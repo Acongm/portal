@@ -1,7 +1,6 @@
 import Image from 'next/image';
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 import { appName } from './shared';
-import { vuepressNavbarLinks } from './navbar';
 
 export function baseOptions(): BaseLayoutProps {
   return {
@@ -21,12 +20,11 @@ export function baseOptions(): BaseLayoutProps {
       ),
       url: '/',
     },
-    links: vuepressNavbarLinks,
     searchToggle: {
       enabled: true,
     },
     themeSwitch: {
-      enabled: false,
+      enabled: true,
     },
   };
 }
