@@ -44,14 +44,27 @@ node scripts/migrate-docs.mjs /path/to/vuepress/docs
 node scripts/extract-sidebar.mjs /path/to/vuepress/docs
 ```
 
-## Vercel 部署
+## Vercel 部署（线上预览）
 
-在 Vercel 项目设置中：
+### 一键导入
 
-- **Root Directory**: `apps/web`
-- 或使用根目录 `vercel.json`（已配置 `pnpm build`）
+1. 打开 [Vercel 导入 portal 仓库](https://vercel.com/new/clone?repository-url=https://github.com/Acongm/portal)
+2. **Root Directory** 设为 `apps/web`（必须）
+3. Framework 会自动识别为 Next.js；`apps/web/vercel.json` 已配置 monorepo 安装/构建命令
+4. 点击 Deploy，完成后访问预览 URL 的 `/docs` 路径
 
-预览部署会在每次 PR 上自动构建。
+### 已连接仓库时
+
+推送 `main` 分支会自动触发 Preview/Production 部署（需在 Vercel 项目设置中 Root Directory = `apps/web`）。
+
+### 本地 CLI（可选）
+
+```bash
+# 在仓库根目录执行，需先 vercel login
+npx vercel link --cwd apps/web
+npx vercel --cwd apps/web
+```
+
 
 ## 相关 Issue
 
