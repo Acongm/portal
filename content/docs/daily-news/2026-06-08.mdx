@@ -1,0 +1,86 @@
+---
+title: "每日科技动态 · 2026年6月8日"
+---
+
+
+# 每日科技动态 · 2026 年 6 月 8 日
+
+今天是 WWDC 2026 开幕日，苹果 AI 路线图即将揭晓，同时上周余波仍在扩散：GitHub Copilot 正式切换计费模型、OpenAI 记忆系统大升级、Chrome 150 Beta 继续推进 CSS 新能力。三条线的共同主题是"平台能力正在从可选附加变成默认基础设施"——AI 从功能变成操作系统级选择，代码助手从订阅变成计量服务，浏览器新 CSS 从提案变成基准。由于最近 24 小时内三类官方更新分布不完全均衡，本文取材范围按规则放宽到了最近 72 小时。
+
+## 今日概览
+
+- 前端：Chrome 150 Beta 携一组 CSS 能力继续推进下一代 Web 样式表达；web.dev 发布 5 月 Web 平台月度综述，多项 CSS 特性进入 Baseline。
+- DevOps：GitHub Copilot 正式启用 AI Credits 用量计费，并同步停用 GPT-5.2 系列模型；CodeQL 更新至 2.25.6，新增 Swift 6.3.2 支持。
+- AI：OpenAI 为 ChatGPT 全量上线 Dreaming V3 分层记忆系统；WWDC 2026 今日开幕，苹果 AI 战略进入关键时刻。
+
+### 前端
+
+前端本周没有大版本发布，但浏览器在稳定节奏中持续把"新 CSS 能力"从实验推向工程可用，同时跨引擎互操作成熟度也在稳步增长。
+
+#### 1. Chrome 150 Beta 带来新一批 CSS 样式能力
+
+- 来源：Chrome for Developers
+- 链接：https://developer.chrome.com/blog/chrome-150-beta
+- 核心信息：Chrome 150 Beta 于 6 月 3 日发布。据官方搜索摘要，本轮 Beta 包含 `AccentColor` / `AccentColorText` 系统颜色（可从系统级读取强调色）、`polygon()` CSS 形状函数支持可选圆角参数、CSS `zoom` 属性支持动画插值、`background-clip: border-area`（CSS Backgrounds Level 4）、`image()` 函数生成纯色图片，以及 `light-dark()` 扩展支持图片值（`url()`、`image-set()`、`none`）用于自动主题切换。
+
+`polygon()` 圆角参数和 `border-area` 补全了 CSS 形状与背景绘制的表达能力，而 `light-dark() 扩展至图片值则让暗色模式下一整套资源切换不再依赖 JS 判断或 &lt;picture> 元素。这些更新对设计系统的影响会更直接地体现在下一版 Stable 中。
+
+#### 2. web.dev 发布 5 月 Web 平台月度综述
+
+- 来源：web.dev
+- 链接：https://web.dev/blog/web-platform-05-2026
+- 核心信息：5 月期间 Chrome 148、Firefox 151 及 Safari 26.5 相继发布稳定版。`:open` 伪类在跨引擎支持下进入 Baseline Newly available；容器查询的 name-only 形式和自定义属性 style queries 也达到 Baseline 门槛。Firefox 151 还新增了 Web Serial API 桌面端支持。
+
+容器查询正在从"单个维度查询"走向"名称查询 + 自定义属性样式查询"的更灵活组合，这意味着响应式布局逻辑可以更直接地绑定到组件内部状态而非全局视口。Web Serial API 跨引擎覆盖面的扩大也让浏览器能接入更多硬件场景。
+
+### DevOps
+
+本周 DevOps 方向的核心事件是 GitHub Copilot 计费模型切换正式生效——这不仅仅是账单调整，而是 AI 编码工具从"固定消费"向"按量计算"转型的标志性节点。
+
+#### 1. GitHub Copilot 正式启用 AI Credits 用量计费
+
+- 来源：GitHub Changelog
+- 链接：https://github.blog/changelog/2026-06-01-updates-to-github-copilot-billing-and-plans
+- 核心信息：6 月 1 日起，GitHub Copilot 所有付费计划从 Premium Request Units 切换为 GitHub AI Credits 用量计费模型——按 token 消耗（输入、输出、缓存 token）计算。同时推出 Copilot Max 套餐面向重度用户，支持按用户设定预算上限，新用户注册仍处暂停状态。
+
+这次切换的本质是将 AI 编程助手从"软件订阅"重新定义为"云计算资源"。对团队而言，管理 Copilot 成本的方式将从"谁有许可证"变成"谁用了多少 token"，预算控制和用量审计将成为日常 DevOps 治理的一部分。
+
+#### 2. GitHub Copilot 停用 GPT-5.2 系列模型，CodeQL 更新至 2.25.6
+
+- 来源：GitHub Changelog
+- 链接：https://github.blog/changelog/2026-06-05-gpt-5-2-and-gpt-5-2-codex-deprecated
+- 核心信息：6 月 5 日起，GPT-5.2 和 GPT-5.2-Codex 在大部分 GitHub Copilot 体验中被停用。同日，CodeQL 2.25.6 发布，新增 Swift 6.3.2 支持并改进 C# 覆盖率。
+
+模型停用与计费切换同步推进，意味着 GitHub 正在加速对 Copilot 模型阵容的精细化运营——旧模型快速退场，新模型按 token 定价。CodeQL 的 Swift 6.3.2 支持则直接服务于 Apple 平台开发者的安全扫描需求。
+
+### AI
+
+AI 方向本周两条更新分别属于"体验深化"和"战略转向"两个维度，恰好反映了当前 AI 产业在应用层和平台层同步演进的态势。
+
+#### 1. OpenAI 为 ChatGPT 上线 Dreaming V3 分层记忆系统
+
+- 来源：OpenAI
+- 链接：https://openai.com/index/chatgpt-memory-dreaming
+- 核心信息：OpenAI 于 6 月 4 日发布 Dreaming V3，这是一套分层记忆架构，用于 ChatGPT 在后台自动合成、组织和刷新用户长期记忆。本次更新首次将 Dreaming 能力扩展到 Free 用户层，同时改善了事实回忆准确性和多会话之间的上下文相关性。
+
+Dreaming 的本质不是多存一点信息，而是让 ChatGPT 学会"什么时候该记住什么、什么时候该遗忘什么"。从辅助工具变成持续协作伙伴，记忆质量是决定性的分水岭。Free 层开放 Dreaming 意味着 OpenAI 正在把记忆从"付费附加值"变成"基准体验"。
+
+#### 2. WWDC 2026 今日开幕：苹果 AI 战略迎来关键节点
+
+- 来源：MacRumors（综合 WWDC 2026 预热信息）
+- 链接：https://www.macrumors.com/roundup/wwdc
+- 核心信息：苹果全球开发者大会 WWDC 2026 于 6 月 8 日至 12 日举行。本届大会预计将发布 iOS 27、iPadOS 27、macOS 27 等新一代操作系统，核心看点包括：用户可在 Apple Intelligence 中选择 ChatGPT、Google Gemini 或 Anthropic Claude 作为底层 AI 模型；全新 LLM Siri 界面；以及照片、相机等系统应用中更深度的 AI 功能集成。
+
+WWDC 2026 可能是苹果在 AI 领域从"跟随"转向"设定平台规则"的关键一站。允许用户在多个 AI 模型之间切换，表面上是给用户选择权，实质上是把 iOS 定位为"AI 的入口层而非内容层"——这与苹果在音乐、视频等内容领域一贯的"平台抽佣"逻辑一脉相承。
+
+## 今日观察
+
+从 Copilot 计费切换、ChatGPT 记忆系统升级到 WWDC 开幕，本周释放的共同信号是：AI 正在进入"基础设施定价"阶段。Copilot 从订阅变计量，OpenAI 把记忆从付费转标配，苹果准备把 AI 模型选择权交给用户——三项动作的背后是同一种逻辑：AI 不再是"某个 App 的酷功能"，而是底层操作系统级的资源，需要成本核算、需要持续治理、需要平台级分发。
+
+对开发者而言，这意味着未来几个月的关键决策不是"用哪个模型"，而是"在哪个平台上编排模型"。
+
+## 简讯
+
+- 前端：Chrome 150 Beta 带来 `AccentColor` 系统颜色、`polygon()` 圆角、`light-dark()` 图片切换等新 CSS 能力，web.dev 5 月综述确认 `:open` 伪类和容器查询进入 Baseline。
+- DevOps：GitHub Copilot 6 月 1 日正式切换 AI Credits 用量计费并同步停用 GPT-5.2 系列模型，CodeQL 2.25.6 新增 Swift 6.3.2 支持。
+- AI：OpenAI 向全体 ChatGPT 用户开放 Dreaming V3 分层记忆系统，WWDC 2026 今日开幕，苹果预计将允许用户在 iOS 27 中选择 ChatGPT / Gemini / Claude 驱动 Apple Intelligence。

@@ -1,0 +1,268 @@
+---
+title: "ServiceRequest 模式使用文档"
+---
+
+# ServiceRequest 模式使用文档
+
+本模块提供了工单系统的状态管理和组件通信能力，基于**单例模式**和**发布订阅模式**实现。
+
+## 架构设计
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  SharedStateBridgeSingleton                  │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │  Registry   │  │  Registry   │  │   SharedStateBridge │  │
+│  │ (组件缓存)  │  │ (回调注册)  │  │   (发布订阅)        │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## 核心类
+
+### Registry\&lt;T\>
+
+通用键值注册表，支持缓存和回调存储。
+
+### SharedStateBridge
+
+发布订阅模式基类，用于跨组件数据共享。
+
+### SharedStateBridgeSingleton
+
+单例实现，统一导出所有 API。
+
+---
+
+## API 文档
+
+### 1. 工单组件缓存
+
+用于缓存工单组件实例，避免重复创建。
+
+```typescript
+import {
+  getCachedServiceRequest,
+  setCachedServiceRequest
+} from './SharedStateBridgeSingleton'
+
+// 缓存组件实例
+setCachedServiceRequest('order-123', componentInstance)
+
+// 获取缓存的组件
+const cached = getCachedServiceRequest('order-123')
+```
+
+---
+
+### 2. 表单数据回调
+
+用于注册/获取工单的表单数据获取回调。
+
+```typescript
+import {
+  registerFormDataCallback,
+  getFormDataCallback,
+  unregisterFormDataCallback,
+  type GetFormDataCallback
+} from './SharedStateBridgeSingleton'
+
+// 定义回调
+const getFormData: GetFormDataCallback = async () => {
+  // 验证表单...
+  if (!isValid) return null
+
+  return {
+    jsSn: 'SR-001',
+    workOrderForm: { name: 'test' },
+    subWorkOrderDTOList: []
+  }
+}
+
+// 注册回调（组件挂载时）
+registerFormDataCallback('order-123', getFormData)
+
+// 获取回调并调用
+const callback = getFormDataCallback('order-123')
+if (callback) {
+  const data = await callback()
+}
+
+// 注销回调（组件卸载时）
+unregisterFormDataCallback('order-123')
+```
+
+---
+
+### 3. 资源更新回调
+
+用于子工单通知主工单添加新资源类型（单一回调模式）。
+
+```typescript
+import {
+  registerResourceUpdateCallback,
+  unregisterResourceUpdateCallback,
+  triggerResourceAdd,
+  type ResourceUpdateCallback
+} from './SharedStateBridgeSingleton'
+
+// 主工单：注册回调
+const handleResourceAdd: ResourceUpdateCallback = (resourceType) => {
+  console.log(`添加资源类型: ${resourceType}`)
+  // 处理添加资源的逻辑...
+}
+registerResourceUpdateCallback(handleResourceAdd)
+
+// 子工单：触发资源添加
+triggerResourceAdd('F5LoadApplication')
+
+// 主工单卸载时：注销回调
+unregisterResourceUpdateCallback()
+```
+
+---
+
+### 4. 跨工单共享数据（发布订阅）
+
+用于工单之间的数据共享和同步。
+
+```typescript
+import {
+  publishSharedData,
+  getSharedData,
+  clearSharedData,
+  subscribeSharedData,
+  unsubscribeSharedData,
+  type SharedDataSubscriber
+} from './SharedStateBridgeSingleton'
+
+// ========== 发布方（数据源工单） ==========
+
+// 发布数据
+publishSharedData('ExtDNSResolution.domainList', ['example.com', 'test.com'])
+
+// 清除数据（组件卸载时）
+clearSharedData('ExtDNSResolution.domainList')
+
+// ========== 订阅方（消费数据工单） ==========
+
+// 定义订阅回调
+const handleDomainListChange: SharedDataSubscriber = (data) => {
+  if (data) {
+    console.log('域名列表更新:', data)
+  } else {
+    console.log('域名列表已清除')
+  }
+}
+
+// 订阅数据变化（如果已有数据会立即触发回调）
+subscribeSharedData('ExtDNSResolution.domainList', handleDomainListChange)
+
+// 直接获取当前数据
+const currentData = getSharedData('ExtDNSResolution.domainList')
+
+// 取消订阅（组件卸载时）
+unsubscribeSharedData('ExtDNSResolution.domainList', handleDomainListChange)
+```
+
+---
+
+## React Hooks 使用示例
+
+### useFormDataCallback
+
+```typescript
+import { useEffect, useCallback } from 'react'
+import {
+  registerFormDataCallback,
+  unregisterFormDataCallback
+} from './SharedStateBridgeSingleton'
+
+function useFormDataCallback(id: string, getFormData: () => Promise<any>) {
+  useEffect(() => {
+    registerFormDataCallback(id, getFormData)
+    return () => unregisterFormDataCallback(id)
+  }, [id, getFormData])
+}
+
+// 使用
+function MyWorkOrder({ id }: { id: string }) {
+  const getFormData = useCallback(async () => {
+    return { jsSn: id, workOrderForm: formState }
+  }, [id, formState])
+
+  useFormDataCallback(id, getFormData)
+}
+```
+
+### useSharedData
+
+```typescript
+import { useState, useEffect } from 'react'
+import {
+  subscribeSharedData,
+  unsubscribeSharedData
+} from './SharedStateBridgeSingleton'
+
+function useSharedData<T>(key: string): T | null {
+  const [data, setData] = useState<T | null>(null)
+
+  useEffect(() => {
+    subscribeSharedData(key, setData)
+    return () => unsubscribeSharedData(key, setData)
+  }, [key])
+
+  return data
+}
+
+// 使用
+function ConsumerComponent() {
+  const domainList = useSharedData<string[]>('ExtDNSResolution.domainList')
+
+  return <div>{domainList?.join(', ')}</div>
+}
+```
+
+---
+
+## 类型定义
+
+```typescript
+// 表单数据回调类型
+type GetFormDataCallback = () => Promise<{
+  jsSn: string
+  workOrderForm: any
+  subWorkOrderDTOList?: Array<{ jsSn: string; workOrderForm: any }>
+} | null>
+
+// 资源更新回调类型
+type ResourceUpdateCallback = (resourceType: string) => void
+
+// 共享数据订阅者类型
+type SharedDataSubscriber<T = any> = (data: T) => void
+```
+
+---
+
+## 迁移指南
+
+从 `ServiceRequestRegistry.ts` 迁移到新模块：
+
+```typescript
+// 旧的导入
+import {
+  getCachedServiceRequest,
+  publishSharedData
+  // ...
+} from './ServiceRequestRegistry'
+
+// 新的导入（API 完全兼容）
+import {
+  getCachedServiceRequest,
+  publishSharedData
+  // ...
+} from './SharedStateBridgeSingleton'
+```
+
+所有函数签名保持不变，可直接替换导入路径。

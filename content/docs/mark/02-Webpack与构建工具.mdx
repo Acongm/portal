@@ -1,0 +1,4333 @@
+---
+title: "Webpack 架构 & 与 Rollup、Vite 对比 & 核心原理"
+---
+
+# Webpack 架构 & 与 Rollup、Vite 对比 & 核心原理
+
+## 笔试题（6 题）
+
+### 1. Webpack 构建流程
+
+画出 Webpack 构建流程的关键步骤（entry → loader → plugin → chunk → asset），并解释每个步骤的作用。
+
+**【作答】：**
+
+流程图：
+
+```
+
+┌─────────────────────────────────────────────────────────────┐
+│  1. 初始化阶段 (Initialization)                              │
+│  - 读取配置文件 (webpack.config.js)                          │
+│  - 合并命令行参数                                            │
+│  - 实例化 Compiler 对象                                      │
+│  - 注册所有 Plugin                                           │
+└─────────────────────────────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────────────────────────────┐
+│  2. 编译阶段 (Compilation)                                   │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ 2.1 从 Entry 开始递归                                │   │
+│  │  entry: './src/index.js'                            │   │
+│  └──────────────────────────────────────────────────────┘   │
+│              ↓                                               │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ 2.2 调用 Loader 转换模块                             │   │
+│  │  .js → babel-loader → ES5                           │   │
+│  │  .css → css-loader → style-loader                   │   │
+│  │  .scss → sass-loader → css-loader                   │   │
+│  └──────────────────────────────────────────────────────┘   │
+│              ↓                                               │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ 2.3 解析依赖关系                                      │   │
+│  │  import './utils.js' → 加入依赖图                    │   │
+│  │  require('./config') → 继续递归解析                  │   │
+│  └──────────────────────────────────────────────────────┘   │
+│              ↓                                               │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ 2.4 构建 Module Graph (模块依赖图)                    │   │
+│  │     index.js                                         │   │
+│  │     ├── utils.js                                     │   │
+│  │     │   └── helper.js                                │   │
+│  │     └── config.js                                    │   │
+│  └──────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────────────────────────────┐
+│  3. 优化阶段 (Optimization)                                  │
+│  - Tree Shaking (剔除未使用代码)                             │
+│  - Scope Hoisting (作用域提升)                               │
+│  - Code Splitting (代码分割)                                 │
+│  - Minification (压缩代码)                                   │
+└─────────────────────────────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────────────────────────────┐
+│  4. 生成 Chunk 阶段 (Chunk Generation)                       │
+│  根据依赖关系和分割策略生成 Chunk：                            │
+│  - main.chunk.js (entry chunk)                              │
+│  - vendor.chunk.js (splitChunks)                            │
+│  - async.chunk.js (动态 import)                             │
+└─────────────────────────────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────────────────────────────┐
+│  5. 生成 Asset 阶段 (Asset Generation)                       │
+│  将 Chunk 渲染成最终文件：                                    │
+│  - main.bundle.js                                           │
+│  - vendor.bundle.js                                         │
+│  - style.css                                                │
+│  - images/logo.png                                          │
+│  - index.html (HtmlWebpackPlugin)                           │
+└─────────────────────────────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────────────────────────────┐
+│  6. 输出阶段 (Emit)                                          │
+│  - 写入文件系统 (dist/)                                      │
+│  - 生成 manifest.json                                       │
+│  - 生成 stats.json                                          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+各步骤作用：
+
+entry (入口):
+
+- 定义构建的起点，Webpack 从这里开始分析依赖
+- 可以是单入口或多入口
+- 示例：entry: \{ main: './src/index.js', admin: './src/admin.js' }
+- 作用：确定应用的入口文件，形成依赖图的根节点
+
+loader (转换器):
+
+- 将非 JavaScript 文件转换为 Webpack 能处理的模块
+- 从右到左、从下到上链式调用
+- 示例：.vue → vue-loader → JavaScript 模块
+- 作用：实现文件级别的转换，处理特定类型的文件
+- 本质：导出函数，接收源码字符串，返回转换后的代码
+
+plugin (插件):
+
+- 在 Webpack 构建流程的特定时机执行自定义逻辑
+- 通过监听 Webpack 生命周期钩子实现功能扩展
+- 示例：HtmlWebpackPlugin 生成 HTML、CleanWebpackPlugin 清理目录
+- 作用：处理 loader 无法完成的复杂任务，如打包优化、资源管理
+- 本质：包含 apply 方法的类/对象，可以访问整个编译生命周期
+
+chunk (代码块):
+
+- 多个模块的集合，是 Webpack 内部的中间产物
+- 生成方式：
+  1. Entry Chunk：每个 entry 生成一个 chunk
+  2. Async Chunk：动态 import() 生成异步 chunk
+  3. Runtime Chunk：提取运行时代码
+  4. Split Chunk：通过 splitChunks 提取公共模块
+- 作用：组织模块，为代码分割提供基础
+
+asset (资源文件):
+
+- 最终输出到 dist 目录的文件
+- 包括：JavaScript bundle、CSS 文件、图片、字体等
+- 命名规则：通过 output.filename 和 output.chunkFilename 配置
+- 示例：main.[contenthash].js、vendors~main.[chunkhash].js
+- 作用：浏览器可直接加载的最终产物
+
+---
+
+### 2. Loader vs Plugin
+
+loader 与 plugin 的本质区别是什么？各自的执行时机、能力边界？举例说明什么场景用 loader，什么场景用 plugin。
+
+**【作答】：**
+
+本质区别：
+
+【Loader】
+
+- 本质：一个导出函数的模块
+- 职责：文件转换器，将源文件转换为 Webpack 可处理的模块
+- 作用范围：单个文件级别
+- 输入/输出：字符串 → 字符串（或 Buffer）
+- 代码示例：
+
+```
+  function myLoader(source) {
+    // source: 源文件内容
+    const result = transform(source);
+    return result; // 返回转换后的代码
+  }
+```
+
+【Plugin】
+
+- 本质：包含 apply 方法的类或对象
+- 职责：功能扩展器，监听构建流程中的事件钩子
+- 作用范围：整个编译过程
+- 输入/输出：访问 Compiler 和 Compilation 对象，可以修改整个构建过程
+- 代码示例：
+
+```
+  class MyPlugin {
+    apply(compiler) {
+      compiler.hooks.emit.tap('MyPlugin', (compilation) => {
+        // 可以访问所有资源、修改输出等
+      });
+    }
+  }
+```
+
+执行时机：
+
+loader:
+
+1. 在模块加载阶段执行
+2. 处理每个匹配的文件时调用
+3. 链式调用顺序：从右到左，从下到上
+   规则：['style-loader', 'css-loader', 'sass-loader']
+   执行：sass-loader → css-loader → style-loader
+
+示例执行流程：
+发现 .scss 文件
+↓
+sass-loader: SCSS → CSS
+↓
+css-loader: CSS → JS 模块 (CSS 转 CommonJS)
+↓
+style-loader: 注入 script 标签到 DOM
+
+plugin:
+
+1. 在整个编译生命周期的特定钩子执行
+2. 可以监听多个钩子，在不同阶段介入
+
+主要钩子时机：
+
+- entryOption: 读取配置后
+- afterPlugins: 插件注册完成
+- run: 开始编译
+- compile: 创建 compilation 对象前
+- compilation: compilation 创建完成
+- make: 从 entry 开始递归分析依赖
+- afterCompile: 编译完成
+- emit: 生成资源到 output 目录前（可修改产物）
+- afterEmit: 生成资源后
+- done: 编译完全完成
+
+示例执行流程：
+Webpack 启动
+↓
+run 钩子 → CleanWebpackPlugin 清理旧文件
+↓
+compilation 钩子 → ProgressPlugin 显示进度
+↓
+emit 钩子 → HtmlWebpackPlugin 生成 HTML
+↓
+done 钩子 → 输出构建统计信息
+
+能力边界：
+
+【Loader 能做的】
+✅ 转换文件内容（语言转换、编译）
+
+- babel-loader: ES6+ → ES5
+- ts-loader: TypeScript → JavaScript
+- sass-loader: SCSS → CSS
+
+✅ 处理特定资源
+
+- file-loader: 文件复制并返回 URL
+- url-loader: 小文件转 base64
+- image-loader: 图片压缩
+
+✅ 代码注入或修改
+
+- vue-loader: 处理 .vue 单文件组件
+- eslint-loader: 代码检查并报告
+
+【Loader 不能做的】
+❌ 访问其他模块
+❌ 修改整体输出结构
+❌ 生成额外文件（除非通过 emitFile API）
+❌ 访问编译上下文和统计信息
+
+【Plugin 能做的】
+✅ 监听整个构建流程
+
+- 可以在任意钩子介入
+
+✅ 修改输出产物
+
+- TerserPlugin: 压缩 JS
+- MiniCssExtractPlugin: 提取 CSS 为单独文件
+
+✅ 生成额外资源
+
+- HtmlWebpackPlugin: 生成 HTML
+- CopyWebpackPlugin: 复制静态资源
+
+✅ 优化构建
+
+- SplitChunksPlugin: 代码分割
+- DllPlugin: 预编译依赖
+
+✅ 改变编译行为
+
+- DefinePlugin: 定义全局常量
+- ProvidePlugin: 自动加载模块
+
+【Plugin 不能做的】
+❌ 直接转换单个文件内容（应该用 loader）
+
+使用场景示例：
+
+【使用 Loader 的场景】
+
+场景 1：TypeScript 转 JavaScript
+
+```javascript
+module: {
+  rules: [
+    {
+      test: `/\.ts$/`,
+      use: 'ts-loader' // ✅ 文件转换 → 用 loader
+    }
+  ]
+}
+```
+
+场景 2：样式处理链
+
+```javascript
+{
+  test: `/\.scss$/`,
+  use: [
+    'style-loader',    // 注入到 DOM
+    'css-loader',      // 解析 CSS 依赖
+    'postcss-loader',  // 自动添加浏览器前缀
+    'sass-loader'      // 编译 SCSS
+  ]  // ✅ 多步转换 → 链式 loader
+}
+```
+
+场景 3：图片资源处理
+
+```javascript
+{
+  test: `/\.(png|jpg|gif)$/`,
+  type: 'asset/resource',
+  generator: {
+    filename: 'images/[hash][ext]'
+  }  // ✅ 资源处理 → 用 loader (Webpack 5 内置)
+}
+```
+
+【使用 Plugin 的场景】
+
+场景 1：自动生成 HTML 并注入 bundle
+
+```javascript
+plugins: [
+  new HtmlWebpackPlugin({
+    template: './src/index.html'
+  })
+] // ✅ 生成额外文件 → 用 plugin
+```
+
+场景 2：提取 CSS 到单独文件
+
+```javascript
+plugins: [
+  new MiniCssExtractPlugin({
+    filename: '[name].[contenthash].css'
+  })
+] // ✅ 改变输出结构 → 用 plugin
+```
+
+场景 3：清理旧的构建产物
+
+```javascript
+plugins: [new CleanWebpackPlugin()] // ✅ 文件系统操作 → 用 plugin
+```
+
+场景 4：代码分割优化
+
+```javascript
+optimization: {
+  splitChunks: {
+    chunks: 'all',
+    cacheGroups: {
+      vendor: {
+        test: `/node_modules/`,
+        name: 'vendors'
+      }
+    }
+  }
+}  // ✅ 构建优化 → 用 plugin (内置)
+```
+
+场景 5：定义环境变量
+
+```javascript
+plugins: [
+  new webpack.DefinePlugin({
+    'process____.env.NODE_ENV': JSON.stringify('production')
+  })
+] // ✅ 全局注入 → 用 plugin
+```
+
+场景 6：模块热替换
+
+```javascript
+plugins: [new webpack.HotModuleReplacementPlugin()] // ✅ 改变运行时行为 → 用 plugin
+```
+
+【组合使用的场景】
+
+场景：处理 CSS 并提取到单独文件
+
+```javascript
+{
+  test: `/\.css$/`,
+  use: [
+    MiniCssExtractPlugin.loader,  // loader: 替代 style-loader
+    'css-loader'                   // loader: 处理 CSS
+  ]
+}
+plugins: [
+  new MiniCssExtractPlugin({      // plugin: 提取 CSS 文件
+    filename: 'css/[name].[contenthash].css'
+  })
+]
+// Loader 负责转换，Plugin 负责输出
+```
+
+【决策流程】
+
+问题：要实现某个功能，用 loader 还是 plugin？
+
+1. 是否只需要转换单个文件？
+   ✅ 是 → 用 Loader
+   ❌ 否 → 继续判断
+
+2. 是否需要访问整个编译流程？
+   ✅ 是 → 用 Plugin
+   ❌ 否 → 继续判断
+
+3. 是否需要生成额外文件或修改输出？
+   ✅ 是 → 用 Plugin
+   ❌ 否 → 用 Loader
+
+4. 是否需要修改多个模块或改变构建行为？
+   ✅ 是 → 用 Plugin
+
+【记忆口诀】
+
+- Loader: 专注"翻译"，一个文件进，一个文件出
+- Plugin: 全局"管家"，可以在构建的任意环节插手
+
+---
+
+### 3. Module Graph vs Chunk Graph
+
+Webpack 的 module graph 与 chunk graph 分别是什么？它们之间的关系？为什么需要两个图？
+
+**【作答】：**
+
+```
+Module Graph (模块依赖图):
+
+定义：
+- 表示模块之间的依赖关系
+- 是一个有向图，节点是模块，边是依赖关系
+- 在编译阶段（Compilation）构建
+- 反映了源代码的真实依赖结构
+
+构建时机：
+- 从 entry 开始递归解析
+- 每遇到 import/require 就创建一条边
+- 形成完整的依赖树
+
+示例：
+源代码结构：
+  // index.js
+  import utils from './utils.js';
+  import('./async.js');  // 动态导入
+
+  // utils.js
+  import helper from './helper.js';
+
+  // helper.js
+  export const add = (a, b) => a + b;
+
+Module Graph：
+        index.js (entry)
+           ↓
+    ┌──────┴──────┐
+    ↓             ↓
+  utils.js    async.js (async)
+    ↓
+  helper.js
+
+特点：
+- 一个模块可能被多个模块依赖（菱形依赖）
+- 包含同步依赖和异步依赖
+- 是静态分析的结果
+
+数据结构：
+{
+  moduleId: 'index.js',
+  dependencies: [
+    { module: 'utils.js', type: 'import' },
+    { module: 'async.js', type: 'import()', async: true }
+  ],
+  source: '...',
+  size: 1024
+}
+
+Chunk Graph (代码块图):
+
+定义：
+- 表示 chunk 之间的关系
+- 是将 module graph 按照分割策略重新组织的结果
+- 在优化阶段（Optimization）构建
+- 反映了最终输出文件的组织结构
+
+构建时机：
+- 在 module graph 构建完成后
+- 根据 entry、splitChunks、动态 import 等策略生成
+- 决定了最终有多少个输出文件
+
+示例（基于上面的 Module Graph）：
+
+配置：
+entry: {
+  main: './src/index.js'
+},
+optimization: {
+  splitChunks: {
+    cacheGroups: {
+      vendors: {
+        test: /node_modules/,
+        name: 'vendors'
+      }
+    }
+  }
+}
+
+Chunk Graph：
+┌─────────────────────┐
+│  Chunk: main        │
+│  - index.js         │
+│  - utils.js         │
+│  - helper.js        │
+└─────────────────────┘
+         ↓ (异步加载)
+┌─────────────────────┐
+│  Chunk: async       │
+│  - async.js         │
+└─────────────────────┘
+
+如果有 node_modules 依赖：
+┌─────────────────────┐       ┌─────────────────────┐
+│  Chunk: vendors     │  ←──  │  Chunk: main        │
+│  - react.js         │       │  - index.js         │
+│  - lodash.js        │       │  - utils.js         │
+└─────────────────────┘       └─────────────────────┘
+                                       ↓
+                              ┌─────────────────────┐
+                              │  Chunk: async       │
+                              │  - async.js         │
+                              └─────────────────────┘
+
+特点：
+- 一个 chunk 包含多个 module
+- 一个 module 可以属于多个 chunk（共享模块）
+- chunk 之间有父子关系（entry chunk、async chunk）
+- 最终会生成对应的 asset 文件
+
+数据结构：
+{
+  chunkId: 'main',
+  modules: ['index.js', 'utils.js', 'helper.js'],
+  parents: [],  // 父 chunk
+  children: ['async'],  // 子 chunk
+  files: ['main.bundle.js'],
+  hash: 'abc123'
+}
+
+两者关系：
+
+1. 转换关系（Module Graph → Chunk Graph）
+   Module Graph                 Chunk Graph
+   ┌──────────┐                ┌─────────────┐
+   │  A  →  B │   分组         │  Chunk 1:   │
+   │  ↓     ↓ │   ======>      │   - A       │
+   │  C  →  D │   策略         │   - B       │
+   │  ↓       │                │   - C       │
+   │  E (异步)│                └─────────────┘
+   └──────────┘                ┌─────────────┐
+                               │  Chunk 2:   │
+                               │   - E       │
+                               └─────────────┘
+
+2. 多对多关系
+   一个 Module 可以属于多个 Chunk（代码复用）
+   一个 Chunk 包含多个 Module（代码聚合）
+
+3. 依赖传递
+   - Module Graph 的依赖关系决定了哪些模块需要打包在一起
+   - Chunk Graph 的父子关系决定了运行时的加载顺序
+
+4. 实际示例
+   源码层面（Module Graph）：
+     app.js → axios (来自 node_modules)
+     page.js → axios (来自 node_modules)
+
+   输出层面（Chunk Graph）：
+     Chunk: vendors (包含 axios，被 app 和 page 共享)
+     Chunk: app (包含 app.js)
+     Chunk: page (包含 page.js)
+
+为什么需要两个图：
+
+原因1：职责分离
+- Module Graph: 关注"依赖关系"
+  → 回答：这个模块依赖哪些模块？
+  → 目的：分析代码结构，Tree Shaking，循环依赖检测
+
+- Chunk Graph: 关注"打包策略"
+  → 回答：这些模块应该打包成几个文件？
+  → 目的：代码分割，缓存优化，并行加载
+
+原因2：灵活的分割策略
+同一个 Module Graph 可以生成不同的 Chunk Graph
+
+示例：相同的源代码，不同的配置
+Module Graph:
+  A → B → C → D
+
+策略1：全部打包到一起
+Chunk Graph: [Chunk: main (A, B, C, D)]
+输出: main.js
+
+策略2：按路由分割
+Chunk Graph:
+  [Chunk: home (A, B)]
+  [Chunk: about (C, D)]
+输出: home.js, about.js
+
+策略3：提取公共依赖
+Chunk Graph:
+  [Chunk: vendors (B, D)]
+  [Chunk: main (A, C)]
+输出: vendors.js, main.js
+
+原因3：优化需求
+- Tree Shaking: 在 Module Graph 上标记未使用的导出
+- Code Splitting: 在 Chunk Graph 上执行分割策略
+- 缓存优化: Chunk Graph 可以分离稳定代码和业务代码
+
+原因4：运行时需求
+- Module Graph: 编译时静态分析
+- Chunk Graph: 运行时动态加载的基础
+
+示例：
+  // 编译时：Module Graph 知道 async.js 是动态导入
+  import('./async.js');
+
+  // 运行时：Chunk Graph 确保 async.js 在单独的 chunk
+  // 浏览器通过 <script> 按需加载
+
+原因5：多入口场景
+多个 entry 共享模块时，需要 Chunk Graph 来优化
+
+Module Graph (多入口):
+  entry1.js → common.js
+  entry2.js → common.js
+
+Chunk Graph (提取公共模块):
+  Chunk: common (common.js)
+  Chunk: entry1 (entry1.js)
+  Chunk: entry2 (entry2.js)
+
+如果只有 Module Graph，无法表达"common.js 应该单独打包"
+
+【流程总结】
+
+构建流程：
+1. 从 entry 开始解析
+2. 递归分析依赖 → 构建 Module Graph
+3. 应用分割策略 → 生成 Chunk Graph
+4. 渲染 Chunk → 生成 Asset
+5. 输出文件
+
+图的作用：
+Module Graph: 保证依赖正确性
+Chunk Graph: 保证输出合理性
+
+【类比理解】
+
+Module Graph = 原材料清单
+  "我需要哪些食材，它们之间有什么关系"
+  - 西红柿 → 需要切碎
+  - 鸡蛋 → 需要打散
+  - 食材之间的搭配关系
+
+Chunk Graph = 出菜计划
+  "这些食材应该做成几道菜，如何组合"
+  - 第一道菜：西红柿炒鸡蛋（西红柿 + 鸡蛋）
+  - 第二道菜：糖拌西红柿（西红柿 + 糖）
+  - 西红柿被用在多道菜中（共享模块）
+
+为什么需要两个？
+  因为"食材清单"和"出菜计划"是两回事：
+  - 食材清单关注"有什么"
+  - 出菜计划关注"怎么做"
+```
+
+---
+
+### 4. Rollup Tree-shaking
+
+Rollup 的 tree-shaking 为什么通常比 Webpack 更"干净"？需要满足哪些条件才能有效 tree-shake？
+
+**【作答】：**
+
+```
+Rollup tree-shaking 更干净的原因：
+
+原因1：输出格式不同
+
+【Webpack 输出（IIFE 包裹）】
+// webpack bundle
+(function(modules) {
+  var installedModules = {};
+  function __webpack_require__(moduleId) {
+    // ...模块加载逻辑
+  }
+  return __webpack_require__(0);
+})([
+  /* 0: index.js */
+  function(module, exports, __webpack_require__) {
+    const { add } = __webpack_require__(1);
+    console.log(add(1, 2));
+  },
+  /* 1: utils.js */
+  function(module, exports) {
+    exports.add = (a, b) => a + b;
+    exports.subtract = (a, b) => a - b;  // 未使用但仍在
+  }
+]);
+
+问题：
+- 每个模块被函数包裹，难以静态分析
+- 运行时加载机制增加了代码量
+- 即使 tree-shaking，也会留下模块骨架
+
+【Rollup 输出（扁平化）】
+// rollup bundle
+const add = (a, b) => a + b;
+// subtract 直接被删除，干干净净
+
+console.log(add(1, 2));
+
+优势：
+- 直接输出 ES6 代码，无运行时包裹
+- 所有模块被"拍平"到一个作用域
+- 未使用的导出直接不存在
+
+原因2：Scope Hoisting（作用域提升）
+
+Webpack (不开启 scope hoisting):
+// 模块1
+function module1() {
+  const name = 'webpack';
+  return name;
+}
+// 模块2
+function module2() {
+  const result = module1();
+  console.log(result);
+}
+
+Rollup (默认提升):
+// 所有代码在同一作用域
+const name = 'webpack';
+const result = name;
+console.log(result);
+
+效果对比：
+- Webpack: 保留模块边界 → 体积大
+- Rollup: 消除模块边界 → 体积小
+
+原因3：设计目标不同
+
+Webpack:
+- 设计目标：应用打包器（Application Bundler）
+- 需要支持：
+  ✓ CommonJS 和 ES6 混用
+  ✓ 代码分割
+  ✓ 动态加载 import()
+  ✓ HMR 热更新
+  ✓ 复杂的 loader/plugin 生态
+- 代价：为了兼容性和功能，牺牲了一定的 tree-shaking 效果
+
+Rollup:
+- 设计目标：库打包器（Library Bundler）
+- 专注于：
+  ✓ 纯 ES6 模块
+  ✓ 静态分析
+  ✓ 最小化输出
+  ✓ 适合打包组件库、工具库
+- 优势：专注导致 tree-shaking 更彻底
+
+原因4：副作用处理更严格
+
+示例代码：
+// utils.js
+export const add = (a, b) => a + b;
+console.log('utils loaded');  // 副作用
+
+// index.js
+import { add } from './utils';
+
+Webpack:
+- 保守策略：有 console.log，保留整个模块
+- 除非在 package.json 中明确标记 "sideEffects": false
+
+Rollup:
+- 更激进：分析代码，只保留必要的副作用
+- 默认假设 ES6 模块无副作用
+
+原因5：Dead Code Elimination 更彻底
+
+示例：
+// math.js
+export const add = (a, b) => a + b;
+export const complex = (x) => {
+  const temp = x * 2;
+  const result = temp + 10;
+  return result;
+};
+
+// index.js
+import { add } from './math';
+console.log(add(1, 2));
+// complex 未使用
+
+Webpack 输出：
+// 可能保留 complex 的定义（取决于配置）
+const add = (a, b) => a + b;
+const complex = (x) => { /* ... */ };  // ❌ 仍然存在
+
+Rollup 输出：
+const add = (a, b) => a + b;  // ✅ 只有 add
+
+console.log(add(1, 2));
+
+原因6：对循环依赖的处理
+
+Webpack:
+// a.js
+import { b } from './b';
+export const a = 'a' + b;
+
+// b.js
+import { a } from './a';
+export const b = 'b';
+
+Webpack 需要运行时处理循环依赖 → 增加代码
+
+Rollup:
+- 静态分析时就会报错或警告
+- 强制开发者解决循环依赖
+- 输出更可预测
+
+原因7：配置默认值不同
+
+Webpack (需要手动配置):
+optimization: {
+  usedExports: true,        // 标记未使用的导出
+  minimize: true,            // 压缩代码
+  sideEffects: true,         // 考虑副作用
+  concatenateModules: true   // scope hoisting (production 默认)
+}
+
+Rollup (默认开启):
+// 默认就是最优的 tree-shaking
+// 无需额外配置
+
+对比示例：
+
+源代码：
+// utils.js
+export const add = (a, b) => a + b;
+export const subtract = (a, b) => a - b;
+export const multiply = (a, b) => a * b;
+export const divide = (a, b) => a / b;
+
+// index.js
+import { add } from './utils';
+console.log(add(1, 2));
+
+【Webpack 输出（production mode）】
+// ... webpack runtime code ...
+const add = (a, b) => a + b;
+// ✅ subtract, multiply, divide 被删除
+// ❌ 但有 webpack 运行时代码（~200 bytes）
+
+【Rollup 输出】
+const add = (a, b) => a + b;
+console.log(add(1, 2));
+// ✅ 完全干净，只有必要代码
+
+体积对比：
+- Webpack: ~250 bytes
+- Rollup: ~50 bytes
+
+有效 tree-shake 的条件：
+
+条件1：使用 ES6 模块（ESM）
+
+✅ 可以 tree-shake:
+// ESM - 静态导入导出
+export const add = (a, b) => a + b;
+import { add } from './math';
+
+❌ 不能 tree-shake:
+// CommonJS - 动态导入导出
+module.exports.add = (a, b) => a + b;
+const { add } = require('./math');
+
+原因：
+- ESM: 编译时确定依赖关系（静态）
+- CommonJS: 运行时确定依赖关系（动态）
+
+反例：
+// 动态导出 - 无法 tree-shake
+const funcs = { add, subtract };
+module.exports = funcs[condition ? 'add' : 'subtract'];
+
+条件2：避免副作用（Side Effects）
+
+✅ 无副作用:
+// pure 函数
+export const add = (a, b) => a + b;
+
+❌ 有副作用（会被保留）:
+export const add = (a, b) => a + b;
+console.log('math module loaded');  // 副作用
+window.mathLoaded = true;            // 副作用
+document.title = 'App';              // 副作用
+
+解决方法：
+1. 在 package.json 中声明
+{
+  "sideEffects": false  // 所有文件无副作用
+}
+
+或
+
+{
+  "sideEffects": [
+    "*.css",        // CSS 文件有副作用
+    "src/polyfills.js"
+  ]
+}
+
+2. 使用 /*#__PURE__*/ 注释
+const result = /*#__PURE__*/ complexCalculation();
+export default result;
+// 告诉打包器：这个函数调用无副作用
+
+条件3：避免默认导出对象
+
+❌ 难以 tree-shake:
+// utils.js
+export default {
+  add: (a, b) => a + b,
+  subtract: (a, b) => a - b
+};
+
+// index.js
+import utils from './utils';
+console.log(utils.add(1, 2));
+// 问题：整个对象都会被打包
+
+✅ 易于 tree-shake:
+// utils.js
+export const add = (a, b) => a + b;
+export const subtract = (a, b) => a - b;
+
+// index.js
+import { add } from './utils';
+console.log(add(1, 2));
+// ✅ 只有 add 被打包
+
+条件4：避免在导入时执行代码
+
+❌ 会阻止 tree-shake:
+// config.js
+const config = {
+  api: process__.env.API_URL
+};
+export default config;
+
+// 导入时就会执行
+import config from './config';
+
+✅ 推迟执行:
+// config.js
+export const getConfig = () => ({
+  api: process__.env.API_URL
+});
+
+// 需要时才调用
+import { getConfig } from './config';
+const config = getConfig();
+
+条件5：类的使用要注意
+
+❌ 类方法难以 tree-shake:
+class Utils {
+  add(a, b) { return a + b; }
+  subtract(a, b) { return a - b; }
+  multiply(a, b) { return a * b; }
+}
+export default new Utils();
+
+// 使用
+import utils from './utils';
+utils.add(1, 2);
+// 问题：整个类实例都会被打包
+
+✅ 分离导出:
+export const add = (a, b) => a + b;
+export const subtract = (a, b) => a - b;
+export const multiply = (a, b) => a * b;
+
+条件6：正确配置 Babel
+
+❌ Babel 转换破坏 ESM:
+// .babelrc (错误配置)
+{
+  "presets": [
+    ["@babel/preset-env", {
+      "modules": "commonjs"  // ❌ 转成 CommonJS
+    }]
+  ]
+}
+
+✅ 保留 ESM:
+{
+  "presets": [
+    ["@babel/preset-env", {
+      "modules": false  // ✅ 保留 ES6 模块
+    }]
+  ]
+}
+
+条件7：避免动态导入路径
+
+❌ 动态路径:
+const moduleName = condition ? 'a' : 'b';
+import(`./${moduleName}.js`);  // 无法静态分析
+
+✅ 静态路径:
+if (condition) {
+  import('./a.js');
+} else {
+  import('./b.js');
+}
+
+条件8：使用支持 tree-shaking 的库
+
+❌ 不支持:
+import _ from 'lodash';  // 整个 lodash (~70KB)
+_.add(1, 2);
+
+✅ 支持:
+import add from 'lodash-es/add';  // 只导入需要的
+add(1, 2);
+
+或使用插件：
+import { add } from 'lodash';  // 配合 babel-plugin-lodash
+
+【验证 tree-shaking 效果】
+
+方法1：分析产物
+// package.json
+{
+  "scripts": {
+    "build": "webpack --mode production",
+    "analyze": "webpack-bundle-analyzer dist/stats.json"
+  }
+}
+
+方法2：查看未使用的导出
+// webpack.config.js
+optimization: {
+  usedExports: true
+}
+
+// 构建后查看警告信息
+
+方法3：对比体积
+// 记录优化前后的 bundle 大小
+
+【最佳实践总结】
+
+1. ✅ 使用 ES6 模块，不用 CommonJS
+2. ✅ 命名导出优于默认导出
+3. ✅ 在 package.json 声明 sideEffects
+4. ✅ Babel 配置保留 ES6 模块
+5. ✅ 使用支持 tree-shaking 的库
+6. ✅ 避免在模块顶层执行副作用代码
+7. ✅ 优先使用 Rollup 打包库，Webpack 打包应用
+```
+
+---
+
+### 5. Vite 为什么快
+
+Vite dev 为什么快？请从三个层面分析：请求、编译、缓存/预构建。
+
+**【作答】：**
+
+```text
+请求层面：
+
+核心：按需加载，利用浏览器原生 ESM
+
+1. No Bundle 开发模式
+
+   Webpack 开发流程：
+   启动开发服务器
+     ↓
+   分析所有模块 (5000+ 文件)
+     ↓
+   打包所有文件
+     ↓
+   生成 bundle
+     ↓
+   启动完成 (20-30秒)  ← 慢！
+     ↓
+   访问 localhost:3000
+     ↓
+   返回 bundle.js (几 MB)
+
+   Vite 开发流程：
+   启动开发服务器
+     ↓
+   预构建依赖 (node_modules)
+     ↓
+   启动完成 (200-300ms)  ← 快！
+     ↓
+   访问 localhost:5173
+     ↓
+   浏览器请求 index.html
+     ↓
+   解析 `\<script type="module" src="/src/main.js"\>`
+     ↓
+   按需编译 main.js → 返回
+     ↓
+   浏览器解析 main.js 中的 import
+     ↓
+   按需编译依赖模块 → 返回
+     ↓
+   逐步加载，快速响应
+
+2. 浏览器原生 ESM
+
+   Vite 输出：
+
+  {/* index.html */}
+  <script type="module" src="/src/main.js"></script>
+
+  // main.js (Vite 处理后)
+  import { createApp } from '/node_modules/.vite/deps/vue.js?v=abc123'
+  import App from '/src/App.vue' // 浏览器原生支持
+
+  createApp(App).mount('#app')
+
+   优势：
+   ✅ 不需要打包，浏览器直接加载 ES6 模块
+   ✅ 每个文件都是独立的 HTTP 请求
+   ✅ 强缓存：304 Not Modified
+   ✅ 并行加载，充分利用 HTTP/2
+
+3. 精确的依赖图
+
+   只编译访问到的文件：
+
+   App.vue
+     ↓ 浏览器请求
+   Vite 编译 App.vue → 返回 (10ms)
+     ↓ 发现 import Header
+   Vite 编译 Header.vue → 返回 (5ms)
+     ↓ 发现 import Button
+   Vite 编译 Button.vue → 返回 (3ms)
+
+   未访问的路由组件：完全不编译 ✅
+
+   对比 Webpack：
+   - 启动时编译所有文件（包括未使用的）
+   - 即使开启 lazy loading，也要分析依赖
+
+4. 请求拦截和转换
+
+   浏览器请求：
+   GET /src/App.vue
+
+   Vite Dev Server 中间件：
+   ┌────────────────────────────────┐
+   │ 1. 读取 App.vue                │
+   │ 2. Vue SFC 编译器处理          │
+   │ 3. 转换 import 路径             │
+   │ 4. 注入 HMR 代码                │
+   │ 5. 返回 JavaScript             │
+   └────────────────────────────────┘
+
+   返回：
+   import { render } from '/src/App.vue?type=template';
+   import script from '/src/App.vue?type=script';
+   script.render = render;
+   export default script;
+
+   特点：
+   - 实时编译：只在请求时编译
+   - 增量编译：修改一个文件，只重新编译这个文件
+   - 快速响应：单文件编译耗时 < 10ms
+
+编译层面：
+
+核心：esbuild 预构建 + 原生 ESM
+
+1. esbuild 极速编译
+
+   速度对比：
+   Webpack (Babel):
+     10000 个文件 → 20-30 秒
+
+   Vite (esbuild):
+     10000 个文件 → 1-2 秒
+
+   快 10-100 倍！
+
+   原因：
+   ✅ Go 语言编写（接近机器码）
+      vs Babel 的 JavaScript（解释执行）
+
+   ✅ 高度并行化
+      充分利用多核 CPU
+
+   ✅ 零拷贝优化
+      直接操作内存，减少解析开销
+
+   ✅ 增量编译
+      只重新编译修改的部分
+
+2. 依赖预构建（Pre-bundling）
+
+   为什么需要预构建：
+
+   问题1：CommonJS 转 ESM
+   // lodash (CommonJS)
+   module.exports = { ... }
+
+   // 浏览器不支持 require
+   const _ = require('lodash');  // ❌ 报错
+
+   解决：esbuild 将 node_modules 中的 CommonJS 转为 ESM
+   import _ from '/node_modules/.vite/deps/lodash.js';  // ✅
+
+   问题2：减少 HTTP 请求
+   // lodash-es 有 600+ 个模块
+   import debounce from 'lodash-es/debounce';
+   // 会导致 600+ 个 HTTP 请求 ❌
+
+   解决：esbuild 将 lodash-es 打包成一个文件
+   import { debounce } from '/node_modules/.vite/deps/lodash-es.js';
+   // 只有 1 个请求 ✅
+
+   预构建流程：
+   首次启动 Vite
+     ↓
+   扫描 import 语句，发现依赖
+     ↓
+   esbuild 打包 node_modules
+     ↓
+   生成 .vite/deps/
+     ↓
+   添加强缓存 (max-age=31536000)
+
+3. 单文件编译
+
+   Vite 编译流程：
+
+   请求 /src/App.vue
+     ↓
+   读取文件内容
+     ↓
+   根据文件类型选择编译器：
+     - .vue → @vitejs/plugin-vue
+     - .jsx → esbuild
+     - .ts → esbuild
+     - .css → postcss
+     ↓
+   编译单个文件 (< 10ms)
+     ↓
+   返回结果 + 缓存
+
+   对比 Webpack：
+   Webpack: 打包整个 bundle → 修改一行代码 → 重新打包 (1-5s)
+   Vite: 编译单个文件 → 修改一行代码 → 只重新编译这个文件 (10ms)
+
+4. 智能代码分割
+
+   Vite 自动按路由分割：
+
+   // router.js
+   const Home = () => import('./Home.vue');
+   const About = () => import('./About.vue');
+
+   编译结果：
+   - 访问 /home → 只加载 Home.vue 及其依赖
+   - 访问 /about → 只加载 About.vue 及其依赖
+
+   动态加载：
+   GET /src/views/Home.vue
+   GET /src/components/HomeHeader.vue
+
+   未访问 About，完全不请求 ✅
+
+5. TypeScript 编译
+
+   esbuild 编译 TS：
+   - 只做类型擦除（Type Stripping）
+   - 不做类型检查（可选的，通过 vue-tsc）
+   - 速度极快：10x faster than tsc
+
+   // tsconfig.json
+   {
+     "compilerOptions": {
+       "isolatedModules": true  // esbuild 要求
+     }
+   }
+
+缓存/预构建层面：
+
+核心：多层缓存 + 智能失效
+
+1. HTTP 强缓存
+
+   依赖模块（node_modules）：
+   GET /node_modules/.vite/deps/vue.js?v=abc123
+   Response Headers:
+     Cache-Control: max-age=31536000, immutable
+
+   一年强缓存！304 Not Modified
+
+   源码模块：
+   GET /src/App.vue?t=1234567890
+   Response Headers:
+     Cache-Control: no-cache
+     ETag: "abc123"
+
+   协商缓存，确保最新
+
+2. 文件系统缓存
+
+   预构建缓存位置：
+   node_modules/.vite/deps/
+     ├── vue.js              (预构建的依赖)
+     ├── vue.js.map
+     ├── _metadata.json      (依赖图元数据)
+     └── package.json
+
+   缓存失效条件：
+   ✅ package.json 中的依赖版本变化
+   ✅ 包管理器的 lockfile 变化
+   ✅ vite.config.js 中的相关配置变化
+   ✅ NODE_ENV 环境变量变化
+
+   只有这些变化时才重新预构建，否则直接使用缓存 ✅
+
+3. 内存缓存
+
+   Vite 内部缓存：
+   const moduleCache = new Map();
+
+   function transformModule(url) {
+     if (moduleCache.has(url)) {
+       return moduleCache.get(url);  // 命中缓存 ✅
+     }
+
+     const result = compile(url);
+     moduleCache.set(url, result);
+     return result;
+   }
+
+   HMR 更新时：
+   - 只清除修改文件的缓存
+   - 其他文件继续使用内存缓存
+
+4. 依赖预扫描（Dependency Pre-Scanning）
+
+   首次启动优化：
+
+   传统方式：
+   启动服务器 → 访问页面 → 发现依赖 → 预构建 → 刷新页面
+
+   Vite 优化：
+   启动服务器 → 同时扫描入口文件 → 提前预构建 → 访问页面时已就绪
+
+   扫描逻辑：
+   1. 分析 index.html 中的 `<script type="module">`
+   2. esbuild 快速扫描，收集 import
+   3. 并行预构建所有依赖
+   4. 在用户访问前完成（冷启动优化）
+
+5. 智能失效和重新验证
+
+   监听文件变化：
+   chokidar.watch('src/**/*').on('change', (path) => {
+     // 只清除相关缓存
+     invalidateModule(path);
+
+     // HMR 更新
+     hmr.send({
+       type: 'update',
+       path,
+       timestamp: Date.now()
+     });
+   });
+   精准失效：
+   修改 App.vue
+     ↓
+   只清除 App.vue 的缓存
+     ↓
+   依赖 App.vue 的模块接收 HMR 更新
+     ↓
+   其他模块缓存仍然有效 ✅
+
+6. 预构建优化检测
+
+   自动检测缺失的依赖：
+
+   访问页面 → 发现新的 import → 运行时预构建
+
+   // 首次没有导入 axios
+   // 后来添加：
+   import axios from 'axios';
+
+   Vite 自动：
+   1. 检测到新依赖
+   2. 立即预构建 axios
+   3. 刷新页面（自动）
+   4. 使用预构建的 axios
+
+【速度对比实例】
+
+场景：大型 Vue3 项目（5000+ 组件）
+
+冷启动：
+Webpack dev server:
+  - 分析模块：15s
+  - 打包构建：25s
+  - 总计：40s ❌
+
+Vite dev server:
+  - 预构建依赖：2s
+  - 启动服务器：0.3s
+  - 总计：2.3s ✅
+
+  快 17 倍！
+
+热更新：
+修改一个组件：
+
+Webpack HMR:
+  - 重新打包相关模块：1-3s
+  - 浏览器更新：0.5s
+  - 总计：1.5-3.5s
+
+Vite HMR:
+  - 重新编译单个文件：10ms
+  - 浏览器更新：50ms
+  - 总计：60ms ✅
+
+  快 25-60 倍！
+
+【Vite 快的本质总结】
+
+1. 架构创新：
+   ❌ Webpack: Bundle-based（先打包再服务）
+   ✅ Vite: Native ESM-based（按需编译）
+
+2. 工具选择：
+   ❌ Webpack: Babel/Terser (JavaScript)
+   ✅ Vite: esbuild (Go) + Rollup (生产)
+
+3. 编译策略：
+   ❌ Webpack: 全量编译
+   ✅ Vite: 增量编译 + 按需编译
+
+4. 缓存利用：
+   ❌ Webpack: 内存缓存为主
+   ✅ Vite: HTTP 缓存 + 文件缓存 + 内存缓存
+
+5. 浏览器能力：
+   ❌ Webpack: 不依赖浏览器 ESM
+   ✅ Vite: 充分利用现代浏览器特性
+
+【权衡和限制】
+
+Vite 的限制：
+1. 需要现代浏览器支持 ESM（IE11 需要额外配置）
+2. 首次访问路由时需要编译（按需加载的代价）
+3. 生产环境仍需打包（使用 Rollup）
+
+Webpack 的优势：
+1. 生态更成熟，plugin 更丰富
+2. 兼容性更好（支持老浏览器）
+3. 适合复杂的构建需求
+
+```
+
+---
+
+### 6. Webpack HMR 原理
+
+解释 Webpack HMR 的基本原理，包括：hash、manifest、module.hot API、更新边界的概念。
+
+**【作答】：**
+
+```
+Hash 的作用：
+
+1. 唯一标识每次构建
+   每次编译都会生成新的 hash 值：
+
+   第一次编译：
+   Hash: abc123
+   main.abc123.js
+
+   修改代码后：
+   Hash: def456
+   main.def456.js
+
+2. 文件版本控制
+   不同类型的 hash：
+
+   【hash】- 整个项目的 hash
+   output: {
+     filename: '[name].[hash].js'
+   }
+   所有文件共享同一个 hash，任何文件改变都会导致所有文件 hash 变化
+
+   【chunkhash】- 每个 chunk 的 hash
+   output: {
+     filename: '[name].[chunkhash].js'
+   }
+   基于 chunk 内容生成，只有该 chunk 变化时才改变
+   适用于代码分割场景
+
+   【contenthash】- 文件内容的 hash
+   output: {
+     filename: '[name].[contenthash].js'
+   }
+   基于文件内容生成，最精准的缓存控制
+   适用于 CSS 等资源文件
+
+3. HMR 中的 hash 作用
+
+   浏览器端：
+   当前 hash: abc123
+
+   Webpack Dev Server 推送：
+   {
+     type: 'hash',
+     data: 'def456'  // 新的 hash
+   }
+
+   浏览器更新：
+   currentHash = 'def456';
+
+   用途：
+   - 标识构建版本
+   - 请求更新资源时作为参数
+   - 避免缓存问题
+
+Manifest 是什么：
+
+1. 定义
+   Manifest 是描述模块更新信息的 JSON 文件
+   记录了哪些模块发生了变化
+
+2. 结构示例
+
+   // hot-update.json (manifest)
+   {
+     "h": "def456",           // 新的 hash
+     "c": {                   // changed modules
+       "main": true           // main chunk 有更新
+     }
+   }
+
+   浏览器收到后，知道需要请求：
+   main.def456.hot-update.js  // 具体的更新模块
+
+3. 更新模块文件
+
+   // main.def456.hot-update.js
+   self["webpackHotUpdate"]("main", {
+     "./src/App.js": (function(module, exports, __webpack_require__) {
+       // 更新后的 App.js 代码
+       const App = () => {
+         return <div>Updated!</div>;
+       };
+       module.exports = App;
+     })
+   });
+
+4. Manifest 的作用
+
+   流程：
+   1. 文件变化 → Webpack 重新编译
+   2. 生成新的 hash: def456
+   3. 生成 manifest: def456.hot-update.json
+   4. 生成更新模块: main.def456.hot-update.js
+   5. 通过 WebSocket 推送 hash
+   6. 浏览器请求 manifest
+   7. 浏览器根据 manifest 请求更新的模块
+   8. 应用更新
+
+module.hot API：
+
+1. 基本 API
+
+   【module.hot.accept】
+   接受模块更新，定义如何处理更新
+
+   // App.js
+   if (module.hot) {
+     module.hot.accept('./Button.js', function() {
+       // Button.js 更新时的回调
+       console.log('Button updated!');
+       // 可以在这里重新渲染
+     });
+   }
+
+   无参数形式（接受自身更新）：
+   if (module.hot) {
+     module.hot.accept(err => {
+       if (err) {
+         console.error('HMR 更新失败', err);
+       }
+     });
+   }
+
+   【module.hot.decline】
+   拒绝模块更新，触发完整刷新
+
+   if (module.hot) {
+     module.hot.decline('./config.js');
+     // config.js 更新时，强制刷新页面
+   }
+
+   【module.hot.dispose】
+   模块被替换前的清理函数
+
+   if (module.hot) {
+     module.hot.dispose(function(data) {
+       // 保存状态，供新模块使用
+       data.count = currentCount;
+
+       // 清理副作用
+       clearInterval(timer);
+       removeEventListener('click', handler);
+     });
+   }
+
+   【module.hot.status】
+   获取 HMR 状态
+
+   console.log(module.hot.status());
+   // 'idle' - 等待中
+   // 'check' - 检查更新
+   // 'prepare' - 准备更新
+   // 'ready' - 更新已下载
+   // 'dispose' - 清理旧模块
+   // 'apply' - 应用更新
+   // 'abort' - 更新中止
+   // 'fail' - 更新失败
+
+2. 实际使用示例
+
+   【React 组件 HMR】
+   // App.jsx
+   import React from 'react';
+   import { render } from 'react-dom';
+   import Root from './Root';
+
+   const rootEl = document.getElementById('root');
+   render(<Root />, rootEl);
+
+   if (module.hot) {
+     module.hot.accept('./Root', () => {
+       // Root 组件更新时，重新渲染
+       const NextRoot = require('./Root').default;
+       render(<NextRoot />, rootEl);
+     });
+   }
+
+   【Vue 组件 HMR】
+   // main.js
+   import { createApp } from 'vue';
+   import App from './App.vue';
+
+   const app = createApp(App);
+   app.mount('#app');
+
+   if (module.hot) {
+     module.hot.accept('./App.vue', () => {
+       const NewApp = require('./App.vue').default;
+       app.unmount();
+       createApp(NewApp).mount('#app');
+     });
+   }
+
+   【状态保持示例】
+   let count = 0;
+
+   function increment() {
+     count++;
+     render();
+   }
+
+   if (module.hot) {
+     // 保存状态
+     module.hot.dispose(data => {
+       data.count = count;
+     });
+
+     // 恢复状态
+     if (module.hot.data) {
+       count = module.hot.data.count || 0;
+     }
+
+     // 接受更新
+     module.hot.accept();
+   }
+
+3. Loader 集成 HMR
+
+   【style-loader】
+   自动支持 CSS HMR：
+
+   // style-loader 内部实现（简化）
+   if (module.hot) {
+     module.hot.accept();
+     module.hot.dispose(() => {
+       // 移除旧样式
+       removeStyle();
+     });
+     // 应用新样式
+     insertStyle(newCss);
+   }
+
+   【vue-loader】
+   自动注入 HMR 代码：
+
+   // vue-loader 处理后
+   import script from './App.vue?vue&type=script';
+   import render from './App.vue?vue&type=template';
+
+   if (module.hot) {
+     module.hot.accept('./App.vue?vue&type=template', () => {
+       __VUE_HMR_RUNTIME__.rerender(id, render);
+     });
+   }
+
+更新边界：
+
+1. 概念
+   更新边界是指能够接受（accept）模块更新的位置
+   如果一个模块没有定义如何接受更新，更新会向上冒泡
+
+2. 冒泡机制
+
+   模块依赖链：
+   index.js → App.js → Button.js → utils.js
+
+   场景1：Button.js 接受更新
+   utils.js 修改
+     ↓
+   查找 utils.js 的 module.hot.accept
+     ✅ 找到！更新边界在 utils.js
+     ↓
+   只更新 utils.js，不影响上层
+
+   场景2：Button.js 不接受更新
+   utils.js 修改
+     ↓
+   utils.js 没有 accept
+     ↓
+   向上冒泡到 Button.js
+     ↓
+   Button.js 有 accept
+     ✅ 更新边界在 Button.js
+     ↓
+   重新执行 Button.js 及其依赖
+
+   场景3：所有模块都不接受
+   utils.js 修改
+     ↓
+   一路冒泡到 index.js
+     ↓
+   index.js 也没有 accept
+     ❌ 触发完整页面刷新（fallback）
+
+3. 更新边界示例
+
+   【合理的边界】
+   // index.js (入口)
+   import App from './App';
+
+   render(App);
+
+   if (module.hot) {
+     module.hot.accept('./App', () => {
+       // App 或其子组件更新时，重新渲染
+       render(require('./App').default);
+     });
+   }
+
+   这样，App 及其所有子组件的更新都会在这里处理 ✅
+
+   【过细的边界】
+   // 每个组件都定义 accept
+   // Button.js
+   if (module.hot) {
+     module.hot.accept();
+   }
+
+   // Header.js
+   if (module.hot) {
+     module.hot.accept();
+   }
+
+   问题：代码冗余，维护困难 ❌
+
+   【无边界】
+   // 所有模块都没有 module.hot.accept
+   结果：任何修改都会刷新页面 ❌
+
+4. 更新边界最佳实践
+
+   ✅ 在框架入口设置边界（React/Vue）
+   ✅ CSS 由 loader 自动处理
+   ✅ 业务代码无需手动添加
+   ✅ 使用框架提供的 HMR 插件
+
+   示例配置：
+   // webpack.config.js
+   plugins: [
+     new ReactRefreshWebpackPlugin(),  // React 自动 HMR
+   ]
+
+完整流程：
+
+1. 启动阶段
+
+   Webpack Dev Server 启动
+     ↓
+   构建项目，生成 hash: abc123
+     ↓
+   启动 WebSocket 服务器（默认端口 ws://localhost:8080）
+     ↓
+   浏览器访问页面
+     ↓
+   注入 HMR Runtime 代码：
+     - WebSocket 客户端
+     - module.hot API 实现
+     - 更新应用逻辑
+     ↓
+   建立 WebSocket 连接
+     ↓
+   浏览器端存储当前 hash: abc123
+
+2. 文件修改阶段
+
+   开发者修改 Button.js
+     ↓
+   Webpack 监听到文件变化（chokidar）
+     ↓
+   触发重新编译（增量编译）
+     ↓
+   只编译变化的模块及其依赖
+     ↓
+   生成新的 hash: def456
+     ↓
+   生成 manifest 文件：
+     - def456.hot-update.json (描述哪些 chunk 更新)
+     ↓
+   生成更新模块文件：
+     - main.def456.hot-update.js (具体的模块代码)
+
+3. 通知阶段
+
+   Webpack 编译完成
+     ↓
+   通过 WebSocket 推送消息给浏览器：
+
+   消息1：
+   {
+     type: 'hash',
+     data: 'def456'  // 新的 hash
+   }
+
+   消息2：
+   {
+     type: 'ok'  // 编译成功，可以更新
+   }
+
+4. 检查阶段（浏览器端）
+
+   浏览器收到消息
+     ↓
+   更新本地 hash: def456
+     ↓
+   调用 module.hot.check() 检查更新
+     ↓
+   请求 manifest 文件：
+   GET /abc123.hot-update.json
+
+   返回：
+   {
+     "h": "def456",
+     "c": { "main": true }
+   }
+     ↓
+   解析 manifest，知道 main chunk 有更新
+
+5. 下载阶段
+
+   请求更新的模块：
+   GET /main.def456.hot-update.js
+
+   返回：
+   webpackHotUpdate("main", {
+     "./src/Button.js": function(module, exports, require) {
+       // 新的 Button.js 代码
+     }
+   });
+     ↓
+   更新模块被下载到浏览器
+
+6. 应用阶段
+
+   查找更新模块的依赖链
+     ↓
+   向上查找是否有 module.hot.accept
+     ↓
+   找到更新边界（如 App.js）
+     ↓
+   调用 dispose 回调（清理旧模块）
+     ↓
+   替换旧模块为新模块
+     ↓
+   调用 accept 回调（应用新模块）
+     ↓
+   重新执行模块代码
+     ↓
+   UI 更新，不刷新页面 ✅
+
+7. 失败处理
+
+   如果没找到更新边界
+     ↓
+   或者更新过程出错
+     ↓
+   自动降级：刷新页面
+     ↓
+   window.location.reload()
+
+【流程图总结】
+
+Webpack (编译) ←→ WebSocket Server ←→ Browser (HMR Runtime)
+
+编译端：
+  文件变化
+    ↓
+  增量编译
+    ↓
+  生成 hash
+    ↓
+  生成 manifest
+    ↓
+  生成 hot-update.js
+
+传输端（WebSocket）：
+  推送 hash 消息
+    ↓
+  推送 ok 消息
+
+浏览器端：
+  接收消息
+    ↓
+  请求 manifest
+    ↓
+  请求 hot-update.js
+    ↓
+  查找更新边界
+    ↓
+  应用更新
+    ↓
+  重新渲染
+
+【HMR vs 完整刷新对比】
+
+完整刷新：
+  修改代码 → 刷新页面 → 重新加载所有资源 → 丢失状态 → 体验差
+
+HMR：
+  修改代码 → 增量更新 → 只加载变化模块 → 保持状态 → 体验好
+
+示例：
+场景：表单填写到一半，修改样式
+
+完整刷新：
+  输入的数据全部丢失 ❌
+  需要重新填写
+
+HMR：
+  输入的数据保留 ✅
+  样式实时更新
+  继续填写表单
+```
+
+---
+
+## 面试题（4 题）
+
+### 1. 从 0 设计打包器
+
+从 0 设计一个打包器，你会如何抽象"模块解析、依赖图构建、产物生成"这三个核心环节？需要考虑哪些扩展点？
+
+**【作答】：**
+
+```
+核心架构设计：
+
+┌─────────────────────────────────────────────────────────┐
+│                    Mini Bundler                         │
+├─────────────────────────────────────────────────────────┤
+│  1. 配置层 (Configuration)                              │
+│     - entry, output, plugins, loaders                  │
+│  2. 编译器 (Compiler)                                   │
+│     - 统筹整个构建流程                                  │
+│  3. 模块解析器 (Resolver)                               │
+│     - 路径解析、文件查找                                │
+│  4. 依赖图构建器 (Graph Builder)                        │
+│     - AST 解析、依赖收集                                │
+│  5. 转换器 (Transformer)                                │
+│     - Loader 链式调用                                   │
+│  6. 代码生成器 (Code Generator)                         │
+│     - 生成最终 bundle                                   │
+│  7. 插件系统 (Plugin System)                            │
+│     - 生命周期钩子                                      │
+└─────────────────────────────────────────────────────────┘
+
+一、模块解析（Module Resolution）
+
+1. 核心功能
+   输入：模块标识符（如 './utils', 'lodash', '@/components/Button'）
+   输出：绝对文件路径（如 '/project/src/utils.js'）
+
+2. 解析算法
+
+   class Resolver {
+     constructor(options) {
+       this.extensions = options.extensions || ['.js', '.json'];
+       this.alias = options.alias || {};
+       this.modules = options.modules || ['node_modules'];
+     }
+
+     resolve(context, request) {
+       // 步骤1: 处理别名
+       const aliasedRequest = this.resolveAlias(request);
+
+       // 步骤2: 判断模块类型
+       if (this.isRelative(aliasedRequest)) {
+         // 相对路径：./utils
+         return this.resolveRelative(context, aliasedRequest);
+       } else if (this.isAbsolute(aliasedRequest)) {
+         // 绝对路径：/src/utils
+         return this.resolveAbsolute(aliasedRequest);
+       } else {
+         // 第三方包：lodash
+         return this.resolveNodeModules(context, aliasedRequest);
+       }
+     }
+
+     resolveAlias(request) {
+       // '@/components' → 'src/components'
+       for (const [key, value] of Object.entries(this.alias)) {
+         if (request.startsWith(key)) {
+           return request.replace(key, value);
+         }
+       }
+       return request;
+     }
+
+     resolveRelative(context, request) {
+       const basePath = path.join(context, request);
+       return this.tryResolve(basePath);
+     }
+
+     tryResolve(basePath) {
+       // 尝试直接访问
+       if (fs.existsSync(basePath) && fs.statSync(basePath).isFile()) {
+         return basePath;
+       }
+
+       // 尝试添加扩展名
+       for (const ext of this.extensions) {
+         const pathWithExt = basePath + ext;
+         if (fs.existsSync(pathWithExt)) {
+           return pathWithExt;
+         }
+       }
+
+       // 尝试 index 文件
+       for (const ext of this.extensions) {
+         const indexPath = path.join(basePath, `index${ext}`);
+         if (fs.existsSync(indexPath)) {
+           return indexPath;
+         }
+       }
+
+       throw new Error(`Cannot find module: ${basePath}`);
+     }
+
+     resolveNodeModules(context, request) {
+       // 从当前目录向上查找 node_modules
+       let dir = context;
+       while (true) {
+         const modulePath = path.join(dir, 'node_modules', request);
+
+         if (fs.existsSync(modulePath)) {
+           // 读取 package.json，查找 main 字段
+           const pkgPath = path.join(modulePath, 'package.json');
+           if (fs.existsSync(pkgPath)) {
+             const pkg = require(pkgPath);
+             const entry = pkg.main || 'index.js';
+             return path.join(modulePath, entry);
+           }
+           return this.tryResolve(modulePath);
+         }
+
+         const parent = path.dirname(dir);
+         if (parent === dir) break;  // 到达根目录
+         dir = parent;
+       }
+
+       throw new Error(`Cannot find module: ${request}`);
+     }
+   }
+
+3. 扩展点
+   - 自定义解析策略（resolvers）
+   - 文件系统抽象（支持虚拟文件系统）
+   - 缓存机制（避免重复解析）
+
+二、依赖图构建（Dependency Graph）
+
+1. 核心数据结构
+
+   class Module {
+     constructor(id, filePath, source) {
+       this.id = id;                    // 模块唯一标识
+       this.filePath = filePath;        // 文件路径
+       this.source = source;            // 原始代码
+       this.dependencies = [];          // 依赖的模块 ID
+       this.transformedSource = null;   // 转换后的代码
+       this.ast = null;                 // AST
+     }
+   }
+
+   class DependencyGraph {
+     constructor() {
+       this.modules = new Map();  // id → Module
+       this.entryId = null;
+     }
+
+     addModule(module) {
+       this.modules.set(module.id, module);
+     }
+
+     getModule(id) {
+       return this.modules.get(id);
+     }
+   }
+
+2. 构建算法（深度优先遍历）
+
+   class GraphBuilder {
+     constructor(resolver, transformer) {
+       this.resolver = resolver;
+       this.transformer = transformer;
+       this.graph = new DependencyGraph();
+       this.moduleId = 0;
+     }
+
+     build(entryPath) {
+       // 从入口开始递归构建
+       const entryId = this.createModule(entryPath, null);
+       this.graph.entryId = entryId;
+       return this.graph;
+     }
+
+     createModule(filePath, parentPath) {
+       // 检查是否已处理
+       const existingModule = this.findModuleByPath(filePath);
+       if (existingModule) {
+         return existingModule.id;
+       }
+
+       // 生成模块 ID
+       const id = this.moduleId++;
+
+       // 读取文件
+       const source = fs.readFileSync(filePath, 'utf-8');
+
+       // 创建模块
+       const module = new Module(id, filePath, source);
+       this.graph.addModule(module);
+
+       // 解析 AST
+       module.ast = this.parse(source);
+
+       // 收集依赖
+       const dependencies = this.collectDependencies(module.ast);
+
+       // 递归处理依赖
+       for (const dep of dependencies) {
+         const depPath = this.resolver.resolve(
+           path.dirname(filePath),
+           dep
+         );
+         const depId = this.createModule(depPath, filePath);
+         module.dependencies.push(depId);
+       }
+
+       // 转换代码
+       module.transformedSource = this.transformer.transform(
+         module.source,
+         module.filePath
+       );
+
+       return id;
+     }
+
+     parse(source) {
+       // 使用 Babel 或其他解析器生成 AST
+       const ast = require('@babel/parser').parse(source, {
+         sourceType: 'module',
+         plugins: ['jsx', 'typescript']
+       });
+       return ast;
+     }
+
+     collectDependencies(ast) {
+       const dependencies = [];
+
+       // 遍历 AST，收集 import/require
+       require('@babel/traverse').default(ast, {
+         ImportDeclaration(path) {
+           // import xx from 'module'
+           dependencies.push(path.node.source.value);
+         },
+         CallExpression(path) {
+           // require('module')
+           if (path.node.callee.name === 'require') {
+             const arg = path.node.arguments[0];
+             if (arg.type === 'StringLiteral') {
+               dependencies.push(arg.value);
+             }
+           }
+         }
+       });
+
+       return dependencies;
+     }
+
+     findModuleByPath(filePath) {
+       for (const module of this.graph.modules.values()) {
+         if (module.filePath === filePath) {
+           return module;
+         }
+       }
+       return null;
+     }
+   }
+
+3. 扩展点
+   - 循环依赖检测
+   - 动态 import 处理（代码分割）
+   - 多入口支持
+   - 依赖去重优化
+
+三、产物生成（Code Generation）
+
+1. 运行时模板
+
+   const bundleTemplate = `
+   (function(modules) {
+     // 模块缓存
+     const installedModules = {};
+
+     // require 函数实现
+     function __webpack_require__(moduleId) {
+       // 检查缓存
+       if (installedModules[moduleId]) {
+         return installedModules[moduleId].exports;
+       }
+
+       // 创建新模块
+       const module = installedModules[moduleId] = {
+         id: moduleId,
+         exports: {}
+       };
+
+       // 执行模块函数
+       modules[moduleId].call(
+         module.exports,
+         module,
+         module.exports,
+         __webpack_require__
+       );
+
+       return module.exports;
+     }
+
+     // 加载入口模块
+     return __webpack_require__(__ENTRY_ID__);
+   })({
+     __MODULES__
+   });
+   `;
+
+2. 代码生成器
+
+   class CodeGenerator {
+     constructor(graph) {
+       this.graph = graph;
+     }
+
+     generate() {
+       // 生成模块映射
+       const modulesCode = this.generateModules();
+
+       // 替换模板占位符
+       let bundle = bundleTemplate
+         .replace('__ENTRY_ID__', this.graph.entryId)
+         .replace('__MODULES__', modulesCode);
+
+       return bundle;
+     }
+
+     generateModules() {
+       const modules = [];
+
+       for (const [id, module] of this.graph.modules) {
+         // 转换依赖路径为模块 ID
+         let code = module.transformedSource;
+
+         for (const depId of module.dependencies) {
+           const depModule = this.graph.getModule(depId);
+           // 替换 import/require 路径为模块 ID
+           code = code.replace(
+             new RegExp(`['"]${depModule.filePath}['"]`, 'g'),
+             depId
+           );
+         }
+
+         modules.push(`
+           ${id}: function(module, exports, require) {
+             ${code}
+           }
+         `);
+       }
+
+       return modules.join(',\n');
+     }
+
+     // 生成 Source Map
+     generateSourceMap() {
+       // 使用 source-map 库生成映射
+       const map = new SourceMapGenerator();
+       // ... 添加映射信息
+       return map.toString();
+     }
+   }
+
+3. 扩展点
+   - 多种输出格式（UMD, ESM, CommonJS）
+   - Source Map 生成
+   - 代码分割（多个 chunk）
+   - 压缩和优化
+
+四、插件系统（Plugin System）
+
+1. 生命周期钩子
+
+   class Compiler {
+     constructor(options) {
+       this.options = options;
+       this.hooks = {
+         // 构建开始前
+         beforeRun: new SyncHook(),
+         // 构建开始
+         run: new SyncHook(),
+         // 编译开始
+         compile: new SyncHook(),
+         // 模块创建后
+         afterModule: new SyncHook(['module']),
+         // 编译完成
+         afterCompile: new SyncHook(['compilation']),
+         // 生成资源前
+         emit: new AsyncSeriesHook(['compilation']),
+         // 生成资源后
+         afterEmit: new AsyncSeriesHook(['compilation']),
+         // 完成
+         done: new SyncHook(['stats'])
+       };
+     }
+
+     run(callback) {
+       this.hooks.beforeRun.call();
+       this.hooks.run.call();
+
+       // 编译流程
+       this.compile((err, compilation) => {
+         if (err) return callback(err);
+
+         this.hooks.afterCompile.call(compilation);
+
+         // 生成文件
+         this.emitAssets(compilation, (err) => {
+           if (err) return callback(err);
+
+           this.hooks.done.call({ compilation });
+           callback(null, compilation);
+         });
+       });
+     }
+
+     compile(callback) {
+       this.hooks.compile.call();
+
+       // 创建 compilation 对象
+       const compilation = new Compilation(this);
+
+       // 构建依赖图
+       compilation.build();
+
+       callback(null, compilation);
+     }
+
+     emitAssets(compilation, callback) {
+       this.hooks.emit.callAsync(compilation, (err) => {
+         if (err) return callback(err);
+
+         // 写入文件
+         for (const [filename, content] of compilation.assets) {
+           fs.writeFileSync(
+             path.join(this.options.output.path, filename),
+             content
+           );
+         }
+
+         this.hooks.afterEmit.callAsync(compilation, callback);
+       });
+     }
+   }
+
+2. 插件接口
+
+   class MyPlugin {
+     apply(compiler) {
+       // 监听钩子
+       compiler.hooks.emit.tapAsync('MyPlugin', (compilation, callback) => {
+         // 修改产物
+         compilation.assets.set('extra.txt', 'Generated by MyPlugin');
+         callback();
+       });
+
+       compiler.hooks.afterModule.tap('MyPlugin', (module) => {
+         // 处理模块
+         console.log('Module created:', module.filePath);
+       });
+     }
+   }
+
+   // 使用
+   const compiler = new Compiler({
+     plugins: [new MyPlugin()]
+   });
+
+   // 注册插件
+   for (const plugin of compiler.options.plugins) {
+     plugin.apply(compiler);
+   }
+
+3. 扩展点
+   - 异步钩子（AsyncSeriesHook, AsyncParallelHook）
+   - 钩子拦截器（interceptors）
+   - 插件间通信机制
+
+五、Loader 系统
+
+1. Loader 接口
+
+   // babel-loader 示例
+   function babelLoader(source) {
+     // this 是 loader context
+     const options = this.getOptions();
+
+     // 转换代码
+     const result = babel.transform(source, options);
+
+     // 返回转换后的代码
+     return result.code;
+   }
+
+   // 异步 loader
+   function asyncLoader(source) {
+     const callback = this.async();
+
+     doAsyncWork(source, (err, result) => {
+       if (err) return callback(err);
+       callback(null, result);
+     });
+   }
+
+   // Pitch Loader
+   function pitchLoader(remainingRequest, precedingRequest, data) {
+     // pitch 阶段执行
+     // 可以中断 loader 链
+     if (shouldSkip()) {
+       return 'module.exports = "skipped";';
+     }
+   }
+   pitchLoader.pitch = function() { /* ... */ };
+
+2. Loader 链式调用
+
+   class LoaderRunner {
+     runLoaders(loaders, resource, callback) {
+       let loaderIndex = loaders.length - 1;
+       let result = fs.readFileSync(resource, 'utf-8');
+
+       // 从右到左执行
+       while (loaderIndex >= 0) {
+         const loader = loaders[loaderIndex];
+         const loaderContext = this.createContext(resource);
+
+         result = loader.call(loaderContext, result);
+         loaderIndex--;
+       }
+
+       callback(null, result);
+     }
+
+     createContext(resource) {
+       return {
+         resource,
+         async: function() {
+           // 返回异步回调
+         },
+         getOptions: function() {
+           // 获取 loader 配置
+         }
+       };
+     }
+   }
+
+六、完整示例
+
+// mini-bundler.js
+class MiniBundler {
+  constructor(options) {
+    this.options = options;
+    this.compiler = new Compiler(options);
+  }
+
+  run() {
+    // 1. 模块解析
+    const resolver = new Resolver(this.options.resolve);
+
+    // 2. 代码转换
+    const transformer = new Transformer(this.options.module.rules);
+
+    // 3. 构建依赖图
+    const builder = new GraphBuilder(resolver, transformer);
+    const graph = builder.build(this.options.entry);
+
+    // 4. 生成代码
+    const generator = new CodeGenerator(graph);
+    const bundle = generator.generate();
+
+    // 5. 输出文件
+    fs.writeFileSync(
+      this.options.output.filename,
+      bundle
+    );
+  }
+}
+
+// 使用
+const bundler = new MiniBundler({
+  entry: './src/index.js',
+  output: {
+    path: './dist',
+    filename: 'bundle.js'
+  },
+  module: {
+    rules: [
+      { test: /\.js$/, use: 'babel-loader' }
+    ]
+  },
+  resolve: {
+    extensions: ['.js', '.json'],
+    alias: {
+      '@': './src'
+    }
+  },
+  plugins: [
+    new MyPlugin()
+  ]
+});
+
+bundler.run();
+
+七、关键扩展点总结
+
+1. 模块解析扩展
+   - 自定义解析器（custom resolvers）
+   - 虚拟模块（virtual modules）
+   - 外部依赖（externals）
+
+2. 依赖图扩展
+   - 循环依赖处理
+   - 代码分割策略
+   - Tree Shaking 集成
+
+3. 代码生成扩展
+   - 多种输出格式
+   - Source Map 支持
+   - 代码压缩和混淆
+
+4. 插件系统扩展
+   - 生命周期钩子
+   - 编译优化
+   - 资源处理
+
+5. 性能优化扩展
+   - 持久化缓存
+   - 并行构建
+   - 增量编译
+```
+
+---
+
+### 2. Vite 的开发/生产模式差异
+
+Vite 为什么开发用 ESM、生产仍要 bundling？分别解决什么问题？这种设计有什么取舍？
+
+**【作答】：**
+
+```
+一、开发模式（Dev）：为什么用 ESM
+
+1. 核心原理
+
+   浏览器直接加载 ES Module：
+
+   {/* index.html */}
+   <script type="module" src="/src/main.js"></script>
+
+   浏览器发起请求：
+   GET /src/main.js
+     ↓
+   Vite Dev Server 拦截
+     ↓
+   实时编译（esbuild/SWC）
+     ↓
+   返回转换后的 ESM
+     ↓
+   浏览器解析 import，继续请求依赖
+     ↓
+   按需加载，逐步构建
+
+2. 解决的问题
+
+   问题1：启动速度慢
+   传统打包器（Webpack）：
+     启动 → 分析所有模块 → 打包 → 启动完成（30s+）
+
+   Vite：
+     启动 → 预构建依赖（node_modules）→ 启动完成（200ms）
+     访问页面时才编译，按需加载
+
+   问题2：HMR 更新慢
+   Webpack：
+     修改文件 → 重新打包相关模块 → 更新（1-5s）
+
+   Vite：
+     修改文件 → 只编译这个文件 → 精准 HMR（<100ms）
+
+   问题3：开发体验差
+   每次改动都要等待，打断开发思路
+   Vite 即时反馈，提升开发效率
+
+3. 开发模式的优势
+
+   ✅ 极快的冷启动
+      无需打包，服务器秒起
+
+   ✅ 即时的热更新
+      只重新编译修改的文件
+
+   ✅ 真正的按需编译
+      未访问的路由/组件不编译
+
+   ✅ 利用浏览器缓存
+      HTTP 304 强缓存
+
+   ✅ 并行加载
+      充分利用 HTTP/2 多路复用
+
+二、生产模式（Build）：为什么要 bundling
+
+1. 核心原理
+
+   Vite 生产构建使用 Rollup：
+
+   vite build
+     ↓
+   Rollup 打包所有模块
+     ↓
+   Tree Shaking
+     ↓
+   代码分割
+     ↓
+   压缩优化
+     ↓
+   生成 bundle 文件
+
+2. 为什么不直接用 ESM？
+
+   问题1：性能问题（最关键）
+
+   假设应用有 1000 个模块：
+
+   【直接用 ESM】
+   浏览器加载：
+     index.html
+       ↓
+     main.js (import 10 个模块)
+       ↓
+     10 个模块 (每个 import 5 个)
+       ↓
+     50 个模块...
+
+   结果：
+   - 1000+ 个 HTTP 请求
+   - 瀑布式加载（串行）
+   - 即使 HTTP/2，也会有延迟
+   - 移动网络更慢
+
+   【打包后】
+   浏览器加载：
+     index.html
+       ↓
+     main.js (bundle，所有代码在内)
+       ↓
+     async-chunk.js (代码分割的异步包)
+
+   结果：
+   - 2-3 个 HTTP 请求
+   - 并行加载
+   - 更快的首屏时间
+
+   问题2：兼容性问题
+
+   现代浏览器 ESM 支持：
+   ✅ Chrome 61+
+   ✅ Firefox 60+
+   ✅ Safari 11+
+   ❌ IE 11 (不支持)
+
+   生产环境需要考虑：
+   - 老旧浏览器用户
+   - 企业内网（可能强制 IE）
+   - 兼容性降级方案
+
+   打包后可以：
+   - 转译为 ES5
+   - 使用 Polyfill
+   - 提供降级方案
+
+   问题3：代码体积问题
+
+   【ESM 重复代码】
+   // moduleA.js
+   import { debounce } from 'lodash-es';
+   export default debounce;
+
+   // moduleB.js
+   import { debounce } from 'lodash-es';
+   export default debounce;
+
+   浏览器加载：
+   - lodash-es/debounce.js 被加载 1 次 ✅
+   - 但依赖的内部模块可能重复解析
+
+   【打包后去重】
+   Rollup 分析依赖图：
+   - debounce 只打包一次
+   - 完全去重，体积更小
+
+   问题4：Tree Shaking 不彻底
+
+   ESM 原生不支持 Tree Shaking：
+
+   // utils.js
+   export const used = () => {};
+   export const unused = () => {};  // 未使用
+
+   // main.js
+   import { used } from './utils.js';
+
+   浏览器：
+   - 仍然加载整个 utils.js
+   - unused 函数仍在文件中
+
+   Rollup 打包：
+   - 静态分析 unused 未使用
+   - 直接删除，减小体积
+
+   问题5：网络往返延迟（RTT）
+
+   每个 HTTP 请求都有延迟：
+   - DNS 查询
+   - TCP 连接
+   - TLS 握手
+   - 服务器处理
+
+   1000 个模块 = 1000 次网络往返
+   即使每次 10ms，总计 10s
+
+   打包后 3 个文件 = 3 次往返 = 30ms
+
+   问题6：缓存策略复杂
+
+   ESM：
+   - 每个文件单独缓存
+   - 一个模块更新，只失效一个缓存 ✅
+   - 但首次加载 1000 个文件都要检查缓存
+
+   Bundle：
+   - 使用 contenthash
+   - main.[hash].js 缓存一年
+   - 代码变化 → hash 变化 → 自动更新
+   - 更简单可靠
+
+3. 生产模式的优势
+
+   ✅ 更少的 HTTP 请求
+      减少网络开销
+
+   ✅ 更好的 Tree Shaking
+      移除未使用代码，体积更小
+
+   ✅ 代码压缩和混淆
+      减小体积，保护代码
+
+   ✅ 代码分割优化
+      按路由/按需加载
+
+   ✅ 长期缓存策略
+      contenthash 精准缓存
+
+   ✅ 兼容性处理
+      支持老旧浏览器
+
+   ✅ 性能优化
+      Scope Hoisting、常量折叠等
+
+三、双模式设计的取舍
+
+1. 开发模式的优势与劣势
+
+   优势：
+   ✅ 极快的启动速度（200ms vs 30s）
+   ✅ 极快的 HMR（<100ms vs 1-5s）
+   ✅ 按需编译，节省资源
+   ✅ 真实的模块边界，调试方便
+
+   劣势：
+   ❌ 首次访问路由时有编译延迟（可预构建缓解）
+   ❌ 需要现代浏览器支持 ESM
+   ❌ 开发和生产不一致（可能有坑）
+   ❌ 大量 HTTP 请求（开发环境可接受）
+
+2. 生产模式的优势与劣势
+
+   优势：
+   ✅ 最优的加载性能
+   ✅ 最小的体积
+   ✅ 最好的兼容性
+   ✅ 成熟的优化策略
+
+   劣势：
+   ❌ 构建时间较长（但比 Webpack 快）
+   ❌ 需要构建步骤
+   ❌ 调试相对困难（需要 Source Map）
+
+3. 开发/生产不一致的潜在问题
+
+   问题1：模块解析差异
+
+   开发环境：
+   import Component from './Component';
+   // Vite 自动补全 .vue 扩展名
+
+   生产环境（Rollup）：
+   import Component from './Component';
+   // 可能找不到模块（如果配置不一致）
+
+   解决：
+   // vite.config.js
+   export default {
+     resolve: {
+       extensions: ['.js', '.ts', '.vue']  // 统一配置
+     }
+   }
+
+   问题2：环境变量处理
+
+   开发环境：
+   console.log(import.meta.env.VITE_API_URL);
+   // Vite 运行时注入
+
+   生产环境：
+   console.log(import.meta.env.VITE_API_URL);
+   // Rollup 构建时替换为字符串
+
+   注意：
+   - 不能使用动态的 env 访问
+   - 必须完整写出变量名
+
+   问题3：CSS 处理差异
+
+   开发环境：
+   import './style.css';
+   // 通过 <style> 标签注入
+
+   生产环境：
+   import './style.css';
+   // 提取为单独的 .css 文件
+
+   影响：
+   - 样式应用时机可能不同
+   - 需要测试生产构建
+
+   问题4：代码分割行为
+
+   开发环境：
+   const Home = () => import('./Home.vue');
+   // 每次访问都是独立的请求
+
+   生产环境：
+   const Home = () => import('./Home.vue');
+   // 打包成 chunk，可能包含其他模块
+
+   建议：
+   - 定期构建生产版本测试
+   - 使用 vite preview 预览生产构建
+
+4. 最佳实践
+
+   开发模式优化：
+   ✅ 配置依赖预构建
+      optimizeDeps: {
+        include: ['vue', 'lodash-es']
+      }
+
+   ✅ 减少不必要的转换
+      只转换需要的文件
+
+   ✅ 使用缓存
+      利用 HTTP 缓存和文件系统缓存
+
+   生产模式优化：
+   ✅ 代码分割
+      build: {
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              vendor: ['vue', 'vue-router']
+            }
+          }
+        }
+      }
+
+   ✅ 压缩配置
+      build: {
+        minify: 'terser',
+        terserOptions: {
+          compress: {
+            drop_console: true
+          }
+        }
+      }
+
+   ✅ 启用 gzip/brotli
+      viteCompression()
+
+四、对比总结
+
+| 维度 | 开发模式（ESM） | 生产模式（Bundle） |
+|------|----------------|-------------------|
+| 启动速度 | ⚡ 极快（200ms） | N/A（需要构建） |
+| 热更新 | ⚡ 极快（<100ms） | N/A |
+| 首次加载 | 🐌 多请求 | ⚡ 少请求 |
+| 文件体积 | ➖ 未优化 | ✅ 最小化 |
+| Tree Shaking | ❌ 不支持 | ✅ 完全支持 |
+| 兼容性 | ⚠️ 仅现代浏览器 | ✅ 可兼容老浏览器 |
+| 调试 | ✅ 真实模块 | ⚠️ 需要 Source Map |
+| 缓存策略 | 📦 HTTP 缓存 | 📦 contenthash 缓存 |
+| 代码分割 | ✅ 天然支持 | ✅ 手动配置 |
+
+五、Vite 的设计哲学
+
+1. 开发体验优先
+   - 快速启动，即时反馈
+   - 让开发者保持心流状态
+   - 不为构建速度牺牲开发体验
+
+2. 生产性能优先
+   - 最优的加载性能
+   - 最小的包体积
+   - 不为开发速度牺牲生产性能
+
+3. 充分利用现代工具
+   - esbuild: Go 编写，极速编译
+   - Rollup: 成熟的打包器，最佳 Tree Shaking
+   - 浏览器原生 ESM: 减少构建负担
+
+4. 渐进式增强
+   - 基础功能开箱即用
+   - 高级功能按需配置
+   - 插件生态丰富
+
+六、何时选择不同的构建工具
+
+选择 Vite：
+✅ 新项目
+✅ Vue/React/Svelte 应用
+✅ 追求极致的开发体验
+✅ 团队成员使用现代浏览器
+
+选择 Webpack：
+✅ 遗留项目（迁移成本高）
+✅ 需要极致的灵活性
+✅ 复杂的构建需求
+✅ 必须支持 IE11
+
+选择 Rollup：
+✅ 打包库（而非应用）
+✅ 需要多种输出格式
+✅ 追求最小体积
+
+【总结】
+Vite 的双模式设计是对开发体验和生产性能的平衡：
+- 开发时利用现代浏览器能力，追求速度
+- 生产时使用成熟打包器，追求性能
+- 两者结合，提供最佳的全流程体验
+```
+
+---
+
+### 3. Webpack 性能优化
+
+Webpack 性能瓶颈通常在哪几个环节？你会如何定位（指标/工具/策略）？给出你的优化清单。
+
+**【作答】：**
+
+````
+一、性能瓶颈环节
+
+1. 构建速度瓶颈
+
+   【入口解析阶段】
+   - 递归解析所有模块的依赖
+   - 大型项目可能有 5000+ 模块
+   - 每个模块都要读取、解析
+
+   【Loader 转换阶段】
+   - babel-loader 转换 ES6+ → ES5（最慢）
+   - ts-loader 编译 TypeScript
+   - sass-loader 编译 SCSS
+   - 每个文件都要经过 loader 链
+
+   【Plugin 处理阶段】
+   - 压缩插件（TerserPlugin）
+   - 提取 CSS（MiniCssExtractPlugin）
+   - 生成 HTML（HtmlWebpackPlugin）
+
+   【文件输出阶段】
+   - 写入大量文件到磁盘
+   - 生成 Source Map
+
+2. 打包体积瓶颈
+
+   - 未 Tree Shaking 的第三方库
+   - 重复打包的公共模块
+   - 未压缩的图片资源
+   - 未分离的大块代码
+   - Source Map 过大
+
+3. 运行时性能瓶颈
+
+   - 首屏加载资源过多
+   - 未做代码分割
+   - 缓存策略不当
+
+二、性能定位方法
+
+1. 速度分析工具
+
+   【speed-measure-webpack-plugin】
+   测量每个 loader 和 plugin 的耗时
+
+   // webpack.config.js
+   const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
+   const smp = new SpeedMeasurePlugin();
+
+   module.exports = smp.wrap({
+     // 你的 webpack 配置
+   });
+
+   输出示例：
+   SMP ⏱
+   General output time took 18.5 secs
+
+   Plugins:
+     TerserPlugin took 8.2 secs
+     MiniCssExtractPlugin took 3.1 secs
+     HtmlWebpackPlugin took 0.5 secs
+
+   Loaders:
+     babel-loader took 12.3 secs
+       /src/index.js (2.1 secs)
+       /src/App.js (1.8 secs)
+     css-loader took 2.5 secs
+     sass-loader took 3.2 secs
+
+   分析：
+   - babel-loader 最慢 → 优化编译
+   - TerserPlugin 慢 → 考虑并行压缩
+
+2. 体积分析工具
+
+   【webpack-bundle-analyzer】
+   可视化分析打包产物
+
+   const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+
+   module.exports = {
+     plugins: [
+       new BundleAnalyzerPlugin({
+         analyzerMode: 'static',  // 生成 HTML 文件
+         openAnalyzer: true
+       })
+     ]
+   };
+
+   npm run build
+   → 自动打开分析页面
+
+   可以看到：
+   - 每个模块的体积
+   - 重复打包的模块（红色）
+   - 最大的依赖库
+   - 可优化的空间
+
+3. 构建日志分析
+
+   【stats.json】
+   生成详细的构建统计
+
+   webpack --profile --json > stats.json
+
+   上传到：
+   - webpack.github.io/analyse/
+   - statoscope.tech
+
+   可以分析：
+   - 模块依赖关系
+   - chunk 组成
+   - 为什么某个模块被打包
+
+4. 关键指标
+
+   【构建速度指标】
+   - 冷启动时间（首次构建）
+   - 热启动时间（有缓存）
+   - HMR 更新时间
+   - 生产构建时间
+
+   目标：
+   - 开发环境冷启动 < 30s
+   - HMR 更新 < 1s
+   - 生产构建（中型项目）< 3 分钟
+
+   【体积指标】
+   - 总体积
+   - 首屏资源体积
+   - gzip 后体积
+
+   目标：
+   - 主 bundle < 200KB (gzip)
+   - 首屏加载 < 500KB (gzip)
+   - 总体积控制在合理范围
+
+三、优化清单
+
+【类别 A：构建速度优化】
+
+1. 减少 Loader 处理范围
+
+   ❌ 优化前：
+   module: {
+     rules: [
+       {
+         test: /\.js$/,
+         use: 'babel-loader'  // 处理所有 JS 文件
+       }
+     ]
+   }
+
+   ✅ 优化后：
+   module: {
+     rules: [
+       {
+         test: /\.js$/,
+         exclude: /node_modules/,  // 排除 node_modules
+         include: path.resolve(__dirname, 'src'),  // 只处理 src
+         use: 'babel-loader'
+       }
+     ]
+   }
+
+   效果：
+   - 减少 50%+ 的文件处理量
+   - 构建时间减少 30-40%
+
+2. 开启 Loader 缓存
+
+   ✅ babel-loader 缓存：
+   {
+     test: /\.js$/,
+     use: {
+       loader: 'babel-loader',
+       options: {
+         cacheDirectory: true,  // 开启缓存
+         cacheCompression: false  // 不压缩缓存（更快）
+       }
+     }
+   }
+
+   缓存位置：node_modules/.cache/babel-loader
+
+   效果：
+   - 第二次构建快 70%+
+   - HMR 更新快 80%+
+
+3. 使用 esbuild/swc 替代 Babel
+
+   【esbuild-loader】
+   Go 语言编写，速度快 10-100 倍
+
+   module: {
+     rules: [
+       {
+         test: /\.js$/,
+         loader: 'esbuild-loader',
+         options: {
+           target: 'es2015'
+         }
+       }
+     ]
+   }
+
+   【swc-loader】
+   Rust 语言编写，速度快 20 倍
+
+   {
+     test: /\.js$/,
+     use: {
+       loader: 'swc-loader',
+       options: {
+         jsc: {
+           parser: {
+             syntax: 'ecmascript',
+             jsx: true
+           }
+         }
+       }
+     }
+   }
+
+   权衡：
+   - esbuild/swc 功能不如 Babel 完善
+   - 部分插件不支持
+   - 适合大部分场景
+
+4. 多进程/多线程构建
+
+   【thread-loader】
+   开启多进程处理 loader
+
+   module: {
+     rules: [
+       {
+         test: /\.js$/,
+         use: [
+           'thread-loader',  // 放在耗时 loader 之前
+           'babel-loader'
+         ]
+       }
+     ]
+   }
+
+   【terser-webpack-plugin 并行压缩】
+   optimization: {
+     minimize: true,
+     minimizer: [
+       new TerserPlugin({
+         parallel: true  // 使用多进程并行压缩
+       })
+     ]
+   }
+
+   注意：
+   - 小项目反而变慢（进程开销）
+   - 建议模块数 > 1000 再使用
+
+5. 持久化缓存（Webpack 5）
+
+   cache: {
+     type: 'filesystem',  // 文件系统缓存
+     buildDependencies: {
+       config: [__filename]  // 配置文件变化时失效
+     }
+   }
+
+   缓存位置：node_modules/.cache/webpack
+
+   效果：
+   - 第二次构建快 90%+
+   - 改一个文件，其他模块使用缓存
+
+6. 优化模块解析
+
+   resolve: {
+     // 指定查找目录，减少搜索范围
+     modules: [path.resolve(__dirname, 'src'), 'node_modules'],
+
+     // 减少扩展名尝试
+     extensions: ['.js', '.jsx'],  // 不要太多
+
+     // 别名，减少查找层级
+     alias: {
+       '@': path.resolve(__dirname, 'src'),
+       'react': path.resolve(__dirname, 'node_modules/react')
+     },
+
+     // 使用 package.json 的 main 字段
+     mainFields: ['main'],
+
+     // 不解析 symlinks
+     symlinks: false
+   }
+
+7. 减少 Plugin 使用
+
+   ❌ 开发环境不必要的插件：
+   - TerserPlugin（压缩）
+   - CompressionPlugin（gzip）
+   - BundleAnalyzerPlugin（分析）
+
+   ✅ 按环境区分：
+   const plugins = [
+     new HtmlWebpackPlugin()
+   ];
+
+   if (process__.env.NODE_ENV === 'production') {
+     plugins.push(
+       new TerserPlugin(),
+       new CompressionPlugin()
+     );
+   }
+
+8. 使用 DllPlugin 预编译依赖
+
+   第三方库（React/Vue/Lodash）很少变化
+   可以预先打包，开发时直接引用
+
+   // webpack.dll.config.js
+   module.exports = {
+     entry: {
+       vendor: ['react', 'react-dom', 'lodash']
+     },
+     output: {
+       filename: '[name].dll.js',
+       library: '[name]_library'
+     },
+     plugins: [
+       new webpack.DllPlugin({
+         name: '[name]_library',
+         path: path.join(__dirname, 'dll', '[name]-manifest.json')
+       })
+     ]
+   };
+
+   // 主配置引用
+   plugins: [
+     new webpack.DllReferencePlugin({
+       manifest: require('./dll/vendor-manifest.json')
+     })
+   ]
+
+   效果：
+   - 减少重复编译
+   - 构建快 40%+
+
+   缺点：
+   - 维护成本高
+   - Webpack 5 的持久化缓存已能替代
+
+9. 开发环境优化
+
+   devtool: 'eval-cheap-module-source-map',  // 快速生成 Source Map
+
+   optimization: {
+     removeAvailableModules: false,  // 不移除已可用模块
+     removeEmptyChunks: false,       // 不移除空 chunk
+     splitChunks: false,              // 不做代码分割
+     minimize: false,                 // 不压缩
+     usedExports: false               // 不标记未使用导出
+   }
+
+   效果：
+   - 跳过不必要的优化
+   - 开发构建快 50%+
+
+【类别 B：打包体积优化】
+
+10. Tree Shaking
+
+    optimization: {
+      usedExports: true,  // 标记未使用的导出
+      minimize: true,      // 压缩时移除
+      sideEffects: false   // 允许删除无副作用的未使用模块
+    }
+
+    package.json:
+    {
+      "sideEffects": false  // 或 ["*.css"]
+    }
+
+    注意：
+    - 只对 ES6 模块有效
+    - CommonJS 无法 Tree Shake
+
+11. 代码分割
+
+    【按路由分割】
+    const Home = React.lazy(() => import('./Home'));
+    const About = React.lazy(() => import('./About'));
+
+    【提取公共代码】
+    optimization: {
+      splitChunks: {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            priority: 10
+          },
+          common: {
+            minChunks: 2,
+            name: 'common',
+            priority: 5
+          }
+        }
+      },
+      runtimeChunk: 'single'  // 提取 runtime
+    }
+
+    效果：
+    - 首屏加载减少 60%+
+    - 长期缓存，vendors 不变
+
+12. 压缩优化
+
+    【JS 压缩】
+    new TerserPlugin({
+      parallel: true,
+      terserOptions: {
+        compress: {
+          drop_console: true,  // 删除 console
+          drop_debugger: true,
+          pure_funcs: ['console.log']  // 删除特定函数
+        }
+      }
+    })
+
+    【CSS 压缩】
+    new CssMinimizerPlugin()
+
+    【HTML 压缩】
+    new HtmlWebpackPlugin({
+      minify: {
+        collapseWhitespace: true,
+        removeComments: true
+      }
+    })
+
+13. 图片优化
+
+    【image-webpack-loader】
+    {
+      test: /\.(png|jpg|gif)$/,
+      use: [
+        'file-loader',
+        {
+          loader: 'image-webpack-loader',
+          options: {
+            mozjpeg: { quality: 75 },
+            pngquant: { quality: [0.65, 0.90] }
+          }
+        }
+      ]
+    }
+
+    【转 base64】
+    {
+      test: /\.(png|jpg)$/,
+      type: 'asset',
+      parser: {
+        dataUrlCondition: {
+          maxSize: 8 * 1024  // 8KB 以下转 base64
+        }
+      }
+    }
+
+    【WebP 格式】
+    使用 image-minimizer-webpack-plugin
+
+14. 按需加载第三方库
+
+    ❌ 整体导入：
+    import _ from 'lodash';  // 整个 lodash (~70KB)
+    _.debounce(fn, 300);
+
+    ✅ 按需导入：
+    import debounce from 'lodash/debounce';  // 只导入需要的
+
+    或使用插件：
+    babel-plugin-import
+    babel-plugin-lodash
+
+15. 移除重复依赖
+
+    【查找重复】
+    npm ls lodash
+
+    可能看到：
+    ├─┬ package-a@1.0.0
+    │ └── lodash@4.17.19
+    └─┬ package-b@2.0.0
+      └── lodash@4.17.20
+
+    【解决方案1：resolutions（yarn）】
+    package.json:
+    {
+      "resolutions": {
+        "lodash": "4.17.21"  // 强制使用同一版本
+      }
+    }
+
+    【解决方案2：alias】
+    resolve: {
+      alias: {
+        lodash: path.resolve(__dirname, 'node_modules/lodash')
+      }
+    }
+
+16. Externals（CDN）
+
+    externals: {
+      react: 'React',
+      'react-dom': 'ReactDOM'
+    }
+
+    ```html
+    &lt;script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js">&lt;/script>
+    ```
+
+    效果：
+    - 减少打包体积
+    - 利用 CDN 缓存
+
+    缺点：
+    - 依赖外部资源
+    - 可能有加载失败风险
+
+17. 开启 Gzip/Brotli
+
+    const CompressionPlugin = require('compression-webpack-plugin');
+
+    plugins: [
+      new CompressionPlugin({
+        algorithm: 'gzip',
+        test: /\.(js|css|html)$/,
+        threshold: 10240,  // 10KB 以上才压缩
+        minRatio: 0.8
+      })
+    ]
+
+    效果：
+    - JS 体积减少 70%+
+    - CSS 体积减少 80%+
+
+【类别 C：运行时优化】
+
+18. 优化 Source Map
+
+    开发环境：
+    devtool: 'eval-cheap-module-source-map'  // 快速，但调试友好
+
+    生产环境：
+    devtool: 'hidden-source-map'  // 不暴露源码，但可上传到错误监控平台
+
+    或不生成（最快）：
+    devtool: false
+
+19. 模块联邦（Webpack 5）
+
+    多个应用共享依赖：
+
+    new ModuleFederationPlugin({
+      name: 'app1',
+      remotes: {
+        app2: 'app2@http://localhost:3002/remoteEntry.js'
+      },
+      shared: ['react', 'react-dom']
+    })
+
+    效果：
+    - 微前端架构
+    - 共享依赖，减少重复加载
+
+20. Prefetch/Preload
+
+    import(/* webpackPrefetch: true */ './utils')
+
+    生成：
+    <link rel="prefetch" href="utils.chunk.js">
+
+    浏览器空闲时预加载
+
+四、优化策略总结
+
+优先级排序：
+
+【立即见效（投入少，收益高）】
+1. ✅ 开启 Loader 缓存
+2. ✅ 排除 node_modules
+3. ✅ 开启持久化缓存（Webpack 5）
+4. ✅ 代码分割 + Tree Shaking
+5. ✅ 压缩配置
+
+【中期优化（需要调研）】
+6. ⚡ 替换为 esbuild/swc
+7. ⚡ 按需加载第三方库
+8. ⚡ 图片优化
+9. ⚡ 多进程构建
+
+【长期规划（架构调整）】
+10. 🎯 迁移到 Vite（新项目）
+11. 🎯 模块联邦（微前端）
+12. 🎯 Monorepo + 依赖共享
+
+优化检查清单：
+
+□ 速度分析：使用 speed-measure-webpack-plugin
+□ 体积分析：使用 webpack-bundle-analyzer
+□ Loader 缓存：babel-loader cacheDirectory
+□ 持久化缓存：cache.type = 'filesystem'
+□ 排除不必要文件：exclude node_modules
+□ 代码分割：splitChunks 配置
+□ Tree Shaking：usedExports + sideEffects
+□ 压缩：TerserPlugin + CssMinimizerPlugin
+□ 图片优化：image-webpack-loader
+□ Source Map：按环境选择合适的 devtool
+□ 按需加载：React.lazy + import()
+□ 移除重复依赖：npm ls 检查
+□ CDN：externals 配置
+□ Gzip：compression-webpack-plugin
+````
+
+---
+
+### 4. Webpack 迁移到 Vite
+
+一个大型项目从 Webpack 迁移到 Vite，你会如何评估风险、兼容性问题、分阶段落地方案？
+
+**【作答】：**
+
+一、前期评估
+
+1. 项目现状调研
+
+   【技术栈评估】
+   ✅ 适合迁移：
+
+   - Vue 3 / React / Svelte 等现代框架
+   - 使用 ES6+ 模块
+   - 依赖库支持 ESM
+   - 团队使用现代浏览器开发
+
+   ⚠️ 需要评估：
+
+   - Vue 2（需要 @vitejs/plugin-vue2）
+   - 混用 CommonJS 和 ESM
+   - 部分依赖只有 UMD 格式
+   - 大量自定义 Webpack 配置
+
+   ❌ 不建议迁移：
+
+   - 必须支持 IE11（除非用 @vitejs/plugin-legacy）
+   - 深度定制 Webpack 配置无法替代
+   - 团队不愿意学习新工具
+   - 项目即将下线
+
+   【依赖检查】
+   检查 package.json 中的依赖：
+
+   npm ls --depth=0 > dependencies.txt
+
+   重点检查：
+
+   - 是否有 ESM 版本
+   - 是否支持 Vite
+   - 是否需要特殊处理
+
+   工具：
+
+   - es-check: 检查代码是否为 ESM
+   - publint: 检查包的导出是否正确
+
+   【Webpack 配置分析】
+   记录当前 Webpack 配置：
+
+   - Loader 使用情况
+     □ babel-loader → Vite 内置 esbuild
+     □ vue-loader → @vitejs/plugin-vue
+     □ style-loader → Vite 内置
+     □ file-loader → Vite asset 处理
+     □ 自定义 loader → 需要评估
+
+   - Plugin 使用情况
+     □ HtmlWebpackPlugin → Vite 内置
+     □ DefinePlugin → Vite define 配置
+     □ CopyWebpackPlugin → vite-plugin-static-copy
+     □ 自定义 plugin → 需要迁移或找替代
+
+   - 特殊功能
+     □ 代码分割 → Vite 支持
+     □ 别名配置 → Vite 支持
+     □ 环境变量 → Vite 支持
+     □ Proxy → Vite 支持
+
+2. 风险评估矩阵
+
+   | 风险项       | 严重程度 | 发生概率 | 应对措施               |
+   | ------------ | -------- | -------- | ---------------------- |
+   | 依赖不兼容   | 高       | 中       | 预先测试，准备降级方案 |
+   | 功能缺失     | 高       | 低       | 找替代插件或自己实现   |
+   | 构建产物差异 | 中       | 高       | 充分测试，对比产物     |
+   | 团队学习成本 | 低       | 高       | 培训 + 文档            |
+   | 性能回退     | 高       | 低       | 性能测试               |
+   | 开发体验下降 | 中       | 低       | 试运行，收集反馈       |
+
+3. 收益评估
+
+   【预期收益】
+   开发速度：
+
+   - 冷启动：30s → 2s（快 15 倍）
+   - 热更新：2s → 100ms（快 20 倍）
+
+   开发体验：
+
+   - 即时反馈，提升开发效率
+   - 更少的配置，降低维护成本
+
+   【量化指标】
+
+   - 开发效率提升：30%（每天节省 2 小时等待时间）
+   - 构建配置减少：50%（更简洁）
+   - 学习成本：2-3 天（阅读文档 + 实践）
+
+二、兼容性问题排查
+
+1. 模块系统兼容性
+
+   【问题 1：CommonJS 模块】
+
+```
+   // 老代码
+   const utils = require_('./utils');
+   module.exports = { ... };
+```
+
+影响：
+
+- Vite 优先支持 ESM
+- CommonJS 需要额外处理
+
+解决方案：
+方案 1：渐进式改造
+
+```
+   // 逐步改为 ESM
+   import utils from './utils';
+   export default { ... };
+```
+
+方案 2：兼容配置
+
+```
+   // vite.config.js
+   optimizeDeps: {
+     include: ['legacy-package']  // 预构建 CJS 依赖
+   }
+```
+
+方案 3：使用插件
+
+```
+   // @originjs/vite-plugin-commonjs
+   import { viteCommonjs } from '@originjs/vite-plugin-commonjs';
+```
+
+【问题 2：动态 require】
+
+```
+   // Webpack 支持
+   const componentName = 'Button';
+   const Component = require(`./components/${componentName}`);
+```
+
+// Vite 不支持
+❌ import(/) 不能使用变量路径
+
+解决方案：
+
+```
+   // 改为静态导入 + 对象映射
+   const components = {
+     Button: () => import('./components/Button'),
+     Input: () => import('./components/Input')
+   };
+   const Component = await components[componentName]();
+```
+
+2. 环境变量兼容性
+
+   【问题：变量命名差异】
+   Webpack:
+
+```
+   process__.env.NODE_ENV
+   process__.env.REACT_APP_API_URL
+```
+
+Vite:
+
+```
+   import.meta.env.MODE  // development / production
+   import.meta.env.VITE_API_URL  // 必须 VITE_ 前缀
+```
+
+解决方案：
+方案 1：全局替换
+
+```
+   // 代码中统一替换
+   - process__.env.NODE_ENV
+   + import.meta.env.MODE
+
+   - process__.env.REACT_APP_API_URL
+   + import.meta.env.VITE_API_URL
+```
+
+方案 2：兼容层
+
+```
+   // vite.config.js
+   define: {
+     'process__.env.NODE_ENV': JSON.stringify(process__.env.NODE_ENV),
+     'process__.env.REACT_APP_API_URL': JSON.stringify(process__.env.VITE_API_URL)
+   }
+```
+
+3. 别名和路径解析
+
+   Webpack:
+
+```
+   resolve: {
+     alias: {
+       '@': path.resolve(__dirname, 'src'),
+       'components': path.resolve(__dirname, 'src/components')
+     }
+   }
+```
+
+Vite:
+
+```
+   resolve: {
+     alias: {
+       '@': '/src',  // 可以用相对路径
+       'components': '/src/components'
+     }
+   }
+```
+
+注意：
+
+- Vite 的路径是相对于项目根目录
+- 需要调整 import 语句
+
+4. 静态资源处理
+
+```
+   【图片导入】
+   Webpack:
+   import logo from './logo.png';  // 返回路径字符串
+   <img src={logo} />
+
+   Vite:
+   import logo from './logo.png';  // 同样返回路径
+   <img src={logo} />  // ✅ 兼容
+
+   【显式 URL 导入】
+   Vite 特有：
+   import logo from './logo.png?url';  // 强制作为 URL
+   import logoRaw from './logo.png?raw';  // 作为字符串
+
+   【public 目录】
+   Webpack:
+   - public/favicon.ico → /favicon.ico
+
+   Vite:
+   - public/favicon.ico → /favicon.ico  // ✅ 兼容
+```
+
+5. CSS 处理差异
+
+```
+   【CSS Modules】
+   Webpack:
+   import styles from './App.module.css';
+
+   Vite:
+   import styles from './App.module.css';  // ✅ 兼容
+
+   【SCSS/Less】
+   Webpack: 需要 sass-loader
+   Vite: 内置支持，只需安装 sass
+
+   npm install -D sass
+
+   【PostCSS】
+   // postcss.config.js（两者通用）
+   module.exports = {
+     plugins: {
+       autoprefixer: {}
+     }
+   }
+```
+
+6. 第三方库兼容性
+
+   【需要预构建的库】
+   某些库导出不规范，需要预构建：
+
+```
+   optimizeDeps: {
+     include: [
+       'lodash-es',  // 太多小文件
+       'ant-design-vue',  // 导出复杂
+       'legacy-lib'  // CommonJS 库
+     ],
+     exclude: [
+       'your-local-package'  // 本地开发的包
+     ]
+   }
+
+   【需要特殊处理的库】
+   // jQuery 等全局变量库
+   export default {
+     define: {
+       $: 'window.jQuery',
+       jQuery: 'window.jQuery'
+     }
+   }
+```
+
+三、分阶段迁移方案
+
+阶段 1：准备阶段（1-2 周）
+
+任务清单：
+□ 升级依赖到最新稳定版
+□ 将 CommonJS 改为 ESM
+□ 清理不用的依赖
+□ 整理 Webpack 配置清单
+□ 准备迁移文档
+
+具体步骤：
+
+1. 创建迁移分支
+   git checkout -b feat/migrate-to-vite
+
+2. 安装 Vite
+   npm install -D vite @vitejs/plugin-vue
+
+   或 React:
+   npm install -D vite @vitejs/plugin-react
+
+3. 创建基础配置
+
+```
+   // vite.config.js
+   import { defineConfig } from 'vite';
+   import vue from '@vitejs/plugin-vue';
+
+   export default defineConfig({
+     plugins: [vue()],
+     resolve: {
+       alias: {
+         '@': '/src'
+       }
+     },
+     server: {
+       port: 3000,
+       proxy: {
+         '/api': {
+           target: 'http://localhost:8080',
+           changeOrigin: true
+         }
+       }
+     }
+   });
+```
+
+4. 修改入口文件
+
+```html
+{/* index.html 移到项目根目录 */}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>App</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
+```
+
+阶段 2：试运行阶段（1 周）
+
+1. 本地开发测试
+   npm run dev # Vite 开发服务器
+
+   测试项：
+   □ 页面能否正常访问
+   □ 路由跳转是否正常
+   □ API 请求是否正常
+   □ 热更新是否工作
+   □ 样式是否正确
+   □ 图片等资源是否加载
+
+2. 解决兼容性问题
+   记录遇到的问题：
+
+   问题日志模板：
+   | 问题 | 原因 | 解决方案 | 状态 |
+   |-----|------|---------|------|
+   | xxx 依赖报错 | CommonJS | optimizeDeps | ✅ |
+   | 环境变量 undefined | 命名不同 | 改为 VITE\_ | ✅ |
+
+3. 性能对比测试
+   记录指标：
+
+   | 指标     | Webpack | Vite | 提升 |
+   | -------- | ------- | ---- | ---- |
+   | 冷启动   | 28s     | 2.1s | 13x  |
+   | 热更新   | 1.8s    | 95ms | 19x  |
+   | 生产构建 | 180s    | 45s  | 4x   |
+
+阶段 3：灰度发布阶段（2 周）
+
+1. 部分开发者试用
+
+   - 选择 2-3 名开发者先使用 Vite
+   - 收集问题和反馈
+   - 优化配置和文档
+
+2. 双轨运行
+
+```
+   package.json:
+   {
+   "scripts": {
+   "dev": "vite", // Vite 开发
+   "dev:webpack": "webpack serve", // 保留 Webpack
+   "build": "vite build",
+   "build:webpack": "webpack build"
+   }
+   }
+```
+
+开发者可以自由选择：
+
+- 新功能开发用 Vite
+- 出问题可以切回 Webpack
+
+3. 构建产物对比
+
+   - 分别构建
+
+   npm run build # Vite
+   npm run build:webpack
+
+   - 对比产物
+
+   - 文件数量
+   - 体积大小
+   - 功能完整性
+   - 性能指标
+
+阶段 4：全面迁移阶段（1 周）
+
+1. 团队培训
+
+   - 分享 Vite 基础知识
+   - 讲解配置差异
+   - 演示常见问题解决
+
+2. 统一切换
+
+   - 所有开发者切换到 Vite
+   - 删除 Webpack 配置（保留备份）
+   - 更新 CI/CD 流程
+
+3. 监控和调优
+   - 收集问题
+   - 快速响应
+   - 持续优化
+
+阶段 5：收尾阶段（1 周）
+
+1. 清理代码
+   □ 删除 Webpack 相关依赖
+   □ 删除 Webpack 配置文件
+   □ 更新文档
+
+   npm uninstall webpack webpack-cli webpack-dev-server
+   npm uninstall babel-loader css-loader style-loader
+   ...
+
+   git rm webpack.config.js
+   git rm babel.config.js
+
+2. 更新 CI/CD
+
+   - .gitlab-ci.yml / .github/workflows
+
+   - npm run build:webpack
+
+   * npm run build
+
+3. 总结复盘
+   - 迁移时间
+   - 遇到的问题
+   - 最终收益
+   - 经验教训
+
+四、回滚预案
+
+1. 触发条件
+
+   - 严重 Bug 无法快速修复
+   - 性能严重下降
+   - 团队强烈反对
+
+2. 回滚步骤
+   git checkout webpack-backup-branch
+   npm install # 恢复依赖
+   npm run dev:webpack
+
+3. 降低回滚风险
+   - 保留 Webpack 配置 1 个月
+   - 定期备份稳定版本
+   - 充分测试再删除
+
+五、迁移检查清单
+
+【开发环境】
+□ npm run dev 能正常启动
+□ 热更新（HMR）正常工作
+□ Source Map 可以正常调试
+□ 环境变量正确注入
+□ API 代理正常工作
+□ 别名（@/~）正常解析
+□ CSS/SCSS 正常编译
+□ 图片等静态资源正常加载
+
+【构建产物】
+□ npm run build 成功
+□ 产物文件结构正确
+□ HTML 正确引用 JS/CSS
+□ 代码分割正常
+□ 资源文件正确输出
+□ 环境变量正确替换
+□ Source Map 正确生成（可选）
+
+【功能测试】
+□ 所有页面能正常访问
+□ 路由跳转正常
+□ 状态管理正常
+□ API 请求正常
+□ 表单提交正常
+□ 文件上传/下载正常
+□ WebSocket 连接正常（如有）
+
+【性能测试】
+□ 首屏加载时间
+□ 交互响应时间
+□ 构建产物体积
+□ Lighthouse 评分
+
+【兼容性测试】
+□ Chrome
+□ Firefox
+□ Safari
+□ Edge
+□ 移动端浏览器
+
+六、常见问题及解决方案
+
+1. 依赖预构建问题
+
+```
+   现象：
+   Uncaught Error: Module "xxx" has been externalized
+
+   解决：
+   optimizeDeps: {
+   include: ['xxx']
+   }
+```
+
+2. 循环依赖警告
+
+```
+   现象：
+   Circular dependency detected
+
+   解决：
+
+   - 检查并消除循环依赖
+   - 或使用动态 import 打破循环
+```
+
+3. 全局变量未定义
+
+```
+   现象：
+   process__ is not defined
+
+   解决：
+   define: {
+   'process__.env': {},
+   global: 'window'
+   }
+```
+
+4. Node.js 内置模块
+
+```
+   现象：
+   Cannot find module 'path'
+
+   解决：
+   npm install -D vite-plugin-node-polyfills
+
+   plugins: [
+   nodePolyfills()
+   ]
+```
+
+七、总结
+
+成功迁移的关键：
+
+1. ✅ 充分评估和准备
+2. ✅ 分阶段逐步推进
+3. ✅ 保留回滚预案
+4. ✅ 团队充分沟通
+5. ✅ 持续监控优化
+
+时间规划（中型项目）：
+
+- 准备阶段：1-2 周
+- 试运行：1 周
+- 灰度发布：2 周
+- 全面迁移：1 周
+- 收尾：1 周
+- 总计：6-7 周
+
+预期收益：
+
+- 开发速度提升 10-20 倍
+- 开发体验显著提升
+- 维护成本降低
+- 团队技术栈现代化
+
+---

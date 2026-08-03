@@ -1,0 +1,31 @@
+{
+  "title": "ServiceRequest",
+  "pages": [
+    "index",
+    "模式来源与类比",
+    "COMPARISON",
+    "EventBus",
+    "EventBus/EventBus",
+    "EventBus/EventBusSingleton",
+    "Observer",
+    "Observer/Subject",
+    "Observer/ObserverSingleton",
+    "Store",
+    "Store/Store",
+    "Store/StoreSingleton",
+    "ProxyStore",
+    "ProxyStore/ProxyStore",
+    "ProxyStore/ProxyStoreSingleton",
+    "CustomEvent",
+    "CustomEvent/CustomEventBridge",
+    "CustomEvent/CustomEventSingleton",
+    "BroadcastChannel",
+    "BroadcastChannel/BroadcastBridge",
+    "BroadcastChannel/BroadcastSingleton",
+    "ServiceRequest",
+    "ServiceRequest/Registry",
+    "ServiceRequest/ServiceRequestRegistry",
+    "ServiceRequest/SharedStateBridge",
+    "ServiceRequest/SharedStateBridgeSingleton"
+  ]
+}

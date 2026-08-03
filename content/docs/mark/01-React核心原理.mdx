@@ -1,0 +1,1125 @@
+---
+title: "React 16+ 各版本区别 & React 核心原理"
+---
+
+# React 16+ 各版本区别 & React 核心原理
+
+## 笔试题（6 题）
+
+### 1. React 16/17/18 版本核心特性对比
+
+请写出 React 16、17、18 三个版本在"渲染/更新"层面的关键变化点，每个版本至少 3 条。
+
+**【作答】：**
+
+```
+React 16:
+1. Fiber 架构 - 重写了核心调和算法，支持可中断的渲染
+2. 异步渲染基础 - 引入 time slicing，为后续并发特性铺路
+3. Error Boundaries - 新增错误边界机制，componentDidCatch
+4. Fragments - 支持返回数组和 Fragment，无需额外 DOM 包裹
+5. Portals - 支持渲染到父组件 DOM 层级之外
+
+React 17:
+1. 无新特性版本 - 主要是过渡版本，为 18 做准备
+2. 事件委托改变 - 从 document 改为 root 容器，支持多版本共存
+3. 去除事件池 - 简化事件处理，提升性能
+4. 新的 JSX 转换 - 不再需要 import React，编译优化
+5. useEffect 清理时机 - 改为异步执行，提升性能
+
+React 18:
+1. 并发渲染（Concurrent Rendering）- 支持渲染可中断和优先级调度
+2. Automatic Batching - 自动批处理扩展到所有场景（setTimeout、Promise、原生事件）
+3. Transitions API - startTransition 区分紧急和非紧急更新
+4. Suspense SSR - 支持流式 SSR 和选择性 Hydration
+5. useId/useTransition/useDeferredValue - 新增并发特性相关 Hooks
+```
+
+---
+
+### 2. Fiber 架构详解
+
+解释 Fiber 是什么：它解决了什么问题？核心数据结构包含哪些关键字段？Fiber 节点之间如何建立关联？
+
+**【作答】：**
+
+```
+Fiber 解决的问题：
+1. React 15 及之前采用递归的 Stack Reconciler，一旦开始无法中断
+2. 大组件树更新会长时间占用主线程，导致页面卡顿、掉帧
+3. 无法区分任务优先级，用户交互得不到及时响应
+4. Fiber 通过时间切片（Time Slicing）实现可中断、可恢复的渲染
+5. 支持任务优先级调度，高优先级任务可以打断低优先级任务
+
+Fiber 核心数据结构字段：
+// 实例相关
+type: 组件类型（函数组件/类组件/原生标签）
+stateNode: 对应的真实 DOM 节点或组件实例
+key/ref: React 元素的 key 和 ref
+
+// 树结构
+return: 父 Fiber 节点
+child: 第一个子 Fiber 节点
+sibling: 下一个兄弟 Fiber 节点
+
+// 状态和副作用
+pendingProps: 新的 props
+memoizedProps: 上次渲染的 props
+memoizedState: 上次渲染的 state
+updateQueue: 更新队列
+flags (effectTag): 副作用标记（Placement/Update/Deletion）
+
+// 调度相关
+lanes: 优先级车道模型
+alternate: 指向 workInProgress/current 树的对应节点（双缓冲）
+
+Fiber 节点关联方式：
+1. 单链表结构：child（第一个子节点）+ sibling（兄弟节点）+ return（父节点）
+2. 双缓冲机制：current 树和 workInProgress 树通过 alternate 互相指向
+3. 深度优先遍历：先 child，无 child 找 sibling，无 sibling 回到 return
+4. 这种结构支持中断后从断点继续，只需保存当前 Fiber 引用即可
+```
+
+---
+
+### 3. React 更新流程
+
+React 中一次 setState/状态更新，从触发到 DOM 更新完成，大致经历哪些阶段？每个阶段的主要工作是什么？
+
+**【作答】：**
+
+```
+阶段1：调度阶段（Schedule）
+- 触发更新：setState/useState/useReducer/forceUpdate
+- 创建 Update 对象，加入 updateQueue
+- 根据优先级（lanes）决定是否立即调度
+- 通过 Scheduler 调度，将任务加入任务队列
+- 主要工作：优先级计算、任务调度、时间切片
+
+阶段2：协调阶段（Render/Reconciliation）- 可中断
+- beginWork：从根节点开始，深度优先遍历 Fiber 树
+- 对比新旧 props/state，标记需要更新的节点
+- 调用组件函数/render 方法，生成新的 ReactElement
+- diff 算法：复用 Fiber 节点，标记 effectTag（Placement/Update/Deletion）
+- completeWork：完成节点处理，创建/更新 DOM 属性
+- 构建 effectList 链表（待提交的副作用列表）
+- 主要工作：Diff 计算、Fiber 树构建、副作用收集
+
+阶段3：提交阶段（Commit）- 不可中断，同步执行
+- before mutation：执行 getSnapshotBeforeUpdate
+- mutation：根据 effectList 执行真实 DOM 操作（增删改）
+- layout：执行 useLayoutEffect/componentDidMount/componentDidUpdate
+- 切换 current 指针，从 workInProgress 树变为新的 current 树
+- 主要工作：DOM 变更、生命周期执行、ref 更新
+
+阶段4：副作用执行（Effect）- 异步
+- 在浏览器完成绘制后异步执行 useEffect
+- 先执行上一次的清理函数（cleanup）
+- 再执行本次的副作用函数
+- 不阻塞浏览器渲染，提升用户体验
+- 主要工作：异步副作用执行、订阅清理
+```
+
+---
+
+### 4. 协调（Reconciliation）与 Key
+
+什么是协调（reconciliation）？key 的作用是什么？错误使用 key（如使用 index）会导致什么问题？请举例说明。
+
+**【作答】：**
+
+```
+协调的定义：
+协调（Reconciliation）是 React 中用于比较新旧虚拟 DOM 树，计算出最小变更集的算法过程。
+React 通过 Diff 算法找出两棵树之间的差异，决定哪些节点需要新增、更新或删除。
+协调是 Render 阶段的核心工作，目标是高效复用现有节点，最小化 DOM 操作。
+React 的协调算法复杂度从 O(n³) 优化到 O(n)，基于三个假设：
+1. 不同类型的元素会产生不同的树
+2. 通过 key 属性标识哪些元素在不同渲染中保持稳定
+3. 同层级节点对比，不跨层级移动
+
+key 的作用：
+1. 唯一标识：帮助 React 识别列表中哪些元素改变、添加或删除
+2. 性能优化：相同 key 的元素会被复用，避免不必要的销毁和重建
+3. 状态保持：有 key 的组件在列表重新排序时能保持自己的状态
+4. Diff 优化：React 通过 key 快速判断节点是移动还是新增/删除
+5. 避免渲染错误：防止组件实例混淆导致的状态错乱
+
+错误使用 key 的问题及示例：
+❌ 使用 index 作为 key 的问题：
+// 错误示例
+items.map((item, index) => <TodoItem key={index} {...item} />)
+
+问题场景：
+1. 列表重新排序时，index 变化导致组件实例错位
+2. 删除中间项时，后面所有项的 index 改变，触发不必要的重渲染
+3. 有内部状态的组件会出现状态错乱
+
+具体案例：
+初始：[{id: 'a', text: '任务A'}, {id: 'b', text: '任务B'}]
+删除第一项后：[{id: 'b', text: '任务B'}]
+
+使用 index 作为 key：
+- 删除前：key=0 对应 '任务A'，key=1 对应 '任务B'
+- 删除后：key=0 对应 '任务B'
+- React 认为 key=0 的组件被更新（而非删除），key=1 的组件被删除
+- 如果组件有内部状态（如输入框内容），会导致状态绑定错误
+
+✅ 正确做法：
+items.map(item => <TodoItem key={item.id} {...item} />)
+使用稳定的唯一标识（如数据库 ID、UUID）作为 key
+```
+
+---
+
+### 5. 并发（Concurrent）vs 并行（Parallel）
+
+React 18 的并发（Concurrent）与传统意义的"并行"有什么本质区别？React 如何实现并发渲染？
+
+**【作答】：**
+
+```
+并发 vs 并行的区别：
+【并行（Parallel）】
+- 定义：多个任务在同一时刻真正同时执行
+- 要求：需要多核 CPU，真正的多线程
+- 特点：同一时间有多个任务在进行
+- 例子：多个 CPU 核心同时计算不同的数据
+
+【并发（Concurrent）】
+- 定义：多个任务在同一时间段内交替执行，看起来像同时进行
+- 要求：单核也可以实现，通过时间切片
+- 特点：快速切换任务，每个任务执行一小段时间
+- 例子：单核 CPU 通过时间片轮转执行多个程序
+
+React 18 的并发是：
+- 在单线程（JavaScript 主线程）中实现
+- 通过时间切片将长任务拆分成多个小任务
+- 在多个小任务之间切换，让高优先级任务插队
+- 本质是任务调度，而非真正的并行计算
+
+类比：
+- 并行 = 多个厨师同时做不同的菜（多核心）
+- 并发 = 一个厨师快速切换做多道菜（单核心）
+
+React 如何实现并发渲染：
+1. Fiber 架构基础
+   - 将渲染工作拆分为多个 Fiber 节点的小单元
+   - 每个单元执行时间短，可以暂停和恢复
+   - 通过链表结构保存断点信息
+
+2. 时间切片（Time Slicing）
+   - 每个时间片默认 5ms（React 内部可配置）
+   - 执行一部分工作后，检查是否超时
+   - 超时则让出主线程，通过 Scheduler 调度下一帧继续
+   - 利用 MessageChannel/setTimeout 实现异步调度
+
+3. 优先级调度（Priority Scheduling）
+   - Lane 模型：31 条车道表示不同优先级
+   - 紧急更新（用户输入）> 普通更新（状态变化）> 低优先级更新（数据预加载）
+   - 高优先级任务可以打断低优先级任务
+   - 饥饿问题处理：低优先级任务过期后提升优先级
+
+4. 双缓冲机制
+   - current 树（当前屏幕显示）
+   - workInProgress 树（后台构建）
+   - 渲染可中断，但提交是原子性的，一次性切换
+
+5. startTransition API
+   - 标记非紧急更新，允许被打断
+   - 保持 UI 响应性，同时处理大量数据更新
+
+实现关键：
+- Scheduler 负责任务调度和时间切片
+- Reconciler（Fiber）负责可中断的协调
+- 两者配合实现并发渲染
+```
+
+---
+
+### 6. React 18 Automatic Batching
+
+React 18 的 automatic batching 覆盖哪些场景？举例说明与 React 17 的差异，并解释为什么能实现这种改进。
+
+**【作答】：**
+
+```
+React 18 automatic batching 覆盖场景：
+React 18 扩展了批处理的覆盖范围，包括：
+1. ✅ 事件处理函数（React 17 也支持）
+2. ✅ setTimeout/setInterval 回调（新增）
+3. ✅ Promise.then 回调（新增）
+4. ✅ 原生事件监听器（新增）
+5. ✅ async/await 异步函数（新增）
+6. ✅ fetch 请求回调（新增）
+
+总结：React 18 在所有场景下都自动批处理，无论更新来源
+
+与 React 17 的差异示例：
+// React 17 的行为
+function handleClick() {
+  setCount(c => c + 1);  // 触发一次渲染
+  setFlag(f => !f);      // 触发一次渲染
+  // ✅ React 事件中会批处理 → 只渲染 1 次
+}
+
+function handleClick17() {
+  setTimeout(() => {
+    setCount(c => c + 1);  // 触发一次渲染 ❌
+    setFlag(f => !f);      // 触发一次渲染 ❌
+    // ❌ 异步回调中不批处理 → 渲染 2 次
+  }, 0);
+}
+
+fetch('/api').then(() => {
+  setCount(c => c + 1);  // 触发一次渲染 ❌
+  setFlag(f => !f);      // 触发一次渲染 ❌
+  // ❌ Promise 中不批处理 → 渲染 2 次
+});
+
+// React 18 的行为
+function handleClick18() {
+  setTimeout(() => {
+    setCount(c => c + 1);
+    setFlag(f => !f);
+    // ✅ 自动批处理 → 只渲染 1 次
+  }, 0);
+}
+
+fetch('/api').then(() => {
+  setCount(c => c + 1);
+  setFlag(f => !f);
+  // ✅ 自动批处理 → 只渲染 1 次
+});
+
+// 如果需要强制同步更新（退出批处理）
+import { flushSync } from 'react-dom';
+
+flushSync(() => {
+  setCount(c => c + 1);  // 立即渲染
+});
+setFlag(f => !f);  // 再次渲染
+
+实现原理：
+1. React 17 的限制
+   - 批处理依赖于 React 的事件系统
+   - 通过 isBatchingUpdates 标志控制
+   - 只在 React 合成事件处理函数执行期间启用
+   - 异步回调时 React 上下文已丢失，无法批处理
+
+2. React 18 的改进
+   - 引入 createRoot API，启用并发特性
+   - 所有更新默认进入更新队列
+   - 通过微任务（microtask）延迟提交
+   - 在同一事件循环中的所有更新自动合并
+
+3. 技术实现
+   - 利用 JavaScript 事件循环机制
+   - 将多个 setState 放入更新队列
+   - 在微任务中统一处理，合并为一次渲染
+   - 无需区分更新来源，统一处理
+
+4. 性能提升
+   - 减少渲染次数，提升性能
+   - 避免中间状态展示，防止闪烁
+   - 降低浏览器重绘重排次数
+
+5. 向后兼容
+   - 使用 ReactDOM.createRoot 才启用
+   - 旧的 ReactDOM.render 保持 React 17 行为
+   - 提供 flushSync 作为逃生舱
+```
+
+---
+
+## 面试题（4 题）
+
+### 1. Fiber 架构的可中断性
+
+讲清楚"Fiber 架构"为什么能中断/恢复渲染？底层依赖哪些机制？你会如何用类比的方式解释给技术新人听？
+
+**【作答】：**
+
+```
+为什么 Fiber 能中断/恢复渲染：
+
+1. 数据结构支持
+   - Fiber 是链表结构，每个节点独立
+   - 包含 child/sibling/return 指针，可以从任意节点继续遍历
+   - 保存了当前工作状态（pendingProps、memoizedState、updateQueue）
+   - 中断时只需保存当前 Fiber 节点引用，恢复时从该节点继续
+
+2. 工作单元拆分
+   - 将整棵树的渲染拆分为一个个小的工作单元（每个 Fiber 节点）
+   - 每完成一个工作单元就检查时间片是否用完
+   - 用完则保存进度，将控制权交还浏览器
+   - 下一帧再从断点继续
+
+3. 双缓冲机制
+   - current 树：当前屏幕显示的内容
+   - workInProgress 树：正在后台构建的新树
+   - 渲染过程可以多次中断，但只在完全构建好后才一次性提交
+   - 保证用户始终看到完整的 UI，不会看到半成品
+
+底层依赖的机制：
+
+1. Scheduler（调度器）
+   - 负责任务调度和时间切片管理
+   - 使用 MessageChannel 或 setTimeout 实现异步调度
+   - 维护任务队列，按优先级排序
+   - 提供 shouldYield() 方法判断是否需要让出主线程
+
+2. 时间切片（Time Slicing）
+   - 每个时间片约 5ms（一帧 16.6ms 的 1/3）
+   - 工作循环：while (workInProgress && !shouldYield()) { performUnitOfWork() }
+   - 超时后通过 requestIdleCallback 概念在下一帧继续
+
+3. 优先级调度（Lane Model）
+   - 31 条车道（lane）表示不同优先级
+   - 高优先级任务可以打断低优先级任务
+   - 被打断的任务等待高优任务完成后重新开始
+
+4. 工作循环（Work Loop）
+   - performUnitOfWork：处理单个 Fiber 节点
+   - beginWork：向下遍历，diff 和创建子 Fiber
+   - completeWork：向上回溯，收集副作用
+   - 每个单元执行时间可控，便于中断
+
+类比解释给新人听：
+
+【类比1：盖楼房】
+- React 15（递归）= 一口气盖完楼，中途不能停
+  "包工头说必须连续干，直到楼封顶，期间不能处理其他事"
+  问题：盖 50 层楼时，紧急电话都没法接
+
+- Fiber（可中断）= 盖完一层就检查一下
+  "每盖完一层就问：有没有紧急事？没有就继续盖下一层"
+  优势：随时可以暂停去处理紧急事，之后再回来继续盖
+
+【类比2：餐厅厨师】
+- React 15 = 一道菜必须做完才能做下一道
+  炒菜必须从开火到装盘一气呵成，期间不能切换
+
+- Fiber = 可以在多道菜之间切换
+  "炒菜A 30秒 → 紧急订单来了 → 先做紧急菜 → 回来继续炒菜A"
+  如何做到：用小火保温（保存状态），贴便签记录进度（Fiber 节点）
+
+【类比3：看书 vs 递归算法】
+- 递归（Stack）= 没有书签的书
+  必须一次看完，中途停下就忘了看到哪里
+
+- Fiber = 有书签的书
+  每一页都是一个 Fiber 节点
+  随时可以插书签（保存当前节点）
+  下次打开从书签继续看
+  甚至可以先看后面的重要章节（高优先级），再回来看前面
+
+【关键点总结】
+Fiber 就像给 React 加了"书签"和"暂停键"：
+1. 书签 = Fiber 节点的链表结构，记录位置
+2. 暂停键 = 时间切片，定期检查是否需要暂停
+3. 任务管理器 = Scheduler，决定先做什么后做什么
+4. 草稿本 = workInProgress 树，可以反复修改，不影响正式版
+```
+
+---
+
+### 2. Render 阶段 vs Commit 阶段
+
+React 为什么要把 render 和 commit 分开？commit 阶段为什么不能被打断？如果 commit 阶段也能中断会有什么问题？
+
+**【作答】：**
+
+````
+为什么要把 Render 和 Commit 分开：
+
+1. 职责分离
+   - Render 阶段：计算"要做什么"（纯计算，无副作用）
+     → 对比新旧虚拟 DOM，标记需要变更的节点
+     → 可以被打断、重新开始，不影响用户界面
+
+   - Commit 阶段：执行"真正的变更"（副作用，修改 DOM）
+     → 根据 Render 阶段的计算结果修改真实 DOM
+     → 必须同步完成，保证 UI 一致性
+
+2. 性能优化
+   - Render 阶段可以中断，高优先级任务可以插队
+   - 被打断的低优先级渲染可以丢弃，重新计算
+   - 避免在计算阶段阻塞用户交互
+
+3. 幂等性保证
+   - Render 阶段是纯函数，多次执行结果相同
+   - 可以安全地中断、重启、重算
+   - Commit 阶段有副作用，不能重复执行
+
+4. 架构灵活性
+   - Render 阶段可跨平台复用（React Native/RN Web）
+   - Commit 阶段针对不同平台有不同实现
+   - React-dom、React-native 共享 Reconciler（Render），各自实现 Renderer（Commit）
+
+Commit 阶段为什么不能被打断：
+
+1. DOM 一致性问题
+   - DOM 操作是副作用，会直接影响用户看到的界面
+   - 如果中断，用户会看到不完整的 UI
+   - 例如：插入一半的列表、只改变了一部分样式
+
+2. 生命周期顺序保证
+   - componentDidMount/useLayoutEffect 必须在 DOM 更新后立即同步执行
+   - 如果中断，生命周期执行顺序会错乱
+   - 父组件的 didMount 必须在子组件之后执行
+
+3. ref 引用问题
+   - ref 的赋值必须与 DOM 操作同步
+   - 中断会导致 ref 指向旧的或不存在的 DOM 节点
+   - 用户在生命周期中访问 ref 会出错
+
+4. 视觉一致性
+   - 多个 DOM 变更应该在同一帧中完成
+   - 浏览器一次性重绘，避免闪烁
+   - 中断会导致多次重绘，出现视觉抖动
+
+如果 Commit 阶段也能中断会有什么问题：
+
+【问题1：UI 撕裂】
+场景：更新一个列表，插入 5 个新元素
+- 中断时机：插入了 3 个就被打断
+- 结果：用户看到不完整的列表
+- 体验：界面一会多 3 个，一会又多 2 个，闪烁抖动
+
+【问题2：状态不一致】
+场景：同时更新文本和样式
+```jsx
+&lt;div style=\{\{color: isActive ? 'red' : 'blue'}}>
+  \{isActive ? '激活' : '未激活'}
+&lt;/div>
+````
+
+- 中断时机：只更新了颜色，文本还没更新
+- 结果：蓝色的"激活"或红色的"未激活"
+- 问题：短暂的状态不一致，用户困惑
+
+【问题 3：生命周期混乱】
+场景：组件挂载过程被打断
+
+```jsx
+class Child extends Component \{
+  componentDidMount() \{
+    // 此时 DOM 可能还没真正插入
+    this.divRef.getBoundingClientRect() // 报错！
+  }
+}
+```
+
+- 中断导致 didMount 执行时 DOM 还未完全更新
+- ref 可能指向旧节点或 null
+
+【问题 4：第三方库兼容性】
+场景：使用 echarts 等需要 DOM 的库
+
+```jsx
+useLayoutEffect(() => \{
+  const chart = echarts.init(chartRef.current) // 此时 DOM 可能还没准备好
+  chart.setOption(option)
+}, [])
+```
+
+- 如果 Commit 可中断，第三方库会在不稳定的 DOM 上操作
+- 导致渲染错误、内存泄漏
+
+【问题 5：浏览器回流抖动】
+
+- 每次部分 DOM 更新都会触发浏览器回流（reflow）
+- 如果分多次提交，会有多次回流，性能反而更差
+- 一次性提交所有变更，浏览器可以优化为一次回流
+
+【对比总结】
+| 阶段 | 能否中断 | 原因 | 副作用 |
+|------|----------|------|--------|
+| Render | ✅ 可以 | 纯计算，不影响 UI | 无 |
+| Commit | ❌ 不可以 | DOM 操作，必须原子性 | 有 |
+
+【类比】
+
+- Render = 建筑师画图纸
+  → 可以画一半改主意，重新画，用户看不到
+- Commit = 工人按图纸施工
+  → 必须一次性完成，不能墙砌一半就停，否则房子会塌
+
+```
+
+---
+
+### 3. React 18 并发模式的实践问题
+React 18 下你遇到过哪些"并发带来的坑"（比如副作用执行时序、状态不一致）？如何规避这些问题？Strict Mode 的双重调用是为了什么？
+
+**【作答】：**
+
+```
+
+并发模式带来的常见问题：
+
+【问题 1：useEffect 重复执行】
+现象：
+
+- Strict Mode 下，组件挂载时 useEffect 执行 2 次
+- 先执行 effect → cleanup → effect
+
+案例：
+
+```jsx
+useEffect(() => \{
+  const subscription = api.subscribe() // 订阅了 2 次！
+  return () => subscription.unsubscribe()
+}, [])
+```
+
+影响：
+
+- WebSocket 重复连接
+- API 重复请求
+- 事件监听器重复绑定
+
+规避方法：
+
+```jsx
+// ✅ 方法1：正确处理清理函数
+useEffect(() => \{
+  let ignore = false
+  fetchData().then((data) => \{
+    if (!ignore) setData(data) // 防止过期数据
+  })
+  return () => \{
+    ignore = true
+  } // cleanup 设置标志
+}, [])
+
+// ✅ 方法2：使用 useRef 防止重复
+const subscriptionRef = useRef(null)
+useEffect(() => \{
+  if (!subscriptionRef.current) \{
+    subscriptionRef.current = api.subscribe()
+  }
+  return () => \{
+    subscriptionRef.current?.unsubscribe()
+    subscriptionRef.current = null
+  }
+}, [])
+```
+
+【问题 2：中间状态可见（Tearing）】
+现象：
+
+- 同一状态在不同组件中看到不同的值
+- 并发渲染时，状态在渲染过程中被更新
+
+案例：
+
+```jsx
+// 外部 store（非 React 状态）
+let externalStore = 0
+
+function ComponentA() \{
+  const value = externalStore // 读取时是 0
+  // ... 耗时渲染 ...
+  return &lt;div>\{value}&lt;/div> // 可能还是 0
+}
+
+function ComponentB() \{
+  const value = externalStore // 读取时已经是 1
+  return &lt;div>\{value}&lt;/div> // 显示 1
+}
+
+// 中途 externalStore 变成 1
+setTimeout(() => \{
+  externalStore = 1
+}, 10)
+```
+
+结果：两个组件显示不同的值（UI 撕裂）
+
+规避方法：
+
+```jsx
+// ✅ 使用 useSyncExternalStore（React 18 新增）
+import \{ useSyncExternalStore } from 'react'
+
+const value = useSyncExternalStore(
+  store.subscribe, // 订阅函数
+  store.getSnapshot, // 获取快照
+  store.getServerSnapshot // SSR 快照（可选）
+)
+```
+
+【问题 3：过时的闭包问题】
+现象：
+
+- 并发渲染时，渲染可能被放弃重来
+- useEffect 中捕获的值可能已过时
+
+案例：
+
+```jsx
+function SearchBox() \{
+  const [query, setQuery] = useState('')
+
+  useEffect(() => \{
+    const timer = setTimeout(() => \{
+      // 如果渲染被打断重来，这个 query 可能是旧值
+      fetchResults(query)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [query])
+}
+```
+
+规避方法：
+
+```jsx
+// ✅ 使用 useTransition 明确标记
+const [isPending, startTransition] = useTransition()
+
+const handleSearch = (value) => \{
+  setQuery(value) // 紧急更新，立即响应输入
+  startTransition(() => \{
+    setResults(searchResults(value)) // 非紧急，可以延迟
+  })
+}
+
+// ✅ 使用 useDeferredValue
+const deferredQuery = useDeferredValue(query)
+useEffect(() => \{
+  fetchResults(deferredQuery) // 使用延迟的值
+}, [deferredQuery])
+```
+
+【问题 4：状态批处理时序变化】
+现象：
+
+- React 18 所有更新都自动批处理
+- 以前同步的 setState 现在可能是异步的
+
+案例：
+
+```jsx
+// React 17
+setTimeout(() => \{
+  setCount(1) // 立即渲染
+  console.log(ref.current.textContent) // "1"
+  setFlag(true) // 再次渲染
+}, 100)
+
+// React 18
+setTimeout(() => \{
+  setCount(1) // 不立即渲染
+  console.log(ref.current.textContent) // "0"（还没更新）
+  setFlag(true) // 批处理，只渲染一次
+}, 100)
+```
+
+规避方法：
+
+```jsx
+// ✅ 使用 flushSync 强制同步
+import \{ flushSync } from 'react-dom'
+
+setTimeout(() => \{
+  flushSync(() => \{
+    setCount(1) // 立即同步渲染
+  })
+  console.log(ref.current.textContent) // "1"
+  setFlag(true) // 再次渲染
+}, 100)
+```
+
+【问题 5：Suspense 导致的多次渲染】
+现象：
+
+- 组件可能被渲染多次后才最终提交
+- Render 阶段的代码可能执行多次
+
+案例：
+
+```jsx
+function Component() \{
+  const data = use(fetchData()) // 可能触发多次
+  console.log('render') // 会打印多次
+  return &lt;div>\{data}&lt;/div>
+}
+```
+
+规避方法：
+
+```jsx
+// ❌ 不要在 render 中执行副作用
+function Component() \{
+  analytics.track('render') // 错误！会重复上报
+}
+
+// ✅ 副作用放在 useEffect 中
+function Component() \{
+  useEffect(() => \{
+    analytics.track('mount') // 正确，只在提交后执行一次
+  }, [])
+}
+```
+
+Strict Mode 的双重调用是为了什么：
+
+【目的】
+帮助开发者提前发现并发模式下的问题
+
+【具体行为（仅开发环境）】
+
+```
+第一次：render → effect → cleanup
+第二次：render → effect
+```
+
+【检测的问题】
+
+1. ✅ 副作用是否正确清理
+   - 如果没有 cleanup，第二次执行可能导致内存泄漏
+2. ✅ 组件是否是纯函数
+
+   - render 执行两次，结果应该相同
+   - 检测 render 中的副作用（不应该有）
+
+3. ✅ 并发渲染的兼容性
+   - 模拟组件被卸载后重新挂载的场景
+   - 确保组件能够正确恢复状态
+
+【典型错误示例】
+
+```jsx
+// ❌ 没有清理，会导致重复订阅
+useEffect(() => \{
+  subscribe()
+  // 缺少 return () => unsubscribe();
+}, [])
+
+// ❌ 在 render 中修改外部状态
+function Component() \{
+  externalCounter++ // 错误！执行两次会导致计数错误
+}
+
+// ✅ 正确写法
+function Component() \{
+  useEffect(() => \{
+    externalCounter++
+  }, [])
+}
+```
+
+【最佳实践总结】
+
+1. ✅ 始终为 useEffect 提供正确的 cleanup 函数
+2. ✅ Render 阶段保持纯净，不执行副作用
+3. ✅ 使用 useSyncExternalStore 处理外部状态
+4. ✅ 使用 useTransition/useDeferredValue 处理非紧急更新
+5. ✅ 需要同步更新时使用 flushSync（谨慎使用）
+6. ✅ 在 Strict Mode 下充分测试
+
+```
+
+---
+
+### 4. 性能优化决策
+你如何判断一个组件该使用 memo/useMemo/useCallback？给出你的原则与反例（过度优化的场景）。如何量化优化效果？
+
+**【作答】：**
+
+```
+
+判断是否需要优化的原则：
+
+【何时使用 React.memo】
+✅ 应该使用的场景：
+
+1. 组件渲染成本高（复杂计算、大列表）
+2. 组件频繁渲染，但 props 很少变化
+3. 组件在列表中重复渲染
+4. 父组件频繁更新，但该子组件不需要同步更新
+
+示例：
+
+```jsx
+// ✅ 适合：复杂的列表项组件
+const ListItem = React.memo((\{ id, title, description }) => \{
+  return &lt;div className="complex-item">{/* 复杂的渲染逻辑 */}&lt;/div>
+})
+
+// ✅ 适合：纯展示组件
+const UserCard = React.memo((\{ user }) => \{
+  return (
+    &lt;div>
+      \{user.name} - \{user.email}
+    &lt;/div>
+  )
+})
+```
+
+❌ 不应该使用的场景：
+
+1. props 每次都变化（memo 反而增加对比成本）
+2. 组件本身很简单（一个 div + 文本）
+3. 组件很少重新渲染
+4. props 包含复杂对象且没有稳定引用
+
+反例：
+
+```jsx
+// ❌ 过度优化：组件太简单
+const Button = React.memo((\{ label }) => &lt;button>\{label}&lt;/button>)
+// 对比 props 的成本 > 重新渲染的成本
+
+// ❌ 过度优化：props 总是变化
+const Clock = React.memo((\{ time }) => &lt;div>\{time}&lt;/div>)
+// time 每秒都变，memo 毫无意义
+```
+
+【何时使用 useMemo】
+✅ 应该使用的场景：
+
+1. 计算成本高（循环、递归、复杂运算）
+2. 依赖项很少变化
+3. 结果被用作其他 Hook 的依赖
+4. 结果传递给使用了 React.memo 的子组件
+
+示例：
+
+```jsx
+// ✅ 适合：昂贵计算
+const expensiveValue = useMemo(() => \{
+  return hugeList
+    .filter((item) => complexCondition(item))
+    .map((item) => expensiveTransform(item))
+}, [hugeList, condition])
+
+// ✅ 适合：作为依赖项
+const memoizedData = useMemo(() => (\{ id, name }), [id, name])
+useEffect(() => \{
+  fetchRelatedData(memoizedData)
+}, [memoizedData]) // 避免无限循环
+```
+
+❌ 不应该使用的场景：
+
+1. 简单的计算（加减乘除、字符串拼接）
+2. 依赖项频繁变化
+3. 创建简单对象或数组
+
+反例：
+
+```jsx
+// ❌ 过度优化：计算太简单
+const fullName = useMemo(() => \{
+  return firstName + ' ' + lastName
+}, [firstName, lastName])
+// 直接计算更快
+
+// ❌ 过度优化：依赖项总变
+const data = useMemo(() => \{
+  return \{ timestamp: Date.now() }
+}, [Date.now()]) // 每次都变，毫无意义
+```
+
+【何时使用 useCallback】
+✅ 应该使用的场景：
+
+1. 函数传递给使用了 React.memo 的子组件
+2. 函数作为 useEffect/useMemo 的依赖项
+3. 函数包含复杂逻辑且依赖项稳定
+4. 自定义 Hook 返回的函数
+
+示例：
+
+```jsx
+// ✅ 适合：传递给 memo 组件
+const MemoChild = React.memo((\{ onClick }) => \{
+  return &lt;button onClick=\{onClick}>Click&lt;/button>
+})
+
+function Parent() \{
+  const handleClick = useCallback(() => \{
+    console.log('clicked')
+  }, []) // 稳定引用，避免 MemoChild 重渲染
+
+  return &lt;MemoChild onClick=\{handleClick} />
+}
+
+// ✅ 适合：作为依赖项
+const fetchData = useCallback(async () => \{
+  const result = await api.fetch(id)
+  setData(result)
+}, [id])
+
+useEffect(() => \{
+  fetchData()
+}, [fetchData]) // 避免无限循环
+```
+
+❌ 不应该使用的场景：
+
+1. 子组件没有用 memo
+2. 函数仅在当前组件内部使用
+3. 函数没有被作为依赖项传递
+
+反例：
+
+```jsx
+// ❌ 过度优化：子组件没有 memo
+function Parent() \{
+  const handleClick = useCallback(() => \{
+    setCount((c) => c + 1)
+  }, [])
+
+  return &lt;Child onClick=\{handleClick} /> // Child 没有 memo，无意义
+}
+
+// ❌ 过度优化：仅内部使用
+function Component() \{
+  const helper = useCallback(() => \{
+    return x * 2
+  }, [x])
+
+  // 仅在此组件内调用，不需要缓存
+  return &lt;div>\{helper()}&lt;/div>
+}
+```
+
+【优化决策流程图】
+
+```
+是否有性能问题？
+  ↓ 否 → 不要优化
+  ↓ 是
+用 Profiler 分析慢在哪？
+  ↓
+组件重渲染过多？
+  ↓ 是
+  props 经常不变？
+    ↓ 是 → 使用 React.memo
+    ↓ 否 → 检查是否可以拆分组件
+  ↓
+有昂贵计算？
+  ↓ 是
+  依赖项稳定？
+    ↓ 是 → 使用 useMemo
+    ↓ 否 → 考虑移到组件外或 Web Worker
+  ↓
+函数引用导致子组件重渲染？
+  ↓ 是 → 使用 useCallback
+  ↓ 否 → 不需要优化
+```
+
+【过度优化的典型反例】
+
+```jsx
+// ❌ 反例1：全家桶优化（没必要）
+const Component = React.memo((\{ data }) => \{
+  const processedData = useMemo(() => data.map((x) => x * 2), [data])
+  const handleClick = useCallback(() => \{
+    console.log(processedData)
+  }, [processedData])
+
+  return &lt;div onClick=\{handleClick}>\{processedData[0]}&lt;/div>
+})
+// 如果组件本身很简单，这些优化都是浪费
+
+// ❌ 反例2：过早优化
+const TodoItem = React.memo((\{ todo }) => \{
+  const formattedDate = useMemo(() => \{
+    return new Date(todo.date).toLocaleDateString()
+  }, [todo.date])
+
+  return (
+    &lt;li>
+      \{todo.title} - \{formattedDate}
+    &lt;/li>
+  )
+})
+// 日期格式化很快，useMemo 反而更慢
+```
+
+【如何量化优化效果】
+
+1. 使用 React DevTools Profiler
+
+```jsx
+// 在组件外包裹 Profiler
+;&lt;Profiler id="ComponentName" onRender=\{callback}>
+  &lt;Component />
+&lt;/Profiler>
+
+function callback(
+  id,
+  phase, // "mount" 或 "update"
+  actualDuration, // 本次渲染耗时
+  baseDuration, // 理想情况下耗时
+  startTime,
+  commitTime
+) \{
+  console.log(`$\{id} $\{phase} 耗时: $\{actualDuration}ms`)
+}
+```
+
+2. Chrome DevTools Performance
+
+- 录制 6fps 以下的场景
+- 查看 Main thread 中的 React 相关任务
+- 对比优化前后的 Scripting 时间
+
+3. 自定义性能监控
+
+```jsx
+// 测量渲染次数
+let renderCount = 0
+function Component() \{
+  renderCount++
+  console.log('Render count:', renderCount)
+}
+
+// 测量计算耗时
+console.time('expensive-calc')
+const result = expensiveCalculation()
+console.timeEnd('expensive-calc')
+```
+
+4. 性能指标对比
+
+```
+优化前：
+- 组件平均渲染时间：15ms
+- 每秒重渲染次数：30次
+- 总耗时：450ms/秒
+
+优化后（使用 memo）：
+- 组件平均渲染时间：15ms
+- 每秒重渲染次数：5次（减少83%）
+- 总耗时：75ms/秒（减少83%）
+
+投入产出比：值得！
+```
+
+【最佳实践原则】
+
+1. ⚡ 先测量，再优化（不要猜）
+2. ⚡ 优化瓶颈，而非全部
+3. ⚡ 简单组件不优化
+4. ⚡ memo/useMemo/useCallback 需要配合使用才有效
+5. ⚡ 关注用户体验指标（FPS、响应时间）
+6. ⚡ 避免过早优化，除非有明确证据
+
+【何时停止优化】
+
+- ✅ FPS 稳定在 60fps
+- ✅ 交互响应时间 < 100ms
+- ✅ Profiler 中无明显性能瓶颈
+- ✅ 用户无卡顿感知
+
+```
+
+---
+
+```

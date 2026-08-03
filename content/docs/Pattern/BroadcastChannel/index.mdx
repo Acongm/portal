@@ -1,0 +1,234 @@
+---
+title: "广播通道 (Broadcast Channel)"
+---
+
+# 广播通道 (Broadcast Channel)
+
+## 概述
+
+Broadcast Channel API 是浏览器原生 API，允许同源的不同浏览上下文（标签页、iframe、Worker）之间进行通信。
+
+## 特点
+
+- ✅ **跨标签页通信**：多个标签页间实时同步
+- ✅ **跨 iframe**：主页面与 iframe 通信
+- ✅ **原生 API**：无需第三方库
+- ✅ **自动数据同步**：新标签页可请求现有数据
+- ⚠️ 仅限同源（same-origin）
+- ⚠️ 不支持 IE 浏览器
+
+## 浏览器兼容性
+
+| 浏览器  | 支持版本  |
+| ------- | --------- |
+| Chrome  | 54+       |
+| Firefox | 38+       |
+| Safari  | 15.4+     |
+| Edge    | 79+       |
+| IE      | ❌ 不支持 |
+
+## 核心类
+
+### BroadcastBridge
+
+封装了 BroadcastChannel，添加状态缓存和自动同步功能。
+
+```typescript
+const bridge = new BroadcastBridge('my-channel')
+
+// 发布（会同步到所有标签页）
+bridge.publish('user', { id: 1, name: 'John' })
+
+// 订阅
+bridge.subscribe('user', (user) => {
+  console.log('User updated:', user)
+})
+
+// 获取
+const user = bridge.get('user')
+
+// 清除
+bridge.clear('user')
+
+// 关闭
+bridge.close()
+```
+
+## API 文档
+
+### 推荐用法（BroadcastChannel 风格）
+
+```typescript
+import {
+  publish,
+  get,
+  clear,
+  subscribe,
+  unsubscribe
+} from './BroadcastSingleton'
+```
+
+#### publish(key, data)
+
+发布数据，同步到所有同源标签页。
+
+```typescript
+// 标签页 A
+publish('session', { userId: 123, token: 'xxx' })
+
+// 标签页 B 会收到通知
+```
+
+#### get(key)
+
+获取本地缓存的数据。
+
+```typescript
+const session = get<Session>('session')
+```
+
+#### subscribe(key, callback)
+
+订阅数据变化。新订阅时会自动向其他标签页请求同步数据。
+
+```typescript
+subscribe('session', (session) => {
+  if (session) {
+    console.log('Session synced:', session)
+  } else {
+    console.log('Session cleared')
+  }
+})
+```
+
+#### unsubscribe(key, callback)
+
+取消订阅。
+
+```typescript
+unsubscribe('session', handler)
+```
+
+#### clear(key)
+
+清除数据（会同步到其他标签页）。
+
+```typescript
+// 用户登出时，清除所有标签页的 session
+clear('session')
+```
+
+## 自动同步机制
+
+```text
+┌─────────────────┐     publish     ┌─────────────────┐
+│    标签页 A     │ ───────────────>│    标签页 B     │
+│  (数据源)       │                 │  (已订阅)       │
+└─────────────────┘                 └─────────────────┘
+        │                                   ▲
+        │                                   │
+        │        sync-request/response      │
+        │<──────────────────────────────────│
+        │                                   │
+        ▼                                   │
+┌─────────────────┐                 ┌───────┴─────────┐
+│    标签页 C     │                 │    新标签页 D   │
+│  (已订阅)       │                 │  (请求同步)     │
+└─────────────────┘                 └─────────────────┘
+```
+
+当新标签页订阅数据时：
+
+1. 检查本地是否有缓存
+2. 如果没有，向其他标签页发送 `sync-request`
+3. 有数据的标签页响应 `sync-response`
+4. 新标签页收到数据并缓存
+
+## React Hook 示例
+
+```typescript
+function useBroadcast<T>(key: string): T | undefined {
+  const [data, setData] = useState<T | undefined>(() => get<T>(key))
+
+  useEffect(() => {
+    subscribe(key, setData)
+    return () => unsubscribe(key, setData)
+  }, [key])
+
+  return data
+}
+
+// 使用：跨标签页同步登录状态
+function LoginStatus() {
+  const session = useBroadcast<Session>('session')
+
+  if (!session) {
+    return <div>未登录</div>
+  }
+
+  return <div>已登录: {session.userName}</div>
+}
+```
+
+## 典型应用场景
+
+### 1. 用户登录/登出同步
+
+```typescript
+// 登录成功
+function onLoginSuccess(session: Session) {
+  publish('session', session)
+}
+
+// 登出
+function onLogout() {
+  clear('session')
+}
+
+// 所有标签页监听
+subscribe('session', (session) => {
+  if (!session) {
+    // 跳转到登录页
+    window.location.href = '/login'
+  }
+})
+```
+
+### 2. 购物车同步
+
+```typescript
+// 添加商品
+function addToCart(item: CartItem) {
+  const cart = get<CartItem[]>('cart') || []
+  publish('cart', [...cart, item])
+}
+
+// 所有标签页的购物车图标会同步更新
+```
+
+### 3. 主题切换同步
+
+```typescript
+// 切换主题
+function toggleTheme() {
+  const current = get<'light' | 'dark'>('theme') || 'light'
+  publish('theme', current === 'light' ? 'dark' : 'light')
+}
+
+// 所有标签页同时切换主题
+```
+
+## 注意事项
+
+1. **同源限制**：仅同源页面可通信
+2. **数据序列化**：数据会被结构化克隆，不能传递函数
+3. **内存管理**：页面卸载时会自动关闭通道
+4. **兼容性检查**：
+
+```typescript
+if ('BroadcastChannel' in window) {
+  // 支持 Broadcast Channel
+} else {
+  // 降级到其他方案（如 localStorage events）
+}
+```

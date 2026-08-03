@@ -1,0 +1,105 @@
+---
+title: "观察者模式 vs 代理模式状态容器"
+---
+
+# 观察者模式 vs 代理模式状态容器
+
+> 同一个需求（Counter），两种实现方式，看清它们的边界与取舍。
+
+## 需求
+
+多个地方监听 `count`，任意地方更新 `count` 时通知所有监听者，并能取消订阅。
+
+---
+
+## 方式一：Observer（手动发布）
+
+```typescript
+import { Subject } from './Observer/Subject'
+
+const counter$ = new Subject<number>()
+
+// 订阅（拿到的是完整 data）
+const observerA = (value: number) => console.log('A count =', value)
+const observerB = (value: number) => console.log('B count =', value)
+
+counter$.attach(observerA)
+counter$.attach(observerB)
+
+// ⚠️ 需要你"显式 notify"才会发布
+counter$.notify(1)
+counter$.notify(10)
+
+// 取消订阅
+counter$.detach(observerA)
+counter$.detach(observerB)
+```
+
+**特点**
+
+- 你决定何时发布（`notify`）
+- 订阅者只拿到当前值，没有 `prevValue`
+- 适合：事件流、消息广播、跨模块通信
+
+---
+
+## 方式二：ProxyStore（写入即发布）
+
+```typescript
+import { ProxyStore } from './ProxyStore/ProxyStore'
+
+type State = { count: number }
+
+const store = new ProxyStore<State>({ count: 0 })
+
+// 按 key 订阅（返回 unsubscribe 函数）
+const stopA = store.subscribe('count', (value, key, prevValue) => {
+  console.log('A:', key, prevValue, '->', value)
+})
+const stopB = store.subscribe('count', (value, key, prevValue) => {
+  console.log('B:', key, prevValue, '->', value)
+})
+
+// ✅ 直接赋值，自动触发通知
+store.proxy.count += 1
+store.proxy.count = 10
+
+// 取消订阅
+stopA()
+stopB()
+```
+
+**特点**
+
+- 赋值即发布，代码更简洁
+- 订阅者能拿到 `(value, key, prevValue)`
+- 适合：状态管理、细粒度响应式（Vue3 / Valtio 风格）
+
+---
+
+## 对比表
+
+| 维度             | Observer (Subject)  | ProxyStore                        |
+| ---------------- | ------------------- | --------------------------------- |
+| 触发时机         | 手动 `notify(data)` | 赋值即触发                        |
+| 订阅粒度         | 整个 Subject        | 按 key                            |
+| 回调签名         | `(data) => void`    | `(value, key, prevValue) => void` |
+| 是否有 prevValue | ❌                  | ✅                                |
+| 典型场景         | 事件广播、消息总线  | 状态容器、响应式数据              |
+| Vue3 对应        | 事件总线 / mitt     | `reactive` + `watch`              |
+
+---
+
+## 为什么都像 Vue3？
+
+1. **Proxy 拦截**：ProxyStore 的 `set` trap 和 Vue3 `reactive` 完全相同——写入触发通知。
+2. **订阅/通知**：两者都是发布-订阅家族；Vue3 内部也是 `Map&lt;key, Set&lt;effect>>`，只是做了"自动依赖收集"。
+3. **Subject 更像 `mitt` / 自定义事件**：Vue3 没有内置事件总线，但社区用 `mitt` 实现的模式和 Subject 一模一样。
+
+---
+
+## 选型建议
+
+- **只是广播事件 / 不关心状态快照**：用 Observer（Subject）。
+- **需要状态容器 + 细粒度响应**：用 ProxyStore。
+- **需要自动依赖追踪（不手动 subscribe）**：直接用 Vue3 reactivity / MobX / Valtio。

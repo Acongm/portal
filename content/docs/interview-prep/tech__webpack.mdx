@@ -1,0 +1,258 @@
+---
+title: "Webpack（构建流程/产物/性能优化）"
+---
+
+
+{/* AUTO-GENERATED:START */}
+
+## 摘要（Auto）
+
+- 生成时间：2025-12-20
+- 简历中出现的项目标题（提取）：大疆用户中心重构 / 大疆售后 RMS 系统重构 / 跨平台公告插件系统 / 大疆 DevOps 平台维护 / XDR 系统 - 魔方大屏 + 报表
+- 面试大纲关键词（提取 Top10）：1）大疆用户中心重构：性能优化 + HTTP 原理 + Webpack 架构 / 性能指标与方法论 / 简历可落地点（结合你的“优化四板斧”） / HTTP 常考点（从“为什么变快”倒推） / Webpack 架构（工程化面试常考） / 按优化顺序，把方案“串起来”（排查 → 定位 → 选择 → 验证） / 0. 排查与基线（先把问题“量化”） / 1. 先保“可见”——骨架屏预渲染（直接拉低 LCP） / 2. 再减“阻塞”——关键渲染路径（CRP）梳理：CSS/字体/首图优先级 / 3. 再降“下载与解析成本”——更小的包体与更少的无效代码
+
+## 建议追问（Auto）
+
+- 你为什么在该项目/场景里选择这个方案？替代方案为何不选？
+- 最大一次事故/踩坑是什么？如何定位与回滚？
+- 如果重做：架构/边界/工程化会怎么调整？
+
+{/* AUTO-GENERATED:END */}
+
+## 关联卡片
+
+- 项目：
+  - [`project__dji-rms`](./project__dji-rms.md#原理简述)
+  - [`project__dji-user-center`](./project__dji-user-center.md#原理简述)
+- 对比：
+  - [`matrix__bundler-webpack-vite-rollup`](./matrix__bundler-webpack-vite-rollup.md#对比表格)
+
+## 在我项目中的角色与使用场景
+
+- 典型场景（RMS / 中后台重构）：
+  - 代码量大、团队多：需要**稳定可控**的工程体系（构建可复现、可回滚、可审计）。
+  - 首屏与交互慢：通过**拆包、缓存、关键路径优化**降低加载/解析/执行成本。
+  - CI 慢：通过**持久化缓存、并行化、减少无效编译**把构建时间压到可接受范围。
+- 我负责的落地：
+  - 设计 `webpack` 配置分层（base/dev/prod），统一多环境差异与开关。
+  - 规范化产物（hash 策略、chunk 命名、sourcemap 策略、错误上报与回溯链路）。
+  - 对“体感慢”做可量化拆解：包体、关键资源优先级、长任务、渲染抖动，并形成回归门禁。
+
+## 原理简述
+
+Webpack 本质是一个**以“模块图（module graph）”为核心的打包器**：
+
+- **输入**：一个或多个入口（entry），解析出依赖图（JS/CSS/图片等都可以是模块）。
+- **处理链路**：
+  - **Loader**：把“非 JS”或“需要变换的源码”转成 Webpack 能理解的模块（如 `ts`→`js`、`scss`→`css`）。
+  - **Plugin**：介入编译生命周期，在“图构建/产物生成/优化/注入运行时”等阶段做扩展（如压缩、抽取 css、产物分析）。
+- **输出**：
+  - 生成多个 chunk（初始 chunk + 异步 chunk），并产出 runtime（模块加载器）以支持按需加载。
+
+工程化面试高频点（可复述）：
+
+- **构建流程**：entry → resolve → loaders → module graph → chunk graph → optimize → emit。
+- **增量与缓存**：
+  - `filesystem cache`/`cache-loader`（旧时代）减少重复编译。
+  - `splitChunks` + `contenthash` 让**“业务变更只影响局部 chunk”**，提升缓存命中。
+- **性能优化（从关键路径出发）**：
+  - 减少首屏 JS：路由级拆包、组件懒加载、预加载关键 chunk（`preload`/`prefetch`）。
+  - 减少解析/执行：去除无用 polyfill、降低 Babel 范围、合理的 `target/browserslist`。
+  - 减少网络成本：gzip/brotli、HTTP 缓存、长缓存 + manifest/runtime 分离。
+
+与替代方案的权衡：
+
+- Webpack：**生态最成熟、边界最清晰**，适合复杂中后台/多团队；代价是配置与心智成本更高。
+- Vite：开发期更快（原生 ESM + 预构建），但在“非常复杂的遗留系统/强定制管线”下迁移要评估。
+- Rollup：更偏向“库构建”，产物更纯净，应用构建需要更多配套（dev server/HMR/HTML 处理等）。
+
+## 延伸阅读（来自我的笔记）
+
+- `docs/webpack/架构及原理.md`
+  - 复习抓手：**Compiler / Compilation / Module / Chunk** 这四个对象把 Webpack 的“生命周期”串起来。
+
+## 对比表格
+
+| 维度       | Webpack                                     | Vite                            | Rollup                       |
+| ---------- | ------------------------------------------- | ------------------------------- | ---------------------------- |
+| 定位       | 应用构建（全能）                            | 开发体验优先的应用构建          | 库构建/产物质量优先          |
+| Dev 启动   | 依赖预打包/缓存后较快，但仍有 bundling 成本 | **原生 ESM** + 预构建，启动快   | 需要额外 dev server 体系     |
+| HMR        | 成熟，但大项目需调参                        | 通常更快更稳                    | 非核心卖点                   |
+| 生态/兼容  | **最成熟**（loader/plugin 丰富）            | 生态快速成长，插件多复用 Rollup | 插件成熟（偏库）             |
+| 迁移成本   | 低（现有存量）                              | 中（配置/插件/兼容性核对）      | 高（应用链路不完整）         |
+| 风险与回滚 | 配置变更可灰度、可回滚                      | 迁移需双构建或分阶段            | 常用于新库，不建议“全量替换” |
+
+决策口径（我在项目里常用）：
+
+- **先问约束**：遗留包袱/业务节奏/团队熟悉度/构建链路复杂度。
+- **再定策略**：应用构建优先 Webpack/Vite；公共库与 SDK 产物优先 Rollup。
+- **回滚策略**：迁移期保持双配置（Webpack 为主，Vite 作为旁路验证）或按子模块逐步切换。
+
+## 模拟问答
+
+- [ ] Q1：Loader 和 Plugin 的区别？为什么要分两套机制？
+  - Context：Webpack 需要既能“转译源码”也能“改造产物”。
+  - Answer：
+    - Loader：**单文件维度**的“源码转换器”，输入输出是内容字符串/AST（如 TS/SCSS）。
+    - Plugin：**编译过程维度**的扩展点，能拿到 compilation/chunk/assets 做全局优化。
+  - Learnings：把“转换”和“编排/优化”分层，能力边界更清晰，生态更可组合。
+- [ ] Q2：`splitChunks` 怎么配才不会“拆碎”或“拆不动”？
+  - 思路：以“首屏关键路径 + 缓存命中”为目标，优先拆 `vendor`/`common`/`async`，并保证 chunk 颗粒度可控（最小体积、最大并发）。
+  - 落地：对大依赖（如图表/编辑器）做**显式异步入口**；对业务公共组件做 `minChunks` 提升复用。
+- [ ] Q3：`hash` / `chunkhash` / `contenthash` 区别？你怎么选？
+  - 目标：让“代码变更”只影响必要文件，最大化缓存命中。
+  - 结论：静态资源文件名优先 `contenthash`；runtime 单独抽离，避免 runtime 变更导致全量失效。
+- [ ] Q4：构建变慢你怎么定位？
+  - 先量化：`speed-measure-webpack-plugin`/`webpack --profile`/`stats.json`。
+  - 再动刀：减少 loader 处理范围（include/exclude）、开启持久化缓存、替换低效插件、并行化（thread-loader/terser 并行）、升级依赖。
+- [ ] Q5：tree-shaking 为什么“看起来开了但没生效”？你怎么排查？
+  - 排查顺序：
+    - 源码：是否用 ESM（静态 import/export）？是否存在顶层副作用（polyfill/全局注入）？
+    - 依赖：第三方包是否声明 `sideEffects`？是否导出方式导致无法静态分析？
+    - 配置：`optimization.usedExports`、`sideEffects`、`minimize` 是否真正开启（生产模式）。
+  - 结论表达：tree-shaking 不是开关，是“写法 + 声明 + 产物链路”三者共同作用。
+- [ ] Q6：sourceMap 你怎么选？为什么有时线上不开？
+  - 选择口径：
+    - 开发：`eval-cheap-module-source-map`（快、可调试）
+    - 生产：通常 `source-map` 或 `hidden-source-map`（可回溯但不暴露给用户）
+  - 线上不开的原因：体积与源码泄露风险；替代方案是“私有 sourcemap 上传到监控平台”。
+- [ ] Q7：Webpack → Vite 迁移你重点看哪些风险点？
+  - 风险清单：
+    - loader/plugin 能否替代（尤其是强定制 loader）
+    - 依赖是否兼容 ESM（CJS/UMD 边界）
+    - legacy 浏览器与 polyfill 策略
+    - 产物与缓存策略是否一致（hash/chunk 命名、sourcemap、manifest）
+- [ ] Q8：Compiler 和 Compilation 有什么区别？为什么要分两个对象？
+  - 结论：
+    - Compiler：一次“构建任务”的全局控制器（读配置、管理生命周期钩子、可 watch，多次编译共用一个 Compiler）。
+    - Compilation：一次“具体编译产物”的上下文（模块解析/依赖关系/chunk/assets 都挂在这里）。
+  - 面试表达：**Compiler 管流程，Compilation 管状态**；插件大多在 compiler/compilation 的 hooks 上做扩展。
+- [ ] Q9：Chunk 是怎么来的？和 Module 是什么关系？
+  - Module：源码文件/资源的抽象单位（依赖图节点）。
+  - Chunk：打包输出的“文件块”，由一组 modules 组成（初始 chunk + 异步 chunk）。
+  - 关联：code-splitting 会把 module 重新分组到不同 chunk；runtime 再负责按需加载。
+- [ ] Q10：Tapable 是什么？`tap/tapAsync/tapPromise` 分别意味着什么？
+  - Tapable 是 Webpack 的 hook 系统，用于在编译生命周期暴露扩展点。
+  - 三种 tap：
+    - `tap`：同步 hook
+    - `tapAsync`：回调型异步 hook
+    - `tapPromise`：Promise 型异步 hook
+  - 面试一句话：**插件就是“往 hook 上挂函数”**，在合适阶段读写 compilation 状态或修改 assets。
+- [ ] Q11：`processAssets` 为什么重要？`emit` 和它有什么区别？
+  - Webpack 5 把“产物处理”阶段更细化到 `processAssets`，便于插件在不同 stage 修改 assets（追加 banner、压缩、生成 manifest）。
+  - `emit` 更偏“输出前”的传统时机；在新生态里很多 asset 相关操作更推荐走 `processAssets` 的 stage。
+
+## 手写代码区
+
+最小 Plugin（展示“编译生命周期 + 改写 asset”）：
+
+```js
+// plugins/AppendBuildInfoPlugin.js
+class AppendBuildInfoPlugin {
+  apply(compiler) {
+    compiler.hooks.thisCompilation.tap(
+      'AppendBuildInfoPlugin',
+      (compilation) => {
+        compilation.hooks.processAssets.tap(
+          {
+            name: 'AppendBuildInfoPlugin',
+            stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE
+          },
+          (assets) => {
+            const banner = `\n/* buildAt: ${new Date().toISOString()} */\n`
+            for (const filename of Object.keys(assets)) {
+              if (!filename.endsWith('.js')) continue
+              const source = compilation
+                .getAsset(filename)
+                .source.source()
+                .toString()
+              compilation.updateAsset(
+                filename,
+                new compiler.webpack.sources.RawSource(source + banner)
+              )
+            }
+          }
+        )
+      }
+    )
+  }
+}
+module.exports = AppendBuildInfoPlugin
+```
+
+最小 Loader（演示 pitch/normal 与执行顺序的“可解释”版本）：
+
+```js
+// loaders/demo-loader.js
+module.exports.pitch = function pitch(remainingRequest) {
+  // pitch 从左到右执行；如果这里 return 了内容，会跳过剩余 loader 的 normal
+  // 注意：真实项目中 pitch 常用来做短路/缓存/注入
+  return null
+}
+
+module.exports = function normal(source) {
+  // normal 从右到左执行
+  const banner = `/* processed by demo-loader */\n`
+  return banner + source
+}
+```
+
+一个“可解释”的拆包策略片段：
+
+```js
+// webpack.prod.js (snippet)
+module.exports = {
+  optimization: {
+    runtimeChunk: 'single',
+    splitChunks: {
+      chunks: 'all',
+      cacheGroups: {
+        react: {
+          test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+          name: 'vendor-react',
+          priority: 20
+        },
+        vendors: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendor',
+          priority: 10
+        }
+      }
+    }
+  }
+}
+```
+
+## 我的补充（Manual）
+
+- MANUAL_MARKER: keep-me
+
+（不会被脚本覆盖：踩坑、细节、反例、排查路径）
+
+## 复盘与反思（Learnings）
+
+- 如果重做会怎么改？
+
+## 面试官追问（面试官视角）
+
+- [ ] 为什么选这个方案？替代方案为什么不选？
+- [!] 最大一次事故/踩坑是什么？如何定位与回滚？
+- [ ] 如果重做会怎么改？
+- [ ] 你能把 Webpack 的生命周期钩子（Tapable）串起来讲一遍吗？哪些点最适合插插件？
+  - 可复述要点：
+    - `compiler.hooks`：全局构建生命周期（启动/配置/本次 compilation 创建/结束）。
+    - `compilation.hooks`：本次编译的细节阶段（构建 module、优化 chunk、生成 assets）。
+    - 插件插入点口径：改“源码”看 loader；改“编译状态/产物”看 plugin（processAssets/optimizeChunks 等）。
+- [ ] Loader 的执行顺序你能讲清楚吗？`pitch`/`normal` 分别解决什么问题？
+  - 可复述要点：
+    - 执行顺序：loader 从右到左执行（normal 阶段）；pitch 阶段从左到右先跑一遍。
+    - pitch 价值：可以“短路”后续 loader（例如直接返回结果），或者在 normal 前做准备/缓存。
+    - 排查坑：style/css/sass 链路顺序错会导致产物不符合预期。
+- [ ] HMR 到底做了什么？为什么它只替换某个模块而不是整页刷新？
+  - 可复述要点：
+    - 运行时有 module hot API；更新时拉取更新的 chunk，替换模块定义并触发 accept 回调。
+    - 不能热更新的场景会回退到整页刷新（例如没有 accept 边界或状态不可恢复）。
+- [ ] Webpack 5 filesystem cache 你怎么解释？为什么有时缓存命中却没变快？
+  - 可复述要点：
+    - 缓存的是编译中间结果（如 loader 产物、解析结果），命中后减少重复编译。
+    - 仍可能慢：I/O、某些 loader 不可缓存、cache key 频繁失效（环境变量/配置变化）、或 CPU 仍被压缩/类型检查占满。

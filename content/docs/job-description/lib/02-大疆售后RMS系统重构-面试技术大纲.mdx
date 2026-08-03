@@ -1,0 +1,58 @@
+---
+title: "大疆售后 RMS 系统重构（2022.10-2024.04）- 面试技术大纲"
+---
+
+# 大疆售后 RMS 系统重构（2022.10-2024.04）- 面试技术大纲
+
+> 技术栈：React 18 + TypeScript + Webpack + Ant Design（简历）  
+> 侧重点：多人协作工程化治理（ESLint/规范/Review/门禁）、中后台可维护性与模块化
+
+---
+
+## 工程化建设：ESLint 规范与落地（多人协作提效）
+
+### 规范维度（“你定了哪些规则”）
+
+- **职责边界**：Prettier（格式化）与 ESLint（语义规则/质量）的分工与冲突处理
+- **React 规范**：Hooks 规则、JSX 可读性、key、受控/非受控、可访问性（a11y）基础
+- **TypeScript 规范**：noImplicitAny、no-unused-vars、类型收窄、联合类型/枚举取舍、any 的管控策略
+- **import 规范**：import/order、禁止深层路径、依赖分层（domain/ui/shared）、循环依赖治理
+- **安全与质量**：no-eval、危险 API、Promise 处理（如 no-floating-promises）、错误边界与日志
+
+### Umi 落地方式（“如何让团队真的执行”）
+
+> 注：简历里该项目栈是 React + Webpack；这里引用的是“Umi 项目常用落地方式”作为可复用的方法论：extends/override + 提交拦截 + CI 门禁。
+
+- **配置策略**：extends/override、不同包/目录的差异化规则、渐进收敛（warning → error）
+- **开发体验**：IDE 保存自动修复、统一 Node/TS 版本、避免“本地过/CI 不过”
+- **流程约束**：husky + lint-staged + commitlint，PR 门禁（lint/类型检查/单测可选）
+- **技术债治理**：老代码豁免策略（文件/目录）、技术债清单与收敛节奏
+
+### 末尾补充细节（结合简历：用规则做 Code Review + commit 校验 + CI/CD 门禁）
+
+#### A. 背景口径（面试可复述）
+
+- **背景**：RMS/中后台多人协作，页面多、交叉开发频繁，最怕“风格不统一 + 隐性 Bug + 模块乱引用”，Review 会被拉成“挑格式/找引用”的低效劳动。
+- **做法**：把格式交给 Prettier，把质量/边界交给 ESLint，并串成闭环：**IDE 自动修复 → 提交拦截（lint-staged）→ PR/CI 门禁（max-warnings=0）**。
+
+#### B. Review 时“高收益”规则清单（你重点盯这些）
+
+- **Hooks 正确性**：`react-hooks/rules-of-hooks`、`react-hooks/exhaustive-deps`（避免线上难复现问题）
+- **TS 边界**：限制 `any`（如 `@typescript-eslint/no-explicit-any`，少量豁免必须写注释原因），关键模块鼓励更严格的类型约束
+- **import 可读性**：`import/order`（导入分组清晰，文件更好读）
+- **模块化边界**：`no-restricted-imports`（禁止跨层/跨域/深层路径引用，只允许从模块出口 `index.ts` 导入，防止绕过封装）
+- **循环依赖**：`import/no-cycle`（避免运行时奇怪行为）
+- **基础质量**：`no-debugger`、`no-console`（按环境）、unused 相关规则（减少死代码/误用）
+
+#### C. commit + CI/CD 的落地链路（保证“真的执行”）
+
+- **commit 校验**：
+  - lint-staged：只检查改动文件，反馈快
+  - commitlint：统一提交信息（Conventional Commits），便于回滚与追溯
+  - husky：把校验固化为钩子，不依赖口头约束
+- **PR/CI 门禁**：lint（可用 `--max-warnings=0`）+ typecheck +（按项目）单测/覆盖率；老代码用“目录豁免 + 逐步收敛”治理技术债
+
+#### D. “规范代码模块化”的面试回答模板
+
+- **结构建议**：`shared`（通用）/ `features`（领域能力）/ `pages`（路由页）/ `services`（接口层）
+- **规则固化**：用 `no-restricted-imports` 把“只能从出口导入、禁止跨层依赖”写死，让模块边界可自动检查；Review 重点从“挑格式/找乱引用”转回“业务正确性与架构演进”，整体可读性显著提升。

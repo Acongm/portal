@@ -1,0 +1,38 @@
+---
+title: "每日科技动态 - 2026年6月18日"
+---
+
+
+# 每日科技动态
+
+今天的官方更新很集中地指向一个共同主题：平台不再只比“有没有新能力”，而是开始比“新能力能不能更快进入真实工作流”。前端侧，WebKit 一边继续在预览版里补标准能力和调试工具，一边直接给出新表单控件的落地边界；DevOps 侧，GitHub 在把远程仓库读取和 agent 能力发现做成更顺手的默认工作流；AI 侧，OpenAI 则把焦点继续推向生命科学这一类高门槛、强验证的真实研究场景。本文优先采用最近 24 小时到 72 小时内的官方信息。
+
+## 今日概览
+
+### 前端
+
+**Safari Technology Preview 246 继续把“预览版”当成 Web 平台能力的前置试验场，而且这次覆盖面很广。** 6 月 17 日，WebKit 发布《Release Notes for Safari Technology Preview 246》。官方正文显示，这一版不仅面向 macOS Golden Gate 和 macOS Tahoe 推出更新，还在多个子系统里继续补齐新能力：CSS 侧新增了 `light-dark(&lt;image>, &lt;image>)`、`image(&lt;color>)`、相对色彩函数支持，预览启用了 `font-variant-emoji` 与 `word-break: auto-phrase`；HTML 侧加入了 popover close watcher integration；Storage 侧增加了在 IndexedDB 中存储 `FileSystemHandle` 对象；Web API 侧支持 `Origin-Agent-Cluster` 响应头，Web Inspector 也新增了与布局和渲染事件关联节点的独立列。对前端团队来说，这类 STP 更新的价值不只是“提前看新特性”，而是能更早判断哪些 CSS、存储和调试能力正在逼近可实验、可适配的阶段。[来源](https://webkit.org/blog/18128/release-notes-for-safari-technology-preview-246/)
+
+**WebKit 还专门提醒开发者：Customizable Select 真正能落地，不取决于样式花不花，而取决于有没有保住文本与可访问性。** 6 月 15 日，WebKit 发布《The golden rule of Customizable Select》。官方正文明确表示，Safari 27 即将支持可定制 `select`，开发者可以直接控制箭头、选项布局、色板、图标和整体视觉样式，而不必再依赖 JavaScript UI 库或大量 `div` 模拟；但它同时强调唯一的“黄金法则”是：**每个 option 都必须保留文本内容，或提供可访问文本属性**。官方文章把原因讲得很直接——一旦只保留图标或色块而移除文本，就会同时伤害可用性、辅助技术支持和渐进增强，因为旧浏览器回退到原生 `select` 时会出现“空选项”。这条更新的重要性在于，浏览器厂商开始不只发布能力本身，也主动把“如何避免错误落地”写成规范化实践。[来源](https://webkit.org/blog/18117/the-golden-rule-of-customizable-select/)
+
+### DevOps
+
+**GitHub CLI 现在可以直接读取远程仓库文件和目录，很多“先 clone 再看”的日常动作开始变成可省略步骤。** 6 月 17 日，GitHub Changelog 发布《Read remote repository content with GitHub CLI》。官方正文显示，GitHub 新增了 `gh repo read-file` 和 `gh repo read-dir` 两个命令：前者可直接读取远程仓库中的单个文件，后者可浏览目录内容，而且同时支持有权限访问的公开与私有仓库。GitHub 还明确给出了使用场景，包括在终端里快速查看 README 或文档、跨多个仓库检查配置文件、构建自动化脚本，以及把仓库探索能力接入 AI agents 和工作流；可用性方面，这两条命令面向所有 GitHub 用户开放，安装或升级到 **GitHub CLI v2.95.0 及以上**即可使用。对平台工程和自动化脚本来说，这相当于把“只读型仓库检查”从 Git 操作降成了普通命令调用。[来源](https://github.blog/changelog/2026-06-17-read-remote-repository-content-with-github-cli)
+
+**GitHub 又把 agent 能力发现做成了默认入口，说明多工具 AI 工作流正在从“手工装配”转向“按任务即时发现”。** 6 月 17 日，GitHub Changelog 发布《Agent finder for GitHub Copilot now available》。官方正文显示，GitHub 的 agent finder 已正式可用，Copilot 可以不再预先手工绑定 MCP servers、skills、canvases、agents 和 tools，而是根据自然语言任务描述搜索可用 AI 资源索引，并返回按相关性排序的候选项，按需拉取需要的能力。官方还指出，这套机制实现了开放的 **Agentic Resource Discovery (ARD)** 规范，并与 Google、GoDaddy、Hugging Face、Microsoft 协作开发，且面向所有 GitHub Copilot 计划开放。它释放出的信号很明确：未来团队管理 agent 工作流时，重点可能不再只是“给模型装多少工具”，而会越来越转向“怎样维护一套可检索、可排序、可治理的能力目录”。[来源](https://github.blog/changelog/2026-06-17-agent-finder-for-github-copilot-now-available/)
+
+### AI
+
+**OpenAI 把“AI 直接参与实验改进”继续往真实化学研发推进，生命科学正在成为高价值验证场景。** 6 月 17 日，OpenAI 发布《A near-autonomous AI chemist improves a challenging reaction in medicinal chemistry》。官方 RSS 摘要显示，OpenAI 与 Molecule.one 展示了一个使用 **GPT-5.4** 的近自主 AI chemist，用来改进药物研发中的一项关键化学反应。即便官方 RSS 目前公开的信息不算很长，这条更新已经足够说明 OpenAI 想强调的方向：模型价值不再只体现在对话与代码生成，而是开始被拿去验证能否在专业实验流程里对“难反应”这类具体问题产生实际改进。[来源](https://openai.com/index/ai-chemist-improves-reaction)
+
+**OpenAI 同日推出 LifeSciBench，则是在补另一块基础设施：如何用更贴近真实研究的方式评估模型。** 6 月 17 日，OpenAI 发布《Introducing LifeSciBench》。官方 RSS 摘要显示，这是一个面向现实生命科学研究任务与决策的 benchmark；官方搜索摘要进一步显示，它是 **expert-authored、expert-reviewed** 的评测集，任务来自现实研究场景，并覆盖证据处理、分析、设计与优化、科学推理、验证与运营、转译与沟通等 **六类工作流**。摘要还强调，每项任务都基于具有 Ph.D. 级训练并参与过生物科技或制药项目推进的从业者判断。对 AI 行业来说，这条消息的意义在于：当厂商不断强调模型能进入科研与高监管领域时，评测本身也必须从“会不会答题”转向“能不能支持真实研究工作”。[来源](https://openai.com/index/introducing-life-sci-bench)
+
+## 今日观察
+
+今天最值得注意的是，“能力发布”和“能力接入”之间的距离正在被持续缩短。WebKit 在用预览版和最佳实践把新 Web 能力往生产可用推进；GitHub 在把远程读取与 agent 发现做成更轻量的默认动作；OpenAI 则同时补应用案例和评测基准，试图证明模型不仅能进入高专业门槛场景，还能被更严肃地验证。对开发团队来说，这意味着未来真正重要的竞争力，会越来越落在谁能更快把这些新能力接进已有流程，并为它们建立可靠的验证方法。
+
+## 简讯
+
+- **前端**：WebKit 在 Safari Technology Preview 246 里同时推进 CSS、Storage、Web API 和调试工具更新，并明确给出 Customizable Select 的可访问性与渐进增强落地边界。
+- **DevOps**：GitHub 一边让 GitHub CLI 直接读取远程仓库文件与目录，一边上线 agent finder，把多工具 AI 工作流从手工装配推向按任务即时发现。
+- **AI**：OpenAI 用 GPT-5.4 驱动的近自主 AI chemist 触碰真实药物化学流程，又用 LifeSciBench 补上生命科学场景下更贴近真实研究任务的评测基线。

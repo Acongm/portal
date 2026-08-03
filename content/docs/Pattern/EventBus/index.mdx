@@ -1,0 +1,161 @@
+---
+title: "事件总线 (Event Bus)"
+---
+
+# 事件总线 (Event Bus)
+
+## 概述
+
+事件总线是一种集中式的事件管理机制，允许组件之间通过发布/订阅事件进行通信，无需直接引用对方。
+
+## 特点
+
+- ✅ 完全解耦，组件间无直接依赖
+- ✅ 支持多对多通信
+- ✅ 实现简单，易于理解
+- ⚠️ 事件名是字符串，缺乏类型约束
+- ⚠️ 调试时难以追踪事件流
+
+## 核心类
+
+### EventBus
+
+```typescript
+const bus = new EventBus()
+
+// 订阅
+bus.on('user:login', (user) => {
+  console.log('User logged in:', user)
+})
+
+// 发布
+bus.emit('user:login', { id: 1, name: 'John' })
+
+// 取消订阅
+bus.off('user:login', handler)
+
+// 一次性订阅
+bus.once('app:ready', () => {
+  console.log('App is ready!')
+})
+```
+
+## API 文档
+
+### 推荐用法（事件总线风格）
+
+```typescript
+import { on, off, emit, once, get, clear } from './EventBusSingleton'
+```
+
+#### on(event, handler, immediate?)
+
+订阅事件。默认 `immediate=true`：若该事件有缓存，会立即触发一次。
+
+```typescript
+on('cart.items', (items) => {
+  console.log('Cart updated:', items)
+})
+```
+
+#### emit(event, data, cache?)
+
+发布事件。默认 `cache=true`：会缓存最后一次数据，方便晚订阅者拿到。
+
+```typescript
+emit('cart.items', [{ id: 1, name: 'Product' }])
+```
+
+#### get(event)
+
+获取缓存的数据。
+
+```typescript
+const items = get<CartItem[]>('cart.items')
+```
+
+#### off(event, handler)
+
+取消订阅。
+
+```typescript
+off('cart.items', handler)
+```
+
+#### clear(event)
+
+清除数据并通知订阅者。
+
+```typescript
+clear('cart.items')
+```
+
+#### once(event, handler)
+
+一次性订阅，触发后自动取消。
+
+```typescript
+once('app:initialized', () => {
+  console.log('App initialized!')
+})
+```
+
+## EventBus 原生 API
+
+```typescript
+import { bus } from './EventBusSingleton'
+
+// 订阅（第三个参数控制是否立即触发）
+bus.on('event', handler, false)
+
+// 发布（第三个参数控制是否缓存）
+bus.emit('event', data, false)
+
+// 获取监听者数量
+const count = bus.listenerCount('event')
+
+// 销毁所有监听
+bus.destroy()
+```
+
+## React Hook 示例
+
+```typescript
+function useEventBus<T>(event: string): T | undefined {
+  const [data, setData] = useState<T | undefined>(() => get<T>(event))
+
+  useEffect(() => {
+    on(event, setData)
+    return () => off(event, setData)
+  }, [event])
+
+  return data
+}
+
+// 使用
+function CartBadge() {
+  const items = useEventBus<CartItem[]>('cart.items')
+  return <span>{items?.length ?? 0}</span>
+}
+```
+
+## 事件命名规范
+
+推荐使用命名空间风格：
+
+```typescript
+// 模块:动作
+'user:login'
+'user:logout'
+'cart:add'
+'cart:remove'
+'order:create'
+'order:cancel'
+```
+
+## 适用场景
+
+- 组件间松耦合通信
+- 全局事件通知（如：登录成功、网络状态变化）
+- 模块间协调（如：购物车更新通知头部徽标）
+- Vue 2 风格的组件通信

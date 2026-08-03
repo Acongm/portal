@@ -1,0 +1,38 @@
+---
+title: "每日科技动态 - 2026年6月15日"
+---
+
+
+# 每日科技动态
+
+今天正好是 6 月 15 日——Anthropic 的 agent 计费改革就在今天生效，而 Chrome 150 稳定版也将在两天后推送。这种时间上的巧合恰好反映了当下三条技术线的共同走向：能力本身已经不再是瓶颈，平台现在都在忙着重新定义"能力怎么分配、怎么治理、怎么收费"。前端侧，Chrome 150 带来了一批让 CSS 更贴近操作系统与设计系统的底层能力，WebKit 也用互动指南把 Grid Lanes 介绍给更多开发者；DevOps 侧，GitHub 在继续把 Copilot 的自动化能力往组织治理和运维精细化方向收紧；AI 侧，最引人注目的不是新模型发布，而是美国政府的一纸指令和 OpenAI 的生态投资——这两件事比任何 benchmark 都更诚实地反映了 AI 产业当前的真实水位。由于最近 24 小时内前端官方高价值更新不足两条，本文前端取材范围放宽到最近 7 天，以保持三类内容均衡。
+
+## 今日概览
+
+### 前端
+
+**Chrome 150 稳定版两天后推送，带来一批让 CSS 更"像原生"的能力。** 根据 Chromium Dash 排期，Chrome 150 的 Early Stable 将在 6 月 17 日推送，稳定版 6 月 30 日全面上线。官方搜索摘要显示，这一版在 CSS 上有多项值得关注的更新：`polygon()` 函数新增可选的**圆角参数**，`zoom` 属性现在**支持动画与插值**，`border-area` 作为 `background-clip` 的新取值让背景裁切控制更精细，CSS `image()` 函数可直接从任意颜色生成**纯色图像**，而 `light-dark()` 函数现在也能接受 `url()`、`image-set()` 等图像值，让 `background-image`、`cursor` 等属性按用户的浅色/深色偏好**自动切换图片资源**。此外，`AccentColor` 和 `AccentColorText` 系统颜色从全局暴露收窄到仅在已安装的 PWA 中生效，这是浏览器在"好看"与"隐私"之间的一次务实取舍。[来源](https://developer.chrome.com/blog/chrome-150-beta)
+
+**WebKit 用互动指南把 Grid Lanes 从规范带进开发者日常。** 6 月 10 日，WebKit 发布《Introducing the Field Guide to Grid Lanes》，并在 gridlanes.webkit.org 上线了一个**可交互的在线指南**。Grid Lanes 是一种新的 CSS 布局模式，支持瀑布流和砖石排列两种效果，通过 `display: grid-lanes` 即可启用。指南本身包含实时可编辑的布局演示、一份覆盖所有属性和取值的单页参考，以及六个对比 Flexbox、Multicolumn 和 Grid 的 Demo 变体。对前端开发者来说，这相当于有人把 CSS-Tricks 当年那本 Flexbox 完全指南的做法平移到了 Grid Lanes 上——降低了试错门槛，也让更多团队开始认真评估这项新布局能力。[来源](https://webkit.org/blog/18098/introducing-the-field-guide-to-grid-lanes)
+
+### DevOps
+
+**Copilot code review 开始向组织级治理收敛。** 6 月 12 日，GitHub Changelog 发布《Copilot code review: New configurations and controls》。官方搜索摘要显示，Copilot code review 现在可以在**组织级别配置 runner 类型**，一套配置即可覆盖组织下所有仓库；同时新增了对**仓库级、组织级、企业级 Copilot content exclusion 设置**的完整支持，允许团队指定哪些文件或目录不对 Copilot 暴露；另外还**移除了仓库自定义指令的字符数限制**。这三个变化组合在一起，实际上是 GitHub 在告诉企业用户：你可以放心让 Copilot 参与代码审查，因为你能精确控制它看什么、用什么算力跑、读到什么上下文。[来源](https://github.blog/changelog/2026-06-12-copilot-code-review-new-configurations-and-controls)
+
+**GitHub Actions 恢复自托管 runner 的最低版本强制执行。** 同样在 6 月 12 日，GitHub 发布《Minimum version enforcement timeline for self-hosted runners》。官方搜索摘要显示，GitHub Actions 正在恢复对 github.com 和 GHEC Data Residency 上自托管 runner 的版本要求：注册或配置 runner 必须使用 **v2.329.0 或更高版本**；如果 runner 在更新发布后 **30 天内未升级**，Actions 服务将停止向其分配任务。对于 **GitHub Enterprise Cloud with Data Residency**，全面强制执行从 **2026 年 7 月 31 日**开始。这一变动本质上是 GitHub 底层架构迁移的一部分——随着所有 runner 迁往新平台，旧版本不再兼容新基础设施。对 DevOps 团队来说，这意味着在 7 月底前需要完成一轮自托管 runner 的版本升级自查。[来源](https://github.blog/changelog/2026-06-12-github-actions-minimum-version-enforcement-timeline-for-self-hosted-runners)
+
+### AI
+
+**美国政府以出口管制指令暂停 Fable 5 和 Mythos 5 的全部访问。** 6 月 12 日，Anthropic 在官方新闻室发布声明，确认美国政府已发出出口管制指令，暂停对 Claude Fable 5 和 Mythos 5 的所有访问。Fable 5 是 Mythos 级模型经安全适配后的公开发行版，6 月 9 日刚刚正式推出；Mythos 5 则是 Anthropic 旗下能力最强的模型，此前仅对 Project Glasswing 的网络安全合作方开放。三天之内从"公开发布"到"政府叫停"，这件事的意义不在于模型本身的能力参数，而在于它标志着各国监管机构正在把 AI 模型按出口管制物项来对待——这条线的划定方式，将直接影响所有前沿模型未来的发布节奏、可用区域和产品形态。[来源](https://www.anthropic.com/news)
+
+**OpenAI 投入 1.5 亿美元搭建全球合作伙伴网络。** 6 月 14 日，OpenAI 发布《Introducing the OpenAI Partner Network》。官方 RSS 描述显示，OpenAI 将投入 **1.5 亿美元**，帮助全球合作伙伴加速企业 AI 的采用、部署和转型。虽然官网正文页在抓取时遇到 Cloudflare 拦截，但从 RSS 标题、日期和摘要可以确认，这一网络的核心目标是降低企业客户接入 OpenAI 产品和 Codex 的门槛，同时将实施、培训和持续优化等环节交给本地合作伙伴承担。相比于此前 OpenAI 与 Oracle、BBVA 等大客户的单点合作，这次是在把"生态铺设"本身系统化——它回答的不是"模型有多强"，而是"谁能在本地把模型真正用起来"。[来源](https://openai.com/index/introducing-openai-partner-network)
+
+## 今日观察
+
+今天三条线都在经历"从能力竞赛到规则建设"的转折。Chrome 150 把 CSS 能力往操作系统层面靠，GitHub 把 Copilot 的自动化往组织治理框架里塞，而美国政府对 Fable 5/Mythos 5 的出口管制指令则把"AI 模型该受什么规则约束"这个问题直接摆上了台面——同一天 Anthropic 的 agent 计费改革也正式生效，把订阅制与按量计费之间的裂缝公开化了。对开发者来说，接下去要关注的不是"下一个模型什么时候出来"，而是"我用的能力在什么规则下运行、谁来承担成本、出了问题谁负责"。
+
+## 简讯
+
+- **前端**：Chrome 150 稳定版两天后推送，带来 polygon 圆角、zoom 动画、light-dark 图片切换等一批 CSS 底层增强；WebKit 上线 Grid Lanes 互动指南，用 Flexbox 时代 CSS-Tricks 的做法推广新布局能力。
+- **DevOps**：Copilot code review 新增组织级 runner 配置、content exclusion 支持和无限自定义指令；GitHub Actions 恢复自托管 runner 最低版本强制执行，GHEC Data Residency 用户须在 7 月 31 日前完成升级。
+- **AI**：美国政府以出口管制指令暂停 Anthropic Fable 5/Mythos 5 全部访问；OpenAI 投入 1.5 亿美元搭建全球合作伙伴网络，系统化推进企业 AI 落地。

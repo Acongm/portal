@@ -1,0 +1,38 @@
+---
+title: "每日科技动态 - 2026年7月23日"
+---
+
+
+# 每日科技动态
+
+今天这组官方更新有一条很清晰的共同线索：工具平台正在把“可见性”和“可控性”一起补齐。前端方向里，浏览器既在继续修复底层实现细节，也在把 Web App 更深地嵌进操作系统体验；DevOps 方向里，GitHub 把 Copilot 的采用深度、模型选择与组织治理继续产品化；AI 方向里，OpenAI 则同时推进企业级 agent 落地与国家级科研协作。由于最近 24 小时内前端官方主力更新数量不足两条，本文在前端分类中将时间范围放宽到最近 7 天，并优先选择仍在直接影响开发工作流的官方条目。
+
+## 今日概览
+
+### 前端
+
+**Safari 最新预览版继续集中修补那些最容易影响复杂页面行为、调试判断和辅助功能稳定性的实现细节。** 7 月 22 日，WebKit 发布《Release Notes for Safari Technology Preview 248》。官方 release notes 显示，这一版新增了在相近色彩空间插值时转发缺失颜色分量的支持，以及 CSS `progress()` 函数的 `no-clamp` 选项；同时修复了 `hidden="until-found"` 场景下 VoiceOver 无法导航到展开内容、`color-scheme` 变更后 iframe 外观不刷新、CSS scroll snap 对 `:target` 目标的优先选择、`@import` 跟在 `@layer` 后时预加载失败，以及视图切换中的若干渲染问题。对前端团队来说，这类更新的意义不在单个 API 名词，而在于 Safari 继续主动清理 CSS、可访问性与渲染链路中的边角差异，让复杂组件和跨浏览器调试更接近“可预期工作”。[来源](https://webkit.org/blog/18162/release-notes-for-safari-technology-preview-248/)
+
+**Chrome 也在把 PWA 从“浏览器里的网站”进一步推向“操作系统里的应用”。** 7 月 16 日，Chrome for Developers 发布《Native Notification Attribution for Web Apps on macOS》。官方正文显示，从 Chrome 152 开始，安装在 macOS 上的 PWA 通知将不再显示为 Google Chrome，而会以 PWA 自身名称和图标出现在系统通知中心；用户也可以直接在 macOS 系统设置中单独管理这些 Web App 的通知与 Focus 模式。正文同时强调两项开发者边界变化：其一，PWA 现在需要额外获得操作系统级通知权限；其二，在该模式下 macOS 不再保证 `requireInteraction` 能让通知持续停留，且 App Badging API 也依赖通知权限才能真正显示 Dock 徽标。对前端与 Web App 团队来说，这意味着“更像原生应用”的用户体验，正在伴随更严格的系统级权限与交互约束一起到来。[来源](https://developer.chrome.com/blog/notification-attribution-macos?hl=en)
+
+### DevOps
+
+**GitHub 正在把 Copilot 的采用度量，从“有多少人在用”推进到“具体用到了多深”。** 7 月 22 日，GitHub Changelog 发布《New Copilot usage metrics impact dashboard》。官方正文显示，新仪表盘面向 enterprise administrators 和 organization owners，基于 Copilot usage metrics API 的 AI adoption phase cohorts，把开发者分成 Phase 1（Code-first）、Phase 2（Agent-first）、Phase 3（Multi-agent or Copilot app）以及被动持证未活跃人群。每个分组都会展示人均每月合并 PR 数、中位 PR 合并速度、各阶段用户占比、人均日代码行数，并提供 6 个月趋势图及把用户推向更深采用阶段的行动建议。对平台治理团队来说，这意味着 Copilot 的管理重点正在从 seat 数量与活跃率，转向“采用深度、吞吐变化与下一步组织运营动作”这样的经营指标。[来源](https://github.blog/changelog/2026-07-22-new-copilot-usage-metrics-impact-dashboard)
+
+**与此同时，GitHub 还在继续把多模型 Copilot 工作流扩展到更偏 agentic 的编码场景。** 7 月 21 日，GitHub Changelog 发布《Gemini 3.6 Flash is now available in GitHub Copilot》。官方正文显示，Gemini 3.6 Flash 正在接入 GitHub Copilot，定位于 web 和 app 开发、编码以及更长链路的 agentic 任务，支持可配置 reasoning effort 与复杂工作流中的并行工具调用。官方还表示，在早期测试中，这个模型相较 Gemini 3.5 Flash 展现出更高的 task-completion rates 和更好的 token efficiency；它将逐步开放给 Copilot Pro、Pro+、Max、Business 和 Enterprise 用户，并可在 VS Code、Visual Studio、Copilot CLI、Copilot cloud agent、Copilot app、JetBrains、Xcode 和 Eclipse 中选择。对于 DevOps 与开发平台团队而言，这说明模型选择本身也正在变成平台能力的一部分：不仅要管权限和成本，还要管不同模型适配哪类工程工作流。[来源](https://github.blog/changelog/2026-07-21-gemini-3-6-flash-is-now-available-in-github-copilot)
+
+### AI
+
+**OpenAI 正在把企业 agent 从“能不能做”进一步包装成“如何可靠上线”的标准化产品。** 7 月 22 日，OpenAI 发布《Introducing OpenAI Presence》。官方 RSS 显示，这是一个面向企业的 AI agent 平台，支持在客户服务与内部工作流中部署可信的语音与聊天 agent；官方搜索摘要进一步显示，该产品强调让 agent 回答问题、处理工单、调用公司系统、执行经批准的操作，并在需要时升级到人工，同时用 policies、guardrails 和 escalation rules 去校验准确性与表现。对企业 AI 落地来说，这条更新的重要性在于：OpenAI 正在把“agent 上生产”描述成一个包含权限、护栏和升级机制的完整交付面，而不再只是单个模型能力展示。[来源](https://openai.com/index/introducing-openai-presence)
+
+**另一条 OpenAI 官方更新则把 AI 叙事继续拉向更大尺度的科研基础设施协作。** 7 月 22 日，OpenAI 发布《Advancing the next era of national science》。官方 RSS 显示，OpenAI 正在与美国能源部和国家实验室合作，用前沿 AI 加速科学发现；官方搜索摘要进一步说明，这项工作将把 frontier models 与科研人员、超级计算机、仿真系统和实验设施连接起来，并作为美国能源部 Genesis Mission 的一部分，为参与研究者提供更广泛的模型访问、前沿能力、技术协作和聚焦科学任务的 campaign。对 AI 行业观察者而言，这表明头部模型公司的竞争已经不只是在消费产品和企业软件层面，也在向国家级科研、计算资源与长期基础设施协作延伸。[来源](https://openai.com/index/advancing-the-next-era-of-national-science)
+
+## 今日观察
+
+今天最值得注意的不是某一个功能点，而是各个平台都在补“把 AI 真正放进工作流后必须出现的系统层能力”。浏览器在补权限与系统集成边界，GitHub 在补采用深度与模型运营能力，OpenAI 则在补企业交付与科研协作两端的组织化框架。下一阶段的差别，可能不再是谁先接上 AI，而是谁先把可观测性、权限、护栏、升级机制和资源治理真正做进默认产品里。
+
+## 简讯
+
+- **前端**：Safari TP 248 继续集中修补 CSS、可访问性与渲染细节，Chrome 则把 PWA 通知正式推进到 macOS 原生应用级体验，但也同步带来更严格的系统权限约束。
+- **DevOps**：GitHub 一边把 Copilot 采用深度做成可视化运营仪表盘，一边把 Gemini 3.6 Flash 接入多端 Copilot 工作流，平台治理开始同时覆盖人群分层与模型分层。
+- **AI**：OpenAI 同日推进企业级 agent 平台 Presence 与面向国家科学体系的协作计划，显示其产品化与基础设施化布局正在并行加速。

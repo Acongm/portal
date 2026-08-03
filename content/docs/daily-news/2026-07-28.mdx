@@ -1,0 +1,38 @@
+---
+title: "每日科技动态 - 2026年7月28日"
+---
+
+
+# 每日科技动态
+
+今天这组更新的共同主题是：平台正在把“默认能力”继续前移。前端侧，Safari 一边补齐 WebAssembly 和浏览器实现细节，一边在 Technology Preview 里继续把 CSS、JavaScript 和调试器能力向前推进；DevOps 侧，GitHub 开始把 Copilot 的治理边界拆得更细、管得更统一；AI 侧，OpenAI 则分别给出了“AI 正在怎样改变工作内容”和“AI 正在怎样进入个人健康场景”两种更落地的答案。由于最近 24 小时内前端官方主力更新不足两条，本文前端部分放宽到最近 7 天。
+
+## 今日概览
+
+### 前端
+
+**Safari 26.6 把一项 WebAssembly 流式编译缺口补齐，并顺手修了 8 个开发者容易踩到的实现问题。** 7 月 27 日，WebKit 发布 Safari 26.6 功能说明。官方正文显示，这一版给 `WebAssembly.compileStreaming()` 和 `WebAssembly.instantiateStreaming()` 补上了 `compileOptions` 参数，因此开发者现在不必为了启用 Wasm JS String Builtins 而退回非流式编译路径；与此同时，Safari 26.6 还修复了 8 个问题，覆盖 CSS、Networking、Service Workers、Web Extensions 和 WebRTC，例如分区 cookie 删除、丢失脚本的 service worker 自动注销、扩展 service worker 注册数据库膨胀，以及 `iceTransportPolicy: "relay"` 的 WebRTC 连接故障。对前端工程团队来说，这类更新的价值不在“新 API 数量”，而在于运行时和浏览器实现细节更少拖后腿。[来源](https://webkit.org/blog/18178/webkit-features-for-safari-26-6/)
+
+**Safari Technology Preview 248 继续推进 CSS 与 JavaScript 细节，重点落在更贴近真实开发的问题上。** 7 月 22 日，WebKit 发布 Safari Technology Preview 248。官方 release notes 显示，这一版新增了 CSS `progress()` 函数的 `no-clamp` 选项，以及 TC39 BigInt Math 提案中的 `BigInt.pow`、`BigInt.sqrt` 等方法；同时修复了多项影响实际工程体验的问题，包括 `@layer` 之后的 `@import` 预加载失效、view transition 期间插入 CSS 规则导致动画直接跳到终态、grid 最小内容贡献计算错误，以及 Web Inspector 对 ES2022 class private fields / methods / accessors 的显示问题。它传递出的信号很明确：浏览器竞争不只是大特性上线，更是把开发者日常最痛的实现缝隙一点点补平。[来源](https://webkit.org/blog/18162/release-notes-for-safari-technology-preview-248/)
+
+### DevOps
+
+**GitHub 给 Copilot app 单独拆出了一条访问策略，企业终于可以把桌面 agent 和 CLI 分开治理。** 7 月 27 日，GitHub 更新 changelog，宣布 GitHub Copilot app 现在拥有独立于 Copilot CLI 的专属策略。官方摘要显示，这项策略默认在各级范围内都是 enabled，管理员可以选择 `Enabled everywhere`、`Disabled everywhere`，或把决定权下放给组织管理员。此前，Copilot app 的可用性依赖 Copilot CLI policy；现在两者拆开后，企业可以针对不同客户端单独开关。对平台团队而言，这意味着 agent 工具的引入不再是“一开全开”，而是能按终端形态做更细粒度的 rollout。[来源](https://github.blog/changelog/2026-07-27-manage-github-copilot-app-access-with-a-dedicated-policy)
+
+**企业级 `managed-settings.json` 现在正式管到 Copilot app 和 cloud agent，治理规则开始跨客户端统一生效。** 同样在 7 月 27 日，GitHub 宣布 enterprise managed settings 已扩展到 GitHub Copilot app 和 Copilot cloud agent。官方摘要显示，企业所有者可以通过 `managed-settings.json` 一次性定义插件、marketplace 和审批绕过等 guardrails，Copilot 客户端会自动拉取并强制执行；其中 cloud agent 也会遵守已批准的插件与 marketplace 边界，而 bypass prompt 控制则只适用于交互式客户端。比起单独增加某个功能，这更像是在补齐“agent 进企业”最关键的控制面：策略只定义一次，但会随着开发者在 IDE、桌面 app 和云端异步任务之间流转而持续生效。[来源](https://github.blog/changelog/2026-07-27-enterprise-managed-settings-now-apply-to-the-github-copilot-app)
+
+### AI
+
+**OpenAI 新研究称，AI 已经开始把工作内容从“岗位内提效”推向“跨岗位任务迁移”。** 7 月 27 日，OpenAI 发布《How AI is expanding what people do at work》。官方搜索摘要显示，这份 `Work at the Frontier` 系列首篇报告把这种现象称为 `task crossover`：历史上属于某一职业的工作，开始频繁出现在另一类职业用户的 AI 使用中。摘要还给出一个关键数字：在去掉写作、总结、排期等通用任务后，43.5% 的非通用消息落在用户本职业之外，其中营销和工程任务跨职业流动最明显。相比“AI 让原岗位更快”这种旧叙事，这份研究更值得关注的点是：组织边界可能不是被自动化替代，而是先被任务流重新切开重组。[来源](https://openai.com/index/how-ai-is-expanding-what-people-do-at-work)
+
+**Health in ChatGPT 开始向美国用户开放，AI 助手第一次更正式地接进个人健康数据。** 7 月 23 日，OpenAI 发布 `Launching Health in ChatGPT`。官方搜索摘要显示，符合条件的美国用户现在可以在 ChatGPT 中安全连接 Apple Health 和受支持的医疗记录，让系统基于这些信息提供更个性化的解释与健康对话；默认情况下，ChatGPT 在使用健康信息前会先询问用户，可以选择仅本次允许，也可以改成始终允许，并且相关设置可随时调整。相比单纯的“健康问答”，这条更新的实际意义在于：OpenAI 正把健康数据接入、权限确认和上下文使用做成产品化流程，AI 从通用对话框进一步进入更高敏感度的个人场景。[来源](https://openai.com/index/health-in-chatgpt)
+
+## 今日观察
+
+今天最值得注意的，不是哪一家又发布了一个更大的模型或更多功能，而是“默认边界”正在被重画。Safari 在继续补运行时和实现细节，说明浏览器厂商越来越愿意把开发体验问题当成正式产品工作；GitHub 连续两条 Copilot 更新都围绕治理，而不是单纯提能，说明企业接纳 agent 的前提已经从“能不能用”转向“怎么管”；OpenAI 则同时展示了 AI 对工作分工和个人健康场景的渗透路径。接下来值得持续观察的，不只是能力上限，而是谁先把权限、上下文和可控性做成真正可运营的底座。
+
+## 简讯
+
+- **前端**：Safari 26.6 补齐了 WebAssembly 流式编译参数缺口并修复 8 个实现问题，Safari Technology Preview 248 则继续推进 CSS `progress()`、BigInt Math 和 Web Inspector 等开发者能力。
+- **DevOps**：GitHub 连续两条更新都围绕 Copilot 治理：先把 Copilot app 从 CLI 策略中拆开独立控制，再让 enterprise managed settings 统一覆盖 app 与 cloud agent。
+- **AI**：OpenAI 一边用新研究说明 AI 正在把工作任务跨岗位重组，一边把 Health in ChatGPT 推向美国用户，让健康数据接入和权限确认进入正式产品流程。

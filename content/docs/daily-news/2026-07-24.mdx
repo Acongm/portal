@@ -1,0 +1,38 @@
+---
+title: "每日科技动态 - 2026年7月24日"
+---
+
+
+# 每日科技动态
+
+今天这组官方更新有一个很鲜明的共同点：平台都在把“默认更快”与“默认更可控”同时推进。前端方向里，Firefox 一边缩短发布节奏，一边把扩展权限和文档级标识做得更精细；DevOps 方向里，GitHub 一边为 MCP 工作流升级协议底座，一边给 issue 自动化补上置信度、审批与理由链路；AI 方向里，OpenAI 则同时把模型能力推向更高敏感度的健康场景，以及更重资产的基础设施建设场景。对开发团队来说，这意味着下一阶段真正有竞争力的产品，不只要更智能，还要更容易治理、更容易扩展。
+
+## 今日概览
+
+### 前端
+
+**Firefox 正在同时改两件会直接影响前端开发者与扩展作者节奏感的事情：一是浏览器版本发布更快，二是扩展能力边界更明确。** 7 月 23 日，Mozilla Add-ons Blog 发布《Firefox 153 WebExtensions API updates》。官方正文显示，Firefox 153 把本地文件访问从原本跟随 host permission 的隐式能力，改成默认关闭、需要用户单独授予的显式权限“Access local files on your computer”；同时新增 `userScripts.execute()`、`publicSuffix` API，把 `documentId` 扩展到更多 API，并允许 content scripts 直接访问和修改 `adoptedStyleSheets`。这些变化的共同指向很明确：扩展可以拿到更稳定的文档级目标、更少依赖页面 hack 的样式操作方式，但也必须更认真地处理权限提示与升级兼容。[来源](https://blog.mozilla.org/addons/2026/07/23/firefox-153-webextensions-api-updates)
+
+**同一天，Mozilla 还宣布 Firefox 桌面版与 Android 版将从 4 周发布切到 2 周发布，这会直接压缩本地化与跟版适配窗口。** 7 月 23 日，Mozilla L10N 发布《Firefox Release Changes and Localization》。官方正文显示，这项变更将从 Firefox 155 Beta 开始生效，此后 Nightly、Beta、Release 周期都改为 2 周；可用于本地化的最短时间窗口也从 3 周压缩到 2 周。Mozilla 同时表示，会继续尝试通过功能翻译就绪后再展示、以及在 dot release 中持续带上最新翻译等方式缓解压力。对前端与浏览器生态团队而言，这不只是“版本号跑得更快”，而是浏览器能力、扩展兼容性、文档和本地化协作都要适配更高频的发布节奏。[来源](https://blog.mozilla.org/l10n/2026/07/23/firefox-release-changes-and-localization)
+
+### DevOps
+
+**GitHub 正在把 MCP 从“能连上”推向“更容易规模化部署”的阶段。** 7 月 23 日，GitHub Changelog 发布《GitHub MCP Server supports the next MCP specification》。官方正文显示，MCP 协议将在 7 月 28 日转向 stateless core，GitHub MCP Server 已提前支持最新版规范。新规范下，sessions 与 `initialize` 被移除，客户端握手可并行完成，部署也更容易水平扩展。GitHub 还说明其服务端已去掉 `initialized` 的数据库写入、把日志与 secret scanning 所需信息改从稳定存在的 HTTP headers 读取，并通过 Go SDK 包装同时兼容新旧客户端。对平台工程团队来说，这类变化的重要性不只是协议小修小补，而是 agent 工具链正在补齐远程部署、扩缩容与兼容迁移的工程底座。[来源](https://github.blog/changelog/2026-07-23-github-mcp-server-supports-the-next-mcp-specification)
+
+**与此同时，GitHub 也在给 issue 自动化补上“为什么这么做、要不要先审”的治理层。** 7 月 23 日，GitHub Changelog 发布《Agent automation controls in GitHub Issues in public preview》。官方正文显示，GitHub Issues 现在支持三项新能力：自动化可以先“建议”而不是直接应用变更；每项动作都会给出 high / medium / low 的 confidence，高置信度自动执行，中低置信度留给人工复核；每次变更都会记录 rationale，形成可查看的审计线索。官方还给出边界：这些审批是工作流便利性，不是服务端安全边界；相关能力同时适用于 GitHub Agentic Workflows、Copilot cloud agent，以及 REST / GraphQL API，首批覆盖 labels、fields、type、close 和 assignees。对 DevOps 团队来说，这表明平台内建自动化正从“替你做事”走向“带着理由、置信度和审批策略替你做事”。[来源](https://github.blog/changelog/2026-07-23-agent-automation-controls-in-github-issues-in-public-preview)
+
+### AI
+
+**OpenAI 开始把 ChatGPT 推进到更高敏感度的个人健康场景，但产品包装的重点已明显转向“信息接入 + 隐私控制”。** 7 月 23 日，OpenAI 发布《Launching Health in ChatGPT》。官方 RSS 显示，Health in ChatGPT 允许符合条件的美国用户安全连接医疗记录和 Apple Health，以获得更个性化的健康洞察并更好理解自身健康信息；官方搜索结果页面还显示，该产品强调与医生合作改进健康智能，并把隐私、安全和用户控制放在核心位置。对 AI 产品观察者来说，这条更新的重点不只是“AI 进入健康领域”，而是 OpenAI 正在把模型能力与个人数据连接、专业场景可用性和隐私控制打包成一个更完整的消费级高敏感场景产品面。[来源](https://openai.com/index/health-in-chatgpt)
+
+**另一条 OpenAI 官方更新则把 AI 竞争继续拉向算力、社区协商与长期基础设施承诺。** 7 月 22 日，OpenAI 发布《Building AI infrastructure with the Effingham County community》。官方 RSS 显示，这是 OpenAI 在美国佐治亚州 Effingham County 规划与开发的长期数据中心项目 Project Camellia；官方搜索摘要进一步显示，OpenAI 承诺在项目周期内提供 8000 万美元社区收益，并向符合条件的佐治亚州高校、社区学院和技术学校学生提供最高 7100 万美元 Codex credits。对 AI 产业观察者而言，这说明头部模型公司的竞争已经越来越像基础设施公司：不仅要争模型和产品，也要争算力落地速度、社区许可与区域人才生态。[来源](https://openai.com/index/building-ai-infrastructure-with-the-effingham-county-community)
+
+## 今日观察
+
+今天最值得注意的，不是哪一家又多发了一个功能，而是几乎所有更新都在强调“系统级可控性”。Firefox 在收紧权限边界并加快发布；GitHub 在给 agent 工作流补协议稳定性和人工复核阀门；OpenAI 则把高敏感数据接入和重资产基础设施叙事一起推到台前。接下来各平台的分水岭，很可能不是谁最先接入 AI，而是谁先把权限、节奏、审计和交付边界变成默认能力。
+
+## 简讯
+
+- **前端**：Firefox 同日更新扩展 API 与发布节奏，一边把本地文件访问、`documentId`、`adoptedStyleSheets` 等开发边界讲清楚，一边把桌面与 Android 版发布周期压缩到 2 周。
+- **DevOps**：GitHub 既提前让 MCP Server 跟上即将到来的无状态协议，也在 Issues 自动化里补上建议模式、置信度分级和理由审计，agent 工作流开始走向可规模化且可治理。
+- **AI**：OpenAI 把 ChatGPT 推向医疗记录与 Apple Health 连接场景，同时推进带有社区收益承诺的数据中心项目，产品能力与基础设施布局在同步加速。

@@ -1,0 +1,108 @@
+---
+title: "Vite（ESM Dev Server 与构建取舍）"
+---
+
+
+{/* AUTO-GENERATED:START */}
+
+## 摘要（Auto）
+
+- 生成时间：2025-12-20
+- 简历中出现的项目标题（提取）：大疆用户中心重构 / 大疆售后 RMS 系统重构 / 跨平台公告插件系统 / 大疆 DevOps 平台维护 / XDR 系统 - 魔方大屏 + 报表
+- 面试大纲关键词（提取 Top10）：1）大疆用户中心重构：性能优化 + HTTP 原理 + Webpack 架构 / 性能指标与方法论 / 简历可落地点（结合你的“优化四板斧”） / HTTP 常考点（从“为什么变快”倒推） / Webpack 架构（工程化面试常考） / 按优化顺序，把方案“串起来”（排查 → 定位 → 选择 → 验证） / 0. 排查与基线（先把问题“量化”） / 1. 先保“可见”——骨架屏预渲染（直接拉低 LCP） / 2. 再减“阻塞”——关键渲染路径（CRP）梳理：CSS/字体/首图优先级 / 3. 再降“下载与解析成本”——更小的包体与更少的无效代码
+
+## 建议追问（Auto）
+
+- 你为什么在该项目/场景里选择这个方案？替代方案为何不选？
+- 最大一次事故/踩坑是什么？如何定位与回滚？
+- 如果重做：架构/边界/工程化会怎么调整？
+
+{/* AUTO-GENERATED:END */}
+
+## 关联卡片
+
+- 项目：
+  - [`project__dji-user-center`](./project__dji-user-center.md#原理简述)
+- 对比：
+  - [`matrix__bundler-webpack-vite-rollup`](./matrix__bundler-webpack-vite-rollup.md#对比表格)
+  - [`tech__webpack`](./tech__webpack.md#原理简述)
+
+## 在我项目中的角色与使用场景
+
+- 使用场景：当项目“冷启动慢、HMR 慢、开发体验差”时，用 Vite 的 ESM Dev Server 提升迭代效率。
+- 我在项目里的落地重点：
+  - 评估迁移成本：插件生态、历史 Webpack loader 能否替代、老旧依赖是否支持 ESM。
+  - 统一 `env`、代理、别名、静态资源处理与 sourcemap 策略，避免“开发好用，上线翻车”。
+  - 对大依赖做 `optimizeDeps`/拆分，避免 dev 期频繁预构建导致的抖动。
+
+## 原理简述
+
+一句话：Vite 开发期走“**原生 ESM**”，构建期走“**Rollup**”。
+
+- **Dev Server（快的原因）**：
+  - 不再把全量依赖打包成一个 bundle 才启动；浏览器按需请求模块（ESM import）。
+  - 对第三方依赖做一次性预构建（esbuild）：把 commonjs/大量小文件依赖变成更适合浏览器的形式，提升启动与 HMR 稳定性。
+  - HMR 基于模块依赖图精确失效，常见场景下比“全量重打包”更快。
+- **Build（Rollup）**：
+  - 产物优化（tree-shaking、code-splitting、chunk 命名、manifest）主要由 Rollup 完成。
+  - 插件体系大体沿用 Rollup 插件生态（同时提供 Vite 专属 hook）。
+
+权衡点（面试表达）：
+
+- Vite 的优势在“开发期”，但**生产构建链路**也需要完整评估（legacy 浏览器、依赖 ESM 兼容、CSS 处理差异）。
+- 复杂存量系统迁移要分阶段：先保证“构建产物一致性”，再追求“开发期极致速度”。
+
+## 对比表格
+
+| 维度     | Vite                         | Webpack                   |
+| -------- | ---------------------------- | ------------------------- |
+| Dev 启动 | **快**（ESM 按需）           | 依赖 bundling，冷启动更慢 |
+| HMR      | 通常更快                     | 成熟但大项目易慢          |
+| 生态     | 快速增长（复用 Rollup）      | **最成熟**                |
+| 迁移成本 | 中（需核对插件/loader/兼容） | 低（存量）                |
+| 适合场景 | 新项目/中等存量、追求 DX     | 大存量/强定制/生态依赖深  |
+| 回滚策略 | 旁路构建、按子模块迁移       | 原地演进                  |
+
+## 模拟问答
+
+- [ ] Q1：Vite 为什么快？快在哪一段？
+  - 关键点：开发期不做全量 bundle，利用浏览器 ESM；依赖预构建用 esbuild；HMR 失效范围更小。
+- [ ] Q2：`optimizeDeps` 是什么？什么时候要调？
+  - 本质：把依赖“预打包/扁平化”，减少 dev 期模块请求与 CJS 转换成本。
+  - 需要调的信号：启动抖动、某些依赖反复被预构建、依赖解析失败或 HMR 不稳定。
+- [ ] Q3：迁移 Webpack → Vite 最大坑是什么？
+  - loader 生态差异（尤其是非常定制的 loader）、某些依赖的 CJS/UMD 兼容、生产环境 polyfill/legacy。
+
+## 手写代码区
+
+一个最小 Vite 插件（构建期注入版本信息）：
+
+```ts
+import type { Plugin } from 'vite'
+
+export function injectBuildMeta(): Plugin {
+  const buildId = new Date().toISOString()
+  return {
+    name: 'inject-build-meta',
+    transform(code, id) {
+      if (!id.endsWith('.ts') && !id.endsWith('.tsx')) return null
+      if (!code.includes('__BUILD_ID__')) return null
+      return code.replaceAll('__BUILD_ID__', JSON.stringify(buildId))
+    }
+  }
+}
+```
+
+## 我的补充（Manual）
+
+（不会被脚本覆盖：踩坑、细节、反例、排查路径）
+
+## 复盘与反思（Learnings）
+
+- 如果重做会怎么改？
+
+## 面试官追问（面试官视角）
+
+- [ ] 为什么选这个方案？替代方案为什么不选？
+- [!] 最大一次事故/踩坑是什么？如何定位与回滚？
+- [ ] 如果重做会怎么改？

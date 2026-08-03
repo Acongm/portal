@@ -1,0 +1,80 @@
+---
+title: "Webpack - 介绍"
+---
+
+# Webpack - 介绍
+
+## 关联面试卡（快速跳转）
+
+- 技术卡：[`tech__webpack`](../interview-prep/tech__webpack.md#原理简述)
+- 构建工具选型矩阵：[`matrix__bundler-webpack-vite-rollup`](../interview-prep/matrix__bundler-webpack-vite-rollup.md#对比表格)
+
+Webpack 是现代前端开发中非常重要的工具，它作为一个模块打包器，能够将你的代码和资源（如 JavaScript、CSS、图片等）打包成最终的文件，优化性能。要系统地学习 Webpack，可以从以下几个方面来梳理相关知识：
+
+### 1. **基本概念**
+
+- **打包（Bundling）**：Webpack 的核心功能是将不同类型的资源（如 JavaScript、CSS、图片、字体等）打包成最终的构建文件。
+- **模块化（Modularization）**：Webpack 基于模块化开发的思想，可以处理 JavaScript 模块、CSS 模块、图片等各种类型的资源。
+- **插件（Plugins）**：插件提供了增强 Webpack 功能的方式，能够做更多的定制化工作，如代码压缩、生成 HTML 文件、处理资源文件等。
+- **加载器（Loaders）**：Webpack 通过加载器来处理和转换非 JavaScript 文件（如 Sass、TypeScript 等）为 JavaScript 模块。
+
+### 2. **Webpack 核心概念**
+
+- **入口（Entry）**：Webpack 的入口文件是项目的起点，Webpack 会从这里开始构建依赖图。
+- **输出（Output）**：定义了打包后的文件生成的位置和文件名。
+- **模块（Modules）**：Webpack 可以处理各种资源（JS、CSS、图片等），并将它们视为模块。
+- **依赖关系（Dependency Graph）**：Webpack 会构建一个依赖图，图中的每个节点都是一个模块。
+
+### 3. **配置文件（webpack.config.js）**
+
+- **entry**：指定入口文件。
+- **output**：指定输出文件的位置和命名方式。
+- **module**：配置加载器（loaders）来处理不同类型的文件。
+- **plugins**：配置插件，扩展 Webpack 的功能。
+- **resolve**：配置模块解析的规则（如路径别名、扩展名等）。
+- **devServer**：配置开发服务器，支持热更新和调试。
+
+### 4. **加载器（Loaders）**
+
+- **babel-loader**：将 ES6+ 代码转译为兼容浏览器的 JavaScript。
+- **css-loader**：解析 CSS 文件。
+- **style-loader**：将 CSS 样式注入到 HTML 文件中。
+- **sass-loader、less-loader**：处理 SCSS 或 LESS 文件。
+- **file-loader、url-loader**：处理图片、字体等文件。
+- **ts-loader**：处理 TypeScript 文件。
+
+### 5. **插件（Plugins）**
+
+- **HtmlWebpackPlugin**：自动生成 HTML 文件，并自动引入打包后的 JS 文件。
+- **MiniCssExtractPlugin**：提取 CSS 为单独的文件，而不是内嵌在 JS 中。
+- **TerserWebpackPlugin**：压缩 JavaScript 代码，减少文件体积。
+- **CleanWebpackPlugin**：清理输出目录，删除旧的构建文件。
+- **DefinePlugin**：定义全局常量，用于替代源码中的常量值。
+
+### 6. **优化**
+
+- **Tree Shaking**：移除未使用的代码，减少打包体积。
+- **Code Splitting**：将代码分割成多个文件，实现按需加载，提高加载速度。
+- **懒加载（Lazy Load）**：按需加载代码，提升页面加载性能。
+- **缓存（Caching）**：通过合理配置缓存策略，使得浏览器能缓存静态资源，减少重复下载。
+
+### 7. **开发模式与生产模式**
+
+- **开发模式**：Webpack 的开发模式下会启用调试信息、源映射等，以便于开发和调试。
+- **生产模式**：生产模式会开启代码压缩、Tree Shaking 等优化选项，以生成更小、更高效的代码。
+
+### 8. **进阶**
+
+- **多页应用支持**：使用 `HtmlWebpackPlugin` 和多入口配置支持多页面应用的打包。
+- **动态导入（Dynamic Imports）**：结合 Code Splitting 实现按需加载。
+- **自定义插件开发**：了解 Webpack 插件的工作机制，自定义开发插件。
+- **Webpack 与 Babel 集成**：深入了解 Webpack 与 Babel 的配置和协作。
+- **Monorepo 和 Webpack**：在单一仓库中管理多个项目，如何配置 Webpack 支持多个子项目。
+
+### 学习建议
+
+- **从基础开始**，通过官网文档或者学习教程逐步理解 Webpack 的基本概念。
+- **动手实践**，自己搭建 Webpack 配置，解决不同项目中的打包需求。
+- **参考实际项目**，从开源项目中借鉴 Webpack 配置，学习最佳实践。
+
+这些是 Webpack 学习的主要内容，可以按照这个框架逐步深入掌握。

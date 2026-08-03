@@ -1,0 +1,130 @@
+---
+title: "TypeScript（类型安全与工程治理）"
+---
+
+
+{/* AUTO-GENERATED:START */}
+
+## 摘要（Auto）
+
+- 生成时间：2025-12-20
+- 简历中出现的项目标题（提取）：大疆用户中心重构 / 大疆售后 RMS 系统重构 / 跨平台公告插件系统 / 大疆 DevOps 平台维护 / XDR 系统 - 魔方大屏 + 报表
+- 面试大纲关键词（提取 Top10）：1）大疆用户中心重构：性能优化 + HTTP 原理 + Webpack 架构 / 性能指标与方法论 / 简历可落地点（结合你的“优化四板斧”） / HTTP 常考点（从“为什么变快”倒推） / Webpack 架构（工程化面试常考） / 按优化顺序，把方案“串起来”（排查 → 定位 → 选择 → 验证） / 0. 排查与基线（先把问题“量化”） / 1. 先保“可见”——骨架屏预渲染（直接拉低 LCP） / 2. 再减“阻塞”——关键渲染路径（CRP）梳理：CSS/字体/首图优先级 / 3. 再降“下载与解析成本”——更小的包体与更少的无效代码
+
+## 建议追问（Auto）
+
+- 你为什么在该项目/场景里选择这个方案？替代方案为何不选？
+- 最大一次事故/踩坑是什么？如何定位与回滚？
+- 如果重做：架构/边界/工程化会怎么调整？
+
+{/* AUTO-GENERATED:END */}
+
+## 在我项目中的角色与使用场景
+
+## 关联卡片
+
+- 项目：
+  - [`project__dji-rms`](./project__dji-rms.md#原理简述)
+  - [`project__dji-user-center`](./project__dji-user-center.md#原理简述)
+  - [`project__dji-devops`](./project__dji-devops.md#原理简述)
+  - [`project__xdr-dashboard-report`](./project__xdr-dashboard-report.md#原理简述)
+
+## 在我项目中的角色与使用场景
+
+- 目标：在多人协作、快速迭代下，把“隐性错误”前置到编译期，降低线上事故与回归成本。
+- 典型场景：
+  - 表单/接口字段复杂：用类型表达“可选/互斥/依赖关系”，减少运行时分支与 if-else。
+  - 跨模块协作：用类型做“契约”（DTO/Domain Model），配合 lint/CI 门禁保证一致性。
+  - 可维护性治理：拆分类型层（api types / domain types / ui props），避免类型污染。
+
+## 原理简述
+
+TypeScript = JavaScript + 类型系统 + 编译器（tsc）。
+
+- **结构化类型（Structural Typing）**：看“形状”而不是“名义”，这使得类型更易组合，但也需要警惕过宽类型。
+- **类型推断（Inference）**：减少显式类型声明，让类型更贴近真实代码；但“边界处”要显式（函数入参/返回、公共 API）。
+- **联合与交叉**：
+  - 联合（`A | B`）表达“多态输入”，要配合**类型收窄**（type guard）。
+  - 交叉（`A & B`）表达“能力叠加”，常用于 HOC/混入能力。
+- **泛型（Generics）**：让类型随输入变化（如 `Promise&lt;T>`），避免 `any`。
+- **条件类型/映射类型**：用于构建更强表达能力的工具类型（`Pick/Partial/ReturnType` 等）。
+
+工程化落地的关键点：
+
+- **tsconfig 分层**：`base`（通用）+ `app`（运行时）+ `node`（脚本/构建），减少互相影响。
+- **类型边界治理**：
+  - 入口（API 层）做校验（zod/io-ts/自研校验）把 unknown 变成 domain type。
+  - 业务层尽量不出现 `any`，必要时用 `unknown` + guard。
+- **增量构建**：`incremental`/`composite`（大仓/多包）提升 CI 与本地速度。
+
+## 对比表格
+
+| 维度     | TypeScript                      | JSDoc + JS           | Flow           |
+| -------- | ------------------------------- | -------------------- | -------------- |
+| 类型能力 | **最强**（生态最全）            | 弱（靠注释约束）     | 中（生态萎缩） |
+| 工程生态 | **事实标准**（tsserver/工具链） | 依赖 IDE/规则        | 较少维护       |
+| 迁移成本 | 中（可渐进）                    | 低                   | 中             |
+| 风险点   | 心智/类型复杂度                 | 约束不足，线上风险高 | 社区与招聘风险 |
+
+渐进迁移策略（我常用）：
+
+- 先从“边界模块”开始：接口层/工具层/公共组件。
+- 开启 `noImplicitAny`、`strictNullChecks` 采用“先 warning 后 error”门禁。
+- 关键路径引入运行时校验（避免“类型正确但数据脏”）。
+
+## 模拟问答
+
+- [ ] Q1：`any` 和 `unknown` 的区别？你为什么更偏向 `unknown`？
+  - `any`：关闭类型检查，风险是“污染链路”，错误扩散。
+  - `unknown`：要求你显式收窄（guard），让风险收敛在边界。
+- [ ] Q2：如何实现一个类型安全的请求封装？
+  - 把 “请求参数/响应体/错误体” 都类型化：`request&lt;TRes, TReq>()`。
+  - 在 API 层做 runtime 校验，把 `unknown` 变成 `TRes`（否则 TS 只能保证编译期）。
+- [ ] Q3：`interface` vs `type` 你怎么选？
+  - `interface`：更适合对象结构与可声明合并（声明扩展）。
+  - `type`：更适合联合/交叉/条件类型表达。
+  - 团队规则：公共 API 层对象优先 `interface`，复杂组合优先 `type`。
+- [ ] Q4：TS 性能变慢你怎么治理？
+  - 拆分 `tsconfig`、减少 `include` 范围、避免巨型类型体操、开启 `incremental`，对 monorepo 用 `project references`。
+
+## 手写代码区
+
+一个最小的“类型安全请求封装”（强调边界与失败路径）：
+
+```ts
+type ApiError = { code: string; message: string }
+
+async function request<
+  TRes,
+  TReq extends Record<string, any> | undefined = undefined
+>(url: string, req?: TReq): Promise<TRes> {
+  const res = await fetch(url, {
+    method: req ? 'POST' : 'GET',
+    headers: { 'content-type': 'application/json' },
+    body: req ? JSON.stringify(req) : undefined
+  })
+
+  if (!res.ok) {
+    // 失败路径：把错误体限制成已知结构，避免 throw any
+    const err = (await res.json().catch(() => null)) as ApiError | null
+    throw new Error(err?.message ?? `Request failed: ${res.status}`)
+  }
+
+  // 边界：这里仍是 unknown（真实项目建议加 zod 校验）
+  return (await res.json()) as TRes
+}
+```
+
+## 我的补充（Manual）
+
+（不会被脚本覆盖：踩坑、细节、反例、排查路径）
+
+## 复盘与反思（Learnings）
+
+- 如果重做会怎么改？
+
+## 面试官追问（面试官视角）
+
+- [ ] 为什么选这个方案？替代方案为什么不选？
+- [!] 最大一次事故/踩坑是什么？如何定位与回滚？
+- [ ] 如果重做会怎么改？

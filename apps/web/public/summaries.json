@@ -1,0 +1,9 @@
+{
+  "_meta": {
+    "generatedAt": "2026-06-13T02:59:51.213Z",
+    "totalFiles": 0,
+    "enabled": false,
+    "message": "AI 摘要功能未启用。请配置 AI_API_KEY 环境变量。"
+  },
+  "summaries": {}
+}

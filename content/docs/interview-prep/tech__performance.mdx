@@ -1,0 +1,184 @@
+---
+title: "前端性能（指标体系与优化方法论）"
+---
+
+
+{/* AUTO-GENERATED:START */}
+
+## 摘要（Auto）
+
+- 指标体系：LCP / FCP / TTI / CLS / INP、首屏/白屏时间、资源体积、接口耗时、缓存命中率
+- 定位手段：Performance/Network、Lighthouse、Web Vitals 上报、Long Task 分析
+- 优化策略：关键渲染路径（CRP）、渐进式渲染（骨架屏/占位/分片）、资源优先级（preload/prefetch）
+
+{/* AUTO-GENERATED:END */}
+
+## 关联卡片
+
+- 项目：
+  - [`project__dji-user-center`](./project__dji-user-center.md#原理简述)
+  - [`project__dji-rms`](./project__dji-rms.md#原理简述)
+- 技术：
+  - [`tech__react`](./tech__react.md#原理简述)
+  - [`tech__webpack`](./tech__webpack.md#原理简述)
+
+## 在我项目中的角色与使用场景
+
+- 用户中心（偏 C 端/高访问）：以 **LCP/INP/CLS** 为主指标，重点优化首屏可见与交互响应。
+- RMS（偏中后台/长生命周期）：以“**性能预算 + 监控 + 回归门禁**”做长期治理，防止随着需求叠加而性能回退。
+- 我的落地方法（可复述）：
+  - 先做基线：建立“现状数据 + 目标阈值 + 覆盖人群”（设备/网络/地域）。
+  - 再做定位：把慢拆成“网络/资源/主线程/渲染/接口”五类，逐类下刀。
+  - 最后做闭环：上线前门禁 + 上线后告警 + 定期复盘（看趋势而不是一次性成绩）。
+
+## 原理简述
+
+分层认知：
+
+- 加载性能：TTFB/资源下载/缓存命中
+- 运行时性能：Long Task、主线程阻塞、渲染频率
+- 感知性能：骨架屏、占位、渐进渲染
+- 可访问性：a11y 与性能治理的交集（焦点、可读性、交互响应）
+
+关键指标（Web Vitals）怎么理解（面试常考）：
+
+- **LCP**：最大内容元素渲染出来的时间 → “用户觉得页面内容出来了没”
+  - 常见瓶颈：首屏 JS 过大、首图/字体优先级低、SSR/CSR 交互、接口慢导致占位迟迟不替换。
+- **INP**：用户交互到下一帧绘制完成的延迟 → “点了有没有立刻响应”
+  - 常见瓶颈：主线程长任务、过多同步计算、事件处理里做重活、渲染一次做太多工作。
+- **CLS**：布局抖动 → “页面会不会跳”
+  - 常见瓶颈：图片/广告/字体未预留尺寸、骨架屏与真实内容尺寸不一致、异步内容插入。
+
+定位方法（我用的排查顺序）：
+
+- 先对齐口径：是“实验室数据（Lighthouse）”还是“真实用户数据（RUM）”？
+- Network：看 TTFB、关键资源 waterfall、是否被阻塞（CSS/字体/首图）。
+- Performance：看 Long Task、JS 执行占比、强制同步布局（Layout thrashing）。
+- React/前端框架：用 Profiler 看 commit 次数与耗时，锁定重渲染源头。
+
+优化方法论（可直接套话术）：
+
+- **先保可见**：骨架屏/占位/渐进渲染（先让 LCP 下来）
+- **再减阻塞**：CRP 梳理（关键 CSS、字体、首图优先级）
+- **再降成本**：更小的包、更少的执行、更少的无效渲染
+- **最后做治理**：预算、监控、回归矩阵与门禁，避免“优化一次、回退十次”
+
+## 对比表格
+
+| 维度     | 骨架屏（Skeleton） | 纯 Loading | 结论                |
+| -------- | ------------------ | ---------- | ------------------- |
+| 感知速度 | **强**（先可见）   | 弱         | 首屏优先骨架/占位   |
+| CLS 风险 | 中（要对齐尺寸）   | 低         | 骨架必须“等比/占位” |
+| 实现成本 | 中                 | 低         | 关键页面值得投入    |
+
+| 维度     | preload                  | prefetch         |
+| -------- | ------------------------ | ---------------- |
+| 目的     | **当前导航**马上要用     | **未来可能**会用 |
+| 优先级   | 高                       | 低（空闲时）     |
+| 常见场景 | 首屏首图/关键 chunk/字体 | 下一路由 chunk   |
+
+| 维度 | HTTP/2 复用          | 域名拆分（domain sharding） |
+| ---- | -------------------- | --------------------------- |
+| 结论 | 现代网络下更推荐复用 | 多数时候收益下降甚至变差    |
+| 风险 | 需要服务端/网关支持  | DNS/握手成本上升、缓存分散  |
+
+## 模拟问答
+
+- [ ] 你怎么建立性能基线？怎么保证“每一刀都有证据、每一刀都有回归验证”？
+  - 基线：选定关键页面与关键人群（设备/网络），记录 LCP/INP/CLS 分布（p50/p75/p95）。
+  - 证据：每次改动绑定一条假设（例如“首屏 JS -200KB → LCP p75 -300ms”），上线前后对比。
+  - 回归：把关键指标接入告警与趋势看板；引入性能预算门禁，防止包体/关键资源回退。
+- [!] 优化导致 CLS 变差怎么办？如何设计兜底与回滚？
+  - 定位：用 Layout Shift 事件定位“谁在跳”（常见是图片/字体/骨架尺寸不一致）。
+  - 兜底：关键媒体资源预留宽高；骨架与真实内容共享布局；字体 `font-display` 策略与预加载。
+  - 回滚：关键优化走开关（灰度），CLS 异常触发自动降级（例如退回 loading 或关闭某组件异步插入）。
+- [ ] 如何建立性能预算（bundle/关键资源上限）并做上线门禁？
+  - 预算维度：入口 bundle、关键路由 chunk、首屏关键资源（css/font/hero image）。
+  - 门禁方式：CI 阶段比对 `stats.json` 或构建产物体积；超阈值阻断或需要审批。
+    &lt;&lt;&lt;&lt;&lt;&lt;&lt; Current (Your changes)
+    =======
+- [ ] 如何把“HTTP/缓存/TLS”这种偏网络的点，跟 LCP/TTFB 的指标关联起来？
+  - 口径：先把 LCP 拆成 TTFB + 资源下载 + 解析执行 + 渲染提交；网络侧主要影响 TTFB 与资源下载。
+  - 实操：对比协议版本（H1/H2/H3）、握手耗时、缓存命中率、压缩比，观察 TTFB 与关键资源 waterfall 是否缩短。
+- [ ] 图片/字体在性能里怎么讲“收益与风险”？
+  - 图片：收益在“传输字节数与解码成本”；风险是 CLS（未预留尺寸）与首图优先级不当。
+  - 字体：收益在“阻塞链路缩短”；风险是 FOIT/FOUT 与重排（需要 `font-display`、子集化、预加载策略配合）。
+- [ ] 为什么线上更看 p75/p95，而不是平均值？你怎么做弱网/中低端机回归？
+  - p75/p95 更能代表“坏体验人群”，平均值容易被少量极快用户稀释。
+  - 回归：按设备档位/网络类型/关键路径做矩阵，跑同一页面同一账号同一资源版本对比。
+    > > > > > > > Incoming (Background Agent changes)
+
+## 手写代码区
+
+最小的 Web Vitals 上报（RUM）：
+
+```ts
+import { onCLS, onINP, onLCP, type Metric } from 'web-vitals'
+
+function report(metric: Metric) {
+  // 真实项目：加上用户/路由/设备信息 + 采样
+  navigator.sendBeacon?.(
+    '/perf',
+    JSON.stringify({
+      name: metric.name,
+      value: metric.value,
+      id: metric.id,
+      navigationType: metric.navigationType
+    })
+  )
+}
+
+onLCP(report)
+onINP(report)
+onCLS(report)
+```
+
+性能预算门禁（伪代码：对 dist 目录做体积上限校验）：
+
+```js
+// scripts/check-bundle-budget.js
+const fs = require('fs')
+const path = require('path')
+
+const BUDGET = {
+  'assets/index-*.js': 350 * 1024,
+  'assets/vendor-*.js': 500 * 1024
+}
+
+function globMatch(name, pattern) {
+  const re = new RegExp(
+    '^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$'
+  )
+  return re.test(name)
+}
+
+const dist = path.resolve(process.cwd(), 'dist')
+const files = fs
+  .readdirSync(path.join(dist, 'assets'))
+  .map((f) => `assets/${f}`)
+
+let ok = true
+for (const [pattern, limit] of Object.entries(BUDGET)) {
+  for (const f of files.filter((x) => globMatch(x, pattern))) {
+    const size = fs.statSync(path.join(dist, f)).size
+    if (size > limit) {
+      ok = false
+      console.error(`[BUDGET FAIL] ${f}: ${size} > ${limit}`)
+    }
+  }
+}
+process.exit(ok ? 0 : 1)
+```
+
+## 面试官追问（面试官视角）
+
+- [ ] 你怎么判断“体感慢”对应哪个指标？怎么落到行动？
+- [!] 弱网/中低端机如何评估？如何做回归矩阵？
+
+## 我的补充（Manual）
+
+（不会被脚本覆盖）
+
+## 复盘与反思（Learnings）
+
+- 如果重做会怎么改？

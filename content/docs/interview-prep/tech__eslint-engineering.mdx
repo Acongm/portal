@@ -1,0 +1,116 @@
+---
+title: "工程化规范（ESLint/Prettier/Husky/CI 门禁）"
+---
+
+
+## 关联卡片
+
+- 项目：
+  - [`project__dji-rms`](./project__dji-rms.md#原理简述)
+  - [`project__dji-devops`](./project__dji-devops.md#原理简述)
+- 技术：
+  - [`tech__typescript`](./tech__typescript.md#原理简述)
+  - [`tech__react`](./tech__react.md#原理简述)
+
+## 在我项目中的角色与使用场景
+
+- 典型场景：中后台多人协作、页面多、交叉开发频繁，最怕：
+  - 风格不统一导致 Review 低效
+  - 隐性 bug（hooks/async/类型边界）线上难复现
+  - 模块乱引用导致耦合与循环依赖
+- 我的目标：把“人肉 Review 的底层劳动”交给工具，把团队注意力拉回到“业务正确性与架构演进”。
+
+## 原理简述
+
+### 1）分工：Prettier vs ESLint vs TypeScript
+
+- Prettier：**格式化**（排版/换行/空格），降低风格争议。
+- ESLint：**语义规则与质量**（潜在 bug、坏味道、边界约束、安全规则）。
+- TypeScript：**类型正确性**（契约、边界收敛、减少运行时分支与错误传播）。
+
+关键点：避免三者“打架”
+
+- 让 Prettier 只负责格式（通过 eslint-config-prettier 关闭与格式冲突的规则）
+- ESLint 聚焦语义与边界（hooks/import/no-cycle/no-eval 等）
+- TS 把 `any/unknown` 风险收敛在边界模块
+
+### 2）闭环：让规则“真的执行”
+
+我常用的执行链路（面试可直接复述）：
+
+- IDE：保存自动修复（eslint --fix / prettier）
+- 提交：husky + lint-staged（**只检查改动文件**，反馈快）
+- PR/CI：lint（`--max-warnings=0`）+ typecheck +（按项目）单测/扫描
+- 技术债：老代码目录/文件豁免 + 技术债清单 + 分阶段收敛（warning → error）
+
+### 3）模块边界治理（高收益）
+
+目标：把“架构约束”写成规则，避免靠口头共识。
+
+- import/order：可读性
+- no-restricted-imports：禁止跨层/深层路径导入，必须从模块出口导入
+- import/no-cycle：防循环依赖
+
+## 对比表格
+
+| 维度          | 仅靠 Code Review  | 仅靠 Prettier | ESLint + Prettier + CI 门禁 |
+| ------------- | ----------------- | ------------- | --------------------------- |
+| 一致性        | 低（看人）        | 高（格式）    | **高（格式+语义）**         |
+| 发现 bug 能力 | 中（依赖经验）    | 低            | **高（规则覆盖）**          |
+| 执行力度      | 低（容易妥协）    | 中            | **高（流程固化）**          |
+| 团队体验      | Review 变“挑格式” | 只解决排版    | Review 回到“架构/业务”      |
+
+## 模拟问答
+
+- [ ] Q1：你定了哪些规则？为什么这些规则“收益最高”？
+  - 推荐回答：
+    - Hooks：`react-hooks/rules-of-hooks`、`react-hooks/exhaustive-deps`（避免线上难复现 bug）
+    - TS 边界：限制 `any`（必要豁免要写理由），鼓励关键模块更严格类型
+    - import 边界：`no-restricted-imports` + `import/no-cycle`
+    - 安全质量：`no-eval`、Promise 处理（如 no-floating-promises）、no-debugger/no-console（按环境）
+- [ ] Q2：你怎么处理“本地过/CI 不过”？
+  - 推荐回答：
+    - 统一 Node/TS 版本（如 .nvmrc/volta/engines），并把 CI 与本地脚本对齐
+    - lint-staged 只跑改动文件，CI 跑全量门禁；两者规则源一致（同一份配置）
+- [ ] Q3：warning → error 的渐进策略怎么做？为什么不能一步到位 strict？
+  - 推荐回答：
+    - 多团队存量大，一步到位会导致“全员被阻断”，最后规则会被撤掉
+    - 先把新增代码收紧（只允许新增不增加债），再逐步清旧债（按目录/模块收敛）
+- [ ] Q4：怎么把“模块化边界”固化到规则？举例说清楚
+  - 推荐回答：
+    - 约定结构：shared/features/pages/services
+    - 用 no-restricted-imports 禁止 features/a 直接依赖 features/b，只能依赖 shared
+
+## 手写代码区
+
+一个“禁止跨层/深层路径导入”的规则思路（示意）：
+
+```js
+// .eslintrc.cjs (snippet)
+module.exports = {
+  rules: {
+    'no-restricted-imports': [
+      'error',
+      {
+        patterns: [
+          // 禁止绕过模块出口：不允许从深层路径导入
+          {
+            group: ['**/features/*/*', '**/services/*/*'],
+            message: '禁止深层路径导入，请从模块出口（index.ts）导入。'
+          },
+          // 禁止跨域引用（示意：features 之间不能互相 import）
+          {
+            group: ['**/features/*'],
+            message:
+              '禁止跨 feature 直接引用，请下沉到 shared 或通过服务层解耦。'
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## 我的补充（Manual）
+
+（不会被脚本覆盖：真实踩坑、团队推进方式、与业务节奏的权衡）

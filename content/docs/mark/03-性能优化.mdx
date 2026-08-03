@@ -1,0 +1,867 @@
+---
+title: "性能优化流程 & 从浏览器请求链路解释\"为什么这么优化\""
+---
+
+# 性能优化流程 & 从浏览器请求链路解释"为什么这么优化"
+
+## 笔试题（6 题）
+
+### 1. URL 到页面可交互全链路
+
+写出从输入 URL 到页面可交互（TTI）的大致链路，并在每个环节标出可优化点。
+
+**【作答】：**
+
+完整链路：
+
+1. DNS 解析：URL → IP 地址
+   - 浏览器查询 DNS 缓存 → 本地 hosts → 递归查询 DNS 服务器
+2. TCP 连接：三次握手建立连接
+   - SYN → SYN-ACK → ACK
+3. TLS 握手（HTTPS）：协商加密参数
+   - ClientHello → ServerHello → 证书验证 → 密钥交换
+4. HTTP 请求：发送请求头和请求体
+5. 服务器处理：解析请求、查询数据库、生成响应
+6. HTTP 响应：接收响应头和响应体
+7. 解析 HTML：构建 DOM 树
+8. 解析 CSS：构建 CSSOM 树
+9. 执行 JS：解析、编译、执行
+10. 构建渲染树：DOM + CSSOM → Render Tree
+11. 布局（Layout/Reflow）：计算元素位置和大小
+12. 绘制（Paint）：填充像素信息
+13. 合成（Composite）：图层合成，输出到屏幕
+14. 可交互（TTI）：JS 主线程空闲，可响应用户交互
+
+各环节优化点：
+
+【网络层优化】
+
+- DNS 解析：使用 dns-prefetch、HTTP/2 Server Push、DNS 缓存
+- TCP 连接：使用 HTTP/2 多路复用、keep-alive、preconnect
+- TLS 握手：TLS 1.3、会话复用、OCSP Stapling
+- 请求优化：压缩（gzip/brotli）、HTTP/2、CDN 加速、减少请求数
+
+【资源加载优化】
+
+- HTML：内联关键 CSS、延迟非关键 JS、服务端渲染（SSR）
+- CSS：关键 CSS 内联、非关键 CSS 异步加载、移除未使用样式
+- JS：代码分割、Tree Shaking、压缩混淆、async/defer、动态导入
+- 图片：WebP/AVIF、懒加载、响应式图片、CDN
+
+【渲染优化】
+
+- 解析：减少 DOM 层级、避免深层嵌套、使用语义化标签
+- 布局：避免强制同步布局、使用 transform/opacity 触发合成层
+- 绘制：减少重绘区域、使用 will-change、GPU 加速
+- 合成：合理使用图层、避免过度合成
+
+【运行时优化】
+
+- JS 执行：避免 Long Task、使用 Web Workers、代码分割
+- 事件处理：防抖节流、事件委托、passive 监听器
+- 内存管理：及时清理引用、避免内存泄漏、使用 WeakMap/WeakSet
+
+---
+
+### 2. 关键渲染路径（CRP）
+
+解释"关键渲染路径（Critical Rendering Path）"：CSS/JS 对渲染的阻塞关系是什么？async 和 defer 的区别？
+
+**【作答】：**
+
+CRP 定义：
+关键渲染路径（Critical Rendering Path）是浏览器将 HTML、CSS、JS 转换为屏幕上像素的过程。
+优化 CRP 的目标是：最小化渲染阻塞资源、减少往返次数、降低关键路径长度。
+
+CSS 阻塞：
+
+- CSS 是渲染阻塞资源：浏览器必须等待 CSSOM 构建完成才能构建渲染树
+- 原因：避免 FOUC（Flash of Unstyled Content），确保样式一致性
+- 阻塞机制：
+  - &lt;link rel="stylesheet"> 会阻塞渲染，直到 CSS 下载并解析完成
+  - 内联关键 CSS 可减少网络往返，但需控制内联体积（&lt;14KB）
+  - 非关键 CSS 应异步加载：&lt;link rel="preload" as="style" onload="this.rel='stylesheet'">
+- 优化：提取关键 CSS、延迟非关键 CSS、使用媒体查询（media="print"）异步加载
+
+JS 阻塞：
+
+- JS 是解析阻塞资源：遇到 \&lt;script\> 会暂停 HTML 解析
+- 原因：JS 可能修改 DOM/CSSOM，必须按顺序执行
+- 阻塞机制：
+  - 同步 \&lt;script\>：阻塞 HTML 解析 → 下载 JS → 执行 JS → 继续解析
+  - 执行 JS 时，如果 CSSOM 未就绪，会等待 CSSOM 构建完成
+- 优化：使用 async/defer、动态 import()、将 JS 放在 `&lt;/body>` 前
+
+async vs defer:
+
+- async（异步执行）：
+  - 下载与 HTML 解析并行，下载完成后立即执行（会阻塞解析）
+  - 执行顺序不确定，适合独立脚本（如统计代码、广告）
+  - 使用场景：不依赖 DOM、不依赖其他脚本的第三方库
+- defer（延迟执行）：
+  - 下载与 HTML 解析并行，但等到 DOM 解析完成后才执行
+  - 执行顺序按声明顺序，保证依赖关系
+  - 使用场景：需要访问 DOM、有执行顺序要求的脚本
+- 对比：
+  - async：下载完就执行，可能打断 HTML 解析
+  - defer：等 DOM 解析完再执行，不打断解析
+  - 两者都支持并行下载，但执行时机不同
+
+---
+
+### 3. 资源提示（Resource Hints）
+
+解释 preconnect/dns-prefetch/preload/prefetch 的差异与适用场景，以及它们在请求链路中的作用时机。
+
+**【作答】：**
+
+preconnect:
+
+- 作用：提前建立与目标服务器的连接（DNS + TCP + TLS）
+- 时机：在 HTML 解析阶段就开始建立连接
+- 适用：已知会请求的第三方域名（CDN、API、字体服务）
+- 示例：&lt;link rel="preconnect" href="https://fonts.googleapis.com">
+- 优势：减少后续请求的延迟（节省 100-500ms）
+- 注意：每个 preconnect 消耗资源，建议限制在 2-4 个
+
+dns-prefetch:
+
+- 作用：仅提前进行 DNS 解析
+- 时机：在 HTML 解析阶段进行 DNS 查询
+- 适用：不确定是否立即连接的第三方域名
+- 示例：&lt;link rel="dns-prefetch" href="https://analytics.example.com">
+- 优势：比 preconnect 更轻量，只做 DNS 查询
+- 注意：现代浏览器会自动 DNS prefetch，手动添加用于关键域名
+
+preload:
+
+- 作用：提前加载当前页面必需的关键资源
+- 时机：在浏览器发现资源引用之前就开始下载
+- 适用：关键字体、关键 CSS、关键 JS、首屏图片
+- 示例：&lt;link rel="preload" as="font" href="font.woff2" crossorigin>
+- 优势：提高资源优先级，减少 CRP 阻塞时间
+- 注意：必须指定 as 属性，避免重复下载（浏览器会缓存）
+
+prefetch:
+
+- 作用：预取未来可能用到的资源（低优先级）
+- 时机：浏览器空闲时下载
+- 适用：下一页面的资源、用户可能点击的链接资源
+- 示例：&lt;link rel="prefetch" href="/next-page.js">
+- 优势：提前缓存，提升后续页面加载速度
+- 注意：优先级低，不会阻塞当前页面渲染
+
+使用场景对比：
+
+【preconnect vs dns-prefetch】
+
+- preconnect：确定会立即请求的第三方服务（CDN、API）
+- dns-prefetch：不确定是否立即请求，但可能用到（分析脚本、广告）
+
+【preload vs prefetch】
+
+- preload：当前页面必需的关键资源，高优先级
+- prefetch：未来页面可能用到的资源，低优先级
+
+【请求链路中的作用时机】
+
+1. DNS 解析阶段：dns-prefetch、preconnect（DNS 部分）
+2. TCP/TLS 阶段：preconnect（建立连接）
+3. 资源发现前：preload（提前下载关键资源）
+4. 浏览器空闲时：prefetch（预取未来资源）
+
+【最佳实践】
+
+- 关键字体：preload + preconnect（字体服务）
+- 关键 CSS：内联或 preload
+- 第三方 CDN：preconnect（减少连接建立时间）
+- 下一页资源：prefetch（提升导航体验）
+
+---
+
+### 4. Long Task 定位
+
+什么是 Long Task？如何用 Performance API 或 Chrome DevTools 定位？如何拆分 Long Task？
+
+**【作答】：**
+
+Long Task 定义及影响：
+
+- 定义：执行时间超过 50ms 的任务（阻塞主线程）
+- 影响：
+  - 阻塞用户交互（点击、滚动无响应）
+  - 导致页面卡顿、掉帧（FPS 下降）
+  - 影响 TTI（Time to Interactive）指标
+  - 触发 Layout Shift（CLS）和输入延迟（FID/INP）
+- 原因：大量 JS 执行、复杂 DOM 操作、同步 I/O、强制同步布局
+
+定位方法：
+
+【Performance API】
+
+```javascript
+// 使用 PerformanceObserver 监听 Long Task
+const observer = new PerformanceObserver((list) => {
+  for (const entry of list.getEntries()) {
+    if (entry.duration > 50) {
+      console.log('Long Task:', {
+        duration: entry.duration,
+        startTime: entry.startTime,
+        name: entry.name
+        // 可通过 entry.attribution 查看任务来源
+      })
+    }
+  }
+})
+observer.observe({ entryTypes: ['longtask'] })
+```
+
+【Chrome DevTools】
+
+1. Performance 面板：
+   - 录制页面加载/交互
+   - 查看 Main 线程时间线
+   - 红色标记表示 Long Task（>50ms）
+   - 点击任务查看调用栈（Call Stack）
+2. 分析步骤：
+
+   - 找到红色长条（Long Task）
+   - 展开查看具体函数调用
+   - 定位耗时函数（Self Time 高）
+   - 查看函数所在文件和行号
+
+3. 关键指标：
+   - Task Duration：任务总时长
+   - Self Time：函数自身执行时间（不含子函数）
+   - Aggregated Time：包含子函数的总时间
+
+拆分策略：
+
+【1. 任务切片（Time Slicing）】
+
+```javascript
+// 使用 requestIdleCallback 或 setTimeout 拆分任务
+function processLargeArray(items) {
+  let index = 0
+  function processChunk() {
+    const chunkEnd = Math.min(index + 10, items.length)
+    for (let i = index; i < chunkEnd; i++) {
+      processItem(items[i])
+    }
+    index = chunkEnd
+    if (index < items.length) {
+      // 让出主线程，允许浏览器处理其他任务
+      setTimeout(processChunk, 0)
+      // 或使用 requestIdleCallback
+      // requestIdleCallback(processChunk);
+    }
+  }
+  processChunk()
+}
+```
+
+【2. Web Workers】
+
+- 将计算密集型任务移到 Worker
+- 避免阻塞主线程
+- 适用：数据处理、图像处理、复杂计算
+
+【3. 异步处理】
+
+- 使用 Promise、async/await 避免同步阻塞
+- 批量处理改为流式处理
+- 使用 requestAnimationFrame 优化 DOM 更新
+
+【4. 延迟非关键任务】
+
+- 使用 requestIdleCallback 执行低优先级任务
+- 交互后延迟执行（如埋点、日志）
+
+【5. 优化算法和数据结构】
+
+- 减少循环嵌套、优化查找算法
+- 使用 Map/Set 替代数组查找
+- 避免不必要的计算和遍历
+
+---
+
+### 5. 图片优化策略
+
+列举图片优化策略，分别说明它们影响请求链路的哪一段（网络传输/解码/绘制）。
+
+**【作答】：**
+
+策略 1：图片格式优化（WebP/AVIF）
+
+- 原理：使用现代压缩算法，在相同质量下体积更小
+- 影响阶段：网络传输（减少传输时间）
+- 优化效果：体积减少 25-50%，传输时间减少相应比例
+- 实现：`&lt;picture>` 标签提供降级方案
+- 示例：
+  ```html
+  `<picture
+    >`
+    <source srcset="image.avif" type="image/avif" />
+    <source srcset="image.webp" type="image/webp" />
+    <img src="image.jpg" alt="fallback" />
+  </picture>
+  ```
+
+策略 2：响应式图片（srcset + sizes）
+
+- 原理：根据设备像素比和视口大小加载合适尺寸
+- 影响阶段：网络传输（避免下载过大图片）
+- 优化效果：移动端减少 50-70% 传输量
+- 实现：
+  ```html
+  <img
+    srcset="small.jpg 400w, medium.jpg 800w, large.jpg 1200w"
+    sizes="(max-width: 600px) 400px, 800px"
+    src="medium.jpg"
+  />
+  ```
+- 注意：浏览器根据设备像素比和 sizes 自动选择
+
+策略 3：图片懒加载（Lazy Loading）
+
+- 原理：只加载可视区域内的图片，滚动时再加载
+- 影响阶段：网络传输（减少初始请求数）
+- 优化效果：首屏请求减少 60-80%，FCP/LCP 提升
+- 实现：
+  - 原生：
+  ```html
+  <img loading="lazy" src="image.jpg" />
+  ```
+  - JS：Intersection Observer API
+- 注意：首屏关键图片不应懒加载
+
+策略 4：图片压缩与 CDN
+
+- 原理：压缩减少体积，CDN 减少传输距离
+- 影响阶段：网络传输（减少体积和延迟）
+- 优化效果：体积减少 30-60%，延迟减少 50-200ms
+- 实现：
+  - 工具压缩：TinyPNG、ImageOptim、sharp
+  - CDN：使用就近节点，HTTP/2 多路复用
+  - 自适应质量：根据网络条件动态调整
+
+策略 5：图片解码优化（decoding="async"）
+
+- 原理：异步解码图片，不阻塞主线程
+- 影响阶段：解码阶段（不阻塞渲染）
+- 优化效果：减少主线程阻塞时间，提升 FCP
+- 实现：
+
+  ```html
+  <img decoding="async" src="image.jpg" />
+  ```
+
+- 注意：关键图片可用 decoding="sync" 确保及时显示
+
+策略 6：使用 CSS Sprites / SVG
+
+- 原理：合并小图标减少请求数，SVG 矢量可缩放
+- 影响阶段：网络传输（减少请求数）
+- 优化效果：减少 HTTP 请求，降低延迟
+- 适用：图标、小图片、简单图形
+
+【各阶段影响总结】
+
+- 网络传输：格式优化、响应式、压缩、CDN、懒加载
+- 解码阶段：decoding="async"、避免过大图片
+- 绘制阶段：使用 transform/opacity 触发 GPU 加速、避免频繁重绘
+
+---
+
+### 6. 代码分割（Code Splitting）
+
+解释代码分割（split chunk）对 FCP/LCP/TTI 的影响机制。如何合理设计分割策略？
+
+**【作答】：**
+
+对 FCP 的影响：
+
+- 机制：代码分割减少初始 JS 体积，加快首屏 JS 执行完成
+- 正面影响：
+  - 减少初始 bundle 体积（如从 500KB → 200KB）
+  - 减少 JS 解析和编译时间
+  - 更早完成关键渲染路径，提升 FCP
+- 负面影响（不当分割）：
+  - 过多小 chunk 增加 HTTP 请求数（HTTP/1.1 下明显）
+  - 需要等待关键 chunk 加载才能渲染
+- 优化：提取关键 JS 内联，非关键 JS 异步加载
+
+对 LCP 的影响：
+
+- 机制：LCP 元素（通常是图片或文本）的渲染依赖 JS 执行
+- 正面影响：
+  - 如果 LCP 元素由 JS 渲染，减少 JS 体积可加快渲染
+  - 延迟非关键 JS，优先加载渲染 LCP 所需的代码
+- 负面影响：
+  - 如果 LCP 元素需要等待某个 chunk 加载，反而延迟 LCP
+  - 关键资源应避免分割，或使用 preload 提前加载
+- 优化：识别 LCP 元素依赖的代码，确保优先加载
+
+对 TTI 的影响：
+
+- 机制：TTI 要求主线程空闲且可交互，依赖所有关键 JS 执行完成
+- 正面影响：
+  - 减少初始 JS 执行时间，更快达到 TTI
+  - 延迟非关键功能代码，不阻塞 TTI
+- 负面影响：
+  - 如果交互功能被分割，需要等待 chunk 加载才能交互
+  - 路由级别的分割可能导致导航时延迟
+- 优化：
+  - 关键交互代码应包含在初始 bundle
+  - 使用路由懒加载，但预加载可能访问的路由
+
+分割策略：
+
+【1. 路由级别分割（Route-based）】
+
+- 适用：SPA 应用，按路由分割
+- 实现：React.lazy() + Suspense
+- 优势：每个路由独立加载，减少初始体积
+- 注意：预加载可能访问的路由，避免导航延迟
+
+【2. 组件级别分割（Component-based）】
+
+- 适用：大型组件、弹窗、折叠内容
+- 实现：动态 import() 加载组件
+- 优势：按需加载，减少初始 bundle
+- 注意：避免过度分割，增加请求开销
+
+【3. 第三方库分割（Vendor splitting）】
+
+- 适用：大型第三方库（如 moment.js、lodash）
+- 实现：webpack splitChunks 配置
+- 优势：利用浏览器缓存，库更新不影响业务代码
+- 配置示例：
+  ```javascript
+  splitChunks: {
+    chunks: 'all',
+    cacheGroups: {
+      vendor: {
+        test: /[\\/]node_modules[\\/]/,
+        name: 'vendors',
+        priority: 10,
+      },
+    },
+  }
+  ```
+
+【4. 公共代码提取（Common chunks）】
+
+- 适用：多个入口共享的代码
+- 实现：webpack CommonsChunkPlugin / splitChunks
+- 优势：避免重复打包，利用缓存
+
+【5. 按需加载（On-demand）】
+
+- 适用：非首屏功能（如分析脚本、广告）
+- 实现：用户交互或条件触发时加载
+- 优势：不阻塞首屏渲染
+
+【最佳实践】
+
+1. 初始 bundle &lt; 200KB（gzip 后）
+2. 关键路径代码不分割或预加载
+3. 路由分割 + 预加载策略
+4. 第三方库单独打包，利用长期缓存
+5. 使用 HTTP/2 时，可适当增加 chunk 数量
+6. 监控 chunk 加载时间，避免过度分割
+
+---
+
+## 面试题（4 题）
+
+### 1. 首屏慢问题排查
+
+给你一个"首屏慢"的页面，你的完整排查路径是什么（先证据后结论）？需要收集哪些数据？
+
+**【作答】：**
+
+【排查路径：先证据后结论】
+
+第一步：收集性能数据（证据）
+
+1. Core Web Vitals 指标：FCP、LCP、FID/INP、CLS、TTI
+2. 网络性能数据：DNS/TCP/TLS 时间、TTFB、资源加载瀑布图、请求数量和传输量
+3. 渲染性能数据：主线程时间线、Long Task、布局/重排次数、重绘次数、合成层数量
+4. 资源分析：JS/CSS/图片体积、未使用代码比例、关键资源加载时间、阻塞资源识别
+
+第二步：定位瓶颈（分析证据）
+
+1. 网络瓶颈：TTFB > 600ms → 服务器响应慢或网络延迟；资源加载时间长 → CDN 或压缩问题
+2. 渲染瓶颈：FCP 慢但 TTFB 正常 → CSS/JS 阻塞；LCP 慢 → 图片问题；TTI 慢 → JS 执行时间长
+3. 资源瓶颈：JS 体积大 → 代码分割；未使用代码多 → Tree Shaking；图片未优化 → 格式/压缩/懒加载
+
+第三步：验证假设（实验）
+
+- 使用 Chrome DevTools：Performance、Network、Lighthouse、Coverage
+- 对比测试：禁用资源、模拟慢网络、对比优化前后指标
+
+第四步：制定优化方案（结论）
+
+- 网络问题 → CDN、压缩、HTTP/2
+- 渲染阻塞 → 关键 CSS 内联、JS 异步
+- 资源体积 → 代码分割、Tree Shaking
+- 图片问题 → 格式优化、懒加载
+
+【需要收集的数据清单】
+
+- 性能指标：Navigation Timing、Resource Timing、Paint Timing、Performance Observer
+- 网络数据：请求瀑布图、资源大小/加载时间/优先级、阻塞资源列表、慢请求识别
+- 渲染数据：主线程时间线、Long Task 列表、布局/重排触发点、合成层信息
+- 资源分析：Bundle 分析、未使用代码覆盖率、关键资源依赖图、第三方库体积占比
+- 环境数据：设备类型、网络类型、浏览器版本、地理位置
+- 工具推荐：Chrome DevTools、WebPageTest、RUM 工具、Bundle 分析工具
+
+```
+
+---
+
+### 2. JS 体积与性能
+为什么"减少 JS 体积"不等于"性能一定更好"？举例说明可能的反例和权衡点。
+
+**【作答】：**
+
+```
+
+【核心原因】
+JS 体积只是性能的一个维度，性能 = 网络传输 + 解析编译 + 执行时间。
+减少体积主要优化"网络传输"，但可能影响"解析编译"和"执行时间"。
+
+【反例 1：过度代码分割】
+场景：将 500KB 代码分割成 50 个 10KB 的 chunk
+问题：HTTP/1.1 下 50 个请求的延迟 > 1 个大请求；每个 chunk 需要单独解析和编译；可能导致"请求瀑布"
+结果：体积减少，但总加载时间反而增加
+权衡：在 HTTP/2 下可适当增加 chunk 数，但需控制合理范围
+
+【反例 2：压缩过度导致执行变慢】
+场景：使用极致压缩（如 closure compiler advanced mode）
+问题：变量名缩短可能阻止 V8 优化（内联缓存失效）；代码可读性差，调试困难
+结果：体积减少 20%，但执行时间增加 10%
+权衡：使用标准压缩（terser default），平衡体积和执行性能
+
+【反例 3：移除"未使用"代码但影响缓存】
+场景：Tree Shaking 移除大量代码，但破坏了 vendor chunk 的稳定性
+问题：业务代码和 vendor 代码混在一起；业务代码更新导致整个 bundle 失效；缓存命中率下降
+结果：体积减少，但重复访问性能变差
+权衡：合理分割 vendor 和业务代码，利用长期缓存
+
+【反例 4：内联关键代码但增加 HTML 体积】
+场景：将关键 JS 内联到 HTML 以减少请求
+问题：HTML 体积增大，TTFB 可能增加；HTML 无法单独缓存；内联代码无法利用浏览器预解析
+结果：请求数减少，但 HTML 传输时间增加
+权衡：只内联极小关键代码（&lt;14KB），其余使用 preload
+
+【反例 5：使用更小的库但功能缺失】
+场景：用轻量库替代功能库（如 day.js 替代 moment.js）
+问题：功能缺失需要额外代码实现；可能引入 bug 或性能问题；开发效率下降
+结果：库体积减少，但总代码量或执行时间可能增加
+权衡：评估实际使用功能，选择合适方案
+
+【反例 6：延迟加载但影响交互】
+场景：将交互相关代码延迟加载
+问题：用户点击时需等待 chunk 加载；交互延迟增加（FID/INP 变差）；用户体验下降
+结果：初始加载快，但交互响应慢
+权衡：关键交互代码应在初始 bundle，非关键功能可延迟
+
+【性能权衡框架】
+
+- 网络传输：体积小传输快，但请求数多延迟增加
+- 解析编译：体积小解析快，但代码分割多次解析
+- 执行阶段：体积小执行代码少，但压缩过度执行变慢
+- 缓存阶段：体积小下载快，但分割不当缓存失效
+
+【最佳实践】
+
+1. 关注总加载时间，而非单纯体积
+2. 使用 HTTP/2 时，可适当增加 chunk 数
+3. 关键路径代码不分割或预加载
+4. 平衡压缩率和执行性能
+5. 利用缓存策略，而非一味减少体积
+6. 监控真实性能指标（FCP、LCP、TTI），而非只看体积
+
+---
+
+### 3. RUM 闭环优化
+
+你如何用 RUM（真实用户监控）闭环性能优化：指标选择、归因分析、A/B 实验、回滚策略？
+
+**【作答】：**
+
+【RUM 闭环流程】
+数据收集 → 指标分析 → 问题归因 → 优化实施 → A/B 验证 → 效果评估 → 回滚/推广
+
+【1. 指标选择】
+
+【核心指标（Core Web Vitals）】
+
+- LCP（Largest Contentful Paint）：加载性能，&lt; 2.5s 良好
+- FID/INP（First Input Delay / Interaction to Next Paint）：交互性，&lt; 100ms 良好
+- CLS（Cumulative Layout Shift）：视觉稳定性，&lt; 0.1 良好
+
+【辅助指标】
+
+- FCP（First Contentful Paint）：首次内容绘制
+- TTI（Time to Interactive）：可交互时间
+- TBT（Total Blocking Time）：总阻塞时间
+- FCP to LCP：内容绘制间隔
+
+【业务指标】
+
+- 页面 PV/UV、跳出率、转化率（与性能关联分析）、用户停留时间
+
+【自定义指标】
+
+- 关键功能加载时间（如搜索、支付）
+- 第三方脚本加载时间、错误率
+
+【2. 归因分析】
+
+【维度划分】
+
+1. 设备维度：移动端 vs 桌面端、iOS vs Android、低端设备 vs 高端设备
+2. 网络维度：3G / 4G / 5G / WiFi、不同运营商、不同地区（CDN 覆盖）
+3. 页面维度：不同路由/页面、首屏 vs 内页、新用户 vs 回访用户
+4. 时间维度：不同时段（高峰/低峰）、工作日 vs 周末、版本发布前后对比
+
+【归因方法】
+
+1. 相关性分析：性能指标与业务指标的相关性，识别影响最大的性能问题
+2. 分位数分析：P50（中位数）、P75、P95、P99，关注长尾用户（P95+）体验
+3. 异常检测：识别性能突降时间点，关联代码发布、配置变更
+4. 用户分群：按设备/网络/地区分群，识别特定用户群体的性能问题
+
+【3. A/B 实验】
+
+【实验设计】
+
+1. 假设提出：基于归因分析，提出优化假设（例："减少首屏 JS 体积可提升 LCP 20%"）
+2. 实验分组：对照组（A）当前版本，实验组（B）优化版本，随机分配用户
+3. 样本量计算：根据预期提升幅度和统计显著性要求，通常需要数千到数万样本
+4. 实验时长：至少 1-2 周，覆盖不同时段和用户类型，避免节假日等异常时段
+
+【监控指标】
+
+- 性能指标：LCP、FID、CLS、TTI
+- 业务指标：转化率、跳出率、停留时间
+- 技术指标：错误率、崩溃率
+
+【统计验证】
+
+- 使用 t-test 或 Mann-Whitney U 检验
+- 确保统计显著性（p &lt; 0.05）
+- 检查置信区间
+
+【4. 回滚策略】
+
+【回滚触发条件】
+
+1. 性能回退：核心指标下降 > 10%，P95 用户性能明显变差
+2. 业务影响：转化率下降 > 5%，错误率增加 > 20%，用户投诉增加
+3. 技术问题：崩溃率增加、关键功能异常、第三方服务异常
+
+【回滚流程】
+
+1. 立即回滚：自动化回滚机制（如 feature flag），保留优化代码，通过配置控制
+2. 数据分析：分析回滚原因，区分是优化方案问题还是其他因素
+3. 问题修复：修复问题后重新实验，或调整优化方案
+
+【灰度发布策略】
+
+- 小流量（5%）→ 中流量（20%）→ 全量（100%）
+- 每阶段观察 1-2 天，发现问题立即回滚
+
+【5. 完整闭环示例】
+
+【阶段 1：数据收集】
+
+- 部署 RUM SDK，收集 1 周基线数据
+- 发现：移动端 LCP P95 = 4.2s（目标 &lt; 2.5s）
+
+【阶段 2：归因分析】
+
+- 分析发现：首屏 JS 体积 800KB，加载时间 2.1s
+- 相关性：JS 体积与 LCP 相关系数 0.75
+
+【阶段 3：优化实施】
+
+- 方案：代码分割 + 延迟非关键 JS
+- 预期：JS 体积减少 60%，LCP 提升 30%
+
+【阶段 4：A/B 实验】
+
+- 实验组：优化版本（50% 流量）
+- 对照组：原版本（50% 流量）
+- 时长：2 周
+
+【阶段 5：效果评估】
+
+- 结果：LCP P95 从 4.2s → 2.8s（提升 33%）
+- 业务指标：转化率提升 5%（统计显著）
+- 决策：全量发布
+
+【阶段 6：持续监控】
+
+- 全量后持续监控 1 周
+- 确认无回退，优化完成
+
+【工具推荐】
+
+- RUM：Google Analytics、New Relic、Datadog、Sentry
+- A/B 测试：Google Optimize、Optimizely、自建
+- 分析：BigQuery、Tableau、Grafana
+
+---
+
+### 4. 性能优化 Case
+
+讲一个你做过的性能优化 case：初始指标、关键决策、实施过程、最终效果、踩坑经验。
+
+**【作答】：**
+
+【案例：电商首页性能优化】
+
+【背景】
+某电商平台首页首屏加载缓慢，用户反馈卡顿，移动端体验尤其差。
+需要系统性优化，提升 Core Web Vitals 指标。
+
+【初始指标（优化前）】
+
+- LCP：移动端 P95 = 4.8s（目标 &lt; 2.5s）
+- FID：P95 = 280ms（目标 &lt; 100ms）
+- CLS：0.25（目标 &lt; 0.1）
+- TTI：8.2s
+- 首屏 JS 体积：850KB（gzip 后）
+- 首屏请求数：45 个
+- 跳出率：42%
+
+【问题分析】
+
+1. 性能分析工具（Lighthouse + Performance）：
+
+   - 发现 3 个 Long Task（总计 320ms）
+   - 首屏图片未优化（总大小 2.1MB）
+   - 关键 CSS 阻塞渲染（280KB）
+   - 第三方脚本阻塞（广告、分析）
+
+2. 网络分析：
+
+   - TTFB：1.2s（服务器响应慢）
+   - 资源加载串行（HTTP/1.1）
+   - 未使用 CDN
+
+3. 代码分析：
+   - Bundle 分析发现大量未使用代码（30%）
+   - 第三方库体积大（moment.js 70KB）
+   - 未做代码分割
+
+【关键决策】
+
+【决策 1：代码分割策略】
+
+- 路由级别分割：首页、列表页、详情页独立 chunk
+- 组件级别分割：弹窗、折叠内容延迟加载
+- Vendor 分割：第三方库单独打包，利用长期缓存
+- 关键决策：保留首屏必需代码在初始 bundle（&lt; 200KB）
+
+【决策 2：资源优化优先级】
+
+1. 图片优化（影响 LCP）→ 最高优先级
+2. JS 体积优化（影响 TTI）→ 高优先级
+3. CSS 优化（影响 FCP）→ 中优先级
+4. 第三方脚本优化（影响 FID）→ 中优先级
+
+【决策 3：技术选型】
+
+- 图片格式：WebP + AVIF（降级 JPEG）
+- 构建工具：Webpack 5（Tree Shaking + Code Splitting）
+- CDN：阿里云 CDN（国内加速）
+- 监控：自建 RUM + Google Analytics
+
+【实施过程】
+
+【阶段 1：图片优化（第 1 周）】
+
+1. 格式转换：使用 sharp 批量转换为 WebP，关键图片提供 AVIF 格式
+2. 响应式图片：生成多尺寸版本（400w, 800w, 1200w），使用 srcset + sizes
+3. 懒加载：首屏外图片使用 loading="lazy"，使用 Intersection Observer 优化
+4. CDN 配置：图片上传到 CDN，配置自动压缩和格式转换
+   结果：图片总大小从 2.1MB → 680KB（减少 68%）
+
+【阶段 2：JS 优化（第 2 周）】
+
+1. 代码分割：路由分割（React.lazy() + Suspense），webpack splitChunks 配置
+2. Tree Shaking：移除未使用的 moment.js，改用 day.js，按需导入 lodash
+3. 压缩优化：使用 terser 压缩，移除 console、注释
+4. 动态导入：非关键功能（如分享、评论）延迟加载
+   结果：首屏 JS 从 850KB → 280KB（减少 67%）
+
+【阶段 3：CSS 优化（第 3 周）】
+
+1. 关键 CSS 内联：提取首屏关键 CSS（&lt; 14KB），内联到 `&lt;head >`
+2. 非关键 CSS 异步加载：使用 preload + onload 切换 rel
+3. 移除未使用样式：使用 PurgeCSS 移除未使用样式，减少 CSS 体积 40%
+
+【阶段 4：第三方脚本优化（第 4 周）】
+
+1. 延迟加载：分析脚本延迟到 onload 后，广告脚本使用 async
+2. 使用 preconnect：提前建立第三方服务连接
+3. 条件加载：移动端不加载桌面端专用脚本
+
+【阶段 5：服务器优化（第 5 周）】
+
+1. 启用 HTTP/2、Brotli 压缩
+2. 配置缓存策略：静态资源 1 年，HTML 无缓存，API 5 分钟
+3. 优化 TTFB：服务器端缓存，数据库查询优化
+
+【最终效果（优化后）】
+
+- LCP：移动端 P95 = 2.1s（提升 56%，达到良好标准）
+- FID：P95 = 85ms（提升 70%，达到良好标准）
+- CLS：0.08（提升 68%，达到良好标准）
+- TTI：4.5s（提升 45%）
+- 首屏 JS 体积：280KB（减少 67%）
+- 首屏请求数：28 个（减少 38%）
+- 跳出率：32%（下降 10 个百分点）
+- 转化率：提升 8%（统计显著）
+
+【踩坑经验】
+
+【坑 1：过度代码分割】
+问题：将代码分割成 30+ 个 chunk，HTTP/1.1 下加载变慢
+解决：合并小 chunk，控制在 10 个以内，或升级 HTTP/2
+教训：分割需平衡体积和请求数
+
+【坑 2：关键资源延迟加载】
+问题：将首屏渲染必需的组件延迟加载，导致 LCP 变慢
+解决：识别关键路径资源，确保优先加载
+教训：不是所有代码都适合延迟加载
+
+【坑 3：图片格式兼容性】
+问题：部分老旧浏览器不支持 WebP，显示异常
+解决：使用 `&lt;picture>` 提供降级方案，充分测试
+教训：新技术需考虑兼容性和降级方案
+
+【坑 4：第三方脚本阻塞】
+问题：广告脚本同步加载，阻塞主线程
+解决：使用 async 或延迟加载，但需注意功能依赖
+教训：第三方脚本需谨慎处理，避免阻塞关键路径
+
+【坑 5：缓存策略不当】
+问题：HTML 设置了长期缓存，更新后用户看不到新版本
+解决：HTML 不缓存，静态资源使用版本号或 hash
+教训：不同资源类型需不同缓存策略
+
+【经验总结】
+
+1. 性能优化是系统性工程，需多维度配合
+2. 数据驱动：先测量再优化，用数据验证效果
+3. 平衡取舍：体积、请求数、缓存、兼容性需权衡
+4. 持续监控：优化后持续监控，避免回退
+5. 用户体验优先：关注真实用户指标，而非实验室指标
+
+---
