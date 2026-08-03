@@ -1,0 +1,27 @@
+{
+  "title": "面试准备",
+  "root": true,
+  "pages": [
+    "index",
+    "INDEX",
+    "BLINDSPOTS",
+    "matrix__bundler-webpack-vite-rollup",
+    "matrix__cicd-release-strategy",
+    "matrix__form-formily-rjsf-custom",
+    "matrix__lowcode-ssr-csr-export",
+    "matrix__monorepo-lerna-nx",
+    "project__announce-plugin",
+    "project__dji-devops",
+    "project__dji-rms",
+    "project__dji-user-center",
+    "project__xdr-dashboard-report",
+    "tech__eslint-engineering",
+    "tech__micro-frontend-qiankun",
+    "tech__performance",
+    "tech__react",
+    "tech__rollup",
+    "tech__typescript",
+    "tech__vite",
+    "tech__webpack"
+  ]
+}

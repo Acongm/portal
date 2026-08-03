@@ -10,5 +10,6 @@
     "code/proxy-observe",
     "vue-render",
     "vue2"
-  ]
+  ],
+  "root": true
 }

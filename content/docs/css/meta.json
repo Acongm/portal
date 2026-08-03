@@ -4,5 +4,6 @@
     "index",
     "skill",
     "scss"
-  ]
+  ],
+  "root": true
 }

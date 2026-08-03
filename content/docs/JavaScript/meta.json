@@ -7,5 +7,6 @@
     "call、apply与bind",
     "js模拟bind方法",
     "js模拟new操作"
-  ]
+  ],
+  "root": true
 }

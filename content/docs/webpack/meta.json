@@ -11,5 +11,6 @@
     "install/pnpm",
     "install/yarn",
     "打包工具"
-  ]
+  ],
+  "root": true
 }

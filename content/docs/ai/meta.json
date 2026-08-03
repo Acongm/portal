@@ -2,5 +2,6 @@
   "title": "AI 开发",
   "pages": [
     "index"
-  ]
+  ],
+  "root": true
 }
