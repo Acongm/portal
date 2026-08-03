@@ -4,7 +4,7 @@
   "private": true,
   "description": "acongm portal — Next.js + Fumadocs documentation site",
   "engines": {
-    "node": ">=22"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "pnpm --filter web dev",
