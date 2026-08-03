@@ -1,0 +1,347 @@
+{
+  "/JavaScript/": [
+    {
+      "text": "JavaScript",
+      "children": [
+        "/JavaScript/",
+        "/JavaScript/经典闭包处理.md",
+        "/JavaScript/执行上下文-作用域链-闭包.md",
+        "/JavaScript/call、apply与bind.md",
+        "/JavaScript/js模拟bind方法.md",
+        "/JavaScript/js模拟new操作.md"
+      ]
+    }
+  ],
+  "/TypeScript/": [
+    {
+      "text": "TypeScript",
+      "children": [
+        "/TypeScript/",
+        "/TypeScript/Study.md"
+      ]
+    }
+  ],
+  "/css/": [
+    {
+      "text": "CSS",
+      "children": [
+        "/css/",
+        "/css/skill.md",
+        "/css/scss.md"
+      ]
+    }
+  ],
+  "/react/": [
+    {
+      "text": "React",
+      "children": [
+        "/react/class-hooks.md",
+        "/react/react16.md",
+        "/react/react17.md",
+        "/react/react18.md",
+        "/react/react-render.md"
+      ]
+    }
+  ],
+  "/vue/": [
+    {
+      "text": "Vue",
+      "children": [
+        "/vue/",
+        "/vue/vue_theory.md",
+        "/vue/vue_interview.md",
+        "/vue/vue3.md",
+        "/vue/code/Object.defineproperty.md",
+        "/vue/code/Proxy.md",
+        "/vue/code/proxy-observe.md",
+        "/vue/vue-render.md",
+        "/vue/vue2.md"
+      ]
+    }
+  ],
+  "/Pattern/": [
+    {
+      "text": "设计模式",
+      "children": [
+        "/Pattern/",
+        "/Pattern/模式来源与类比.md",
+        "/Pattern/COMPARISON.md"
+      ]
+    },
+    {
+      "text": "EventBus",
+      "children": [
+        "/Pattern/EventBus/",
+        "/Pattern/EventBus/EventBus.md",
+        "/Pattern/EventBus/EventBusSingleton.md"
+      ]
+    },
+    {
+      "text": "Observer",
+      "children": [
+        "/Pattern/Observer/",
+        "/Pattern/Observer/Subject.md",
+        "/Pattern/Observer/ObserverSingleton.md"
+      ]
+    },
+    {
+      "text": "Store",
+      "children": [
+        "/Pattern/Store/",
+        "/Pattern/Store/Store.md",
+        "/Pattern/Store/StoreSingleton.md"
+      ]
+    },
+    {
+      "text": "ProxyStore",
+      "children": [
+        "/Pattern/ProxyStore/",
+        "/Pattern/ProxyStore/ProxyStore.md",
+        "/Pattern/ProxyStore/ProxyStoreSingleton.md"
+      ]
+    },
+    {
+      "text": "CustomEvent",
+      "children": [
+        "/Pattern/CustomEvent/",
+        "/Pattern/CustomEvent/CustomEventBridge.md",
+        "/Pattern/CustomEvent/CustomEventSingleton.md"
+      ]
+    },
+    {
+      "text": "BroadcastChannel",
+      "children": [
+        "/Pattern/BroadcastChannel/",
+        "/Pattern/BroadcastChannel/BroadcastBridge.md",
+        "/Pattern/BroadcastChannel/BroadcastSingleton.md"
+      ]
+    },
+    {
+      "text": "ServiceRequest",
+      "children": [
+        "/Pattern/ServiceRequest/",
+        "/Pattern/ServiceRequest/Registry.md",
+        "/Pattern/ServiceRequest/ServiceRequestRegistry.md",
+        "/Pattern/ServiceRequest/SharedStateBridge.md",
+        "/Pattern/ServiceRequest/SharedStateBridgeSingleton.md"
+      ]
+    }
+  ],
+  "/webpack/": [
+    {
+      "text": "Webpack",
+      "children": [
+        "/webpack/知识梳理.md",
+        "/webpack/架构及原理.md",
+        "/webpack/vite-知识梳理.md",
+        "/webpack/vite-架构及原理.md",
+        "/webpack/webpack-vite-rollup.md",
+        "/webpack/install/ni.md",
+        "/webpack/install/npm.md",
+        "/webpack/install/pnpm.md",
+        "/webpack/install/yarn.md",
+        "/webpack/打包工具.md"
+      ]
+    }
+  ],
+  "/node/": [
+    {
+      "text": "Node.js",
+      "children": [
+        "/node/npm.md",
+        "/node/toolkit.md"
+      ]
+    }
+  ],
+  "/git/": [
+    {
+      "text": "Git",
+      "children": [
+        "/git/",
+        "/git/command.md",
+        "/git/commit.md"
+      ]
+    }
+  ],
+  "/performance/": [
+    {
+      "text": "性能优化",
+      "children": [
+        "/performance/"
+      ]
+    }
+  ],
+  "/mark/": [
+    {
+      "text": "技能提炼",
+      "children": [
+        "/mark/",
+        "/mark/01-React核心原理.md",
+        "/mark/01-React核心原理-补充.md",
+        "/mark/02-Webpack与构建工具.md",
+        "/mark/03-性能优化.md",
+        "/mark/04-微前端.md",
+        "/mark/05-低代码.md",
+        "/mark/06-插件系统.md",
+        "/mark/07-NestJS与SSR.md",
+        "/mark/08-代码规范.md",
+        "/mark/09-Promise原理.md",
+        "/mark/10-骨架屏.md",
+        "/mark/11-HTTP与缓存.md",
+        "/mark/React更新流程详解.md",
+        "/mark/ai-doc-content-enhancement.md"
+      ]
+    }
+  ],
+  "/ai/": [
+    {
+      "text": "AI 开发",
+      "children": [
+        "/ai/"
+      ]
+    }
+  ],
+  "/daily-news/": [
+    {
+      "text": "每日资讯",
+      "children": [
+        "/daily-news/2026-08-03.md",
+        "/daily-news/2026-07-31.md",
+        "/daily-news/2026-07-30.md",
+        "/daily-news/2026-07-29.md",
+        "/daily-news/2026-07-28.md",
+        "/daily-news/2026-07-27.md",
+        "/daily-news/2026-07-26.md",
+        "/daily-news/2026-07-25.md",
+        "/daily-news/2026-07-24.md",
+        "/daily-news/2026-07-23.md",
+        "/daily-news/2026-07-22.md",
+        "/daily-news/2026-06-23.md",
+        "/daily-news/2026-06-22.md",
+        "/daily-news/2026-06-21.md",
+        "/daily-news/2026-06-20.md",
+        "/daily-news/2026-06-19.md",
+        "/daily-news/2026-06-18.md",
+        "/daily-news/2026-06-17.md",
+        "/daily-news/2026-06-16.md",
+        "/daily-news/2026-06-15.md",
+        "/daily-news/2026-06-14.md",
+        "/daily-news/2026-06-13.md",
+        "/daily-news/2026-06-12.md",
+        "/daily-news/2026-06-11.md",
+        "/daily-news/2026-06-10.md",
+        "/daily-news/2026-06-09.md",
+        "/daily-news/2026-06-08.md",
+        "/daily-news/2026-06-07.md",
+        "/daily-news/2026-06-06.md",
+        "/daily-news/2026-06-05.md",
+        "/daily-news/2026-06-04.md",
+        "/daily-news/2026-06-03.md",
+        "/daily-news/2026-06-02.md",
+        "/daily-news/2026-06-01.md",
+        "/daily-news/2026-05-26.md",
+        "/daily-news/2026-05-25.md",
+        "/daily-news/2026-05-24.md",
+        "/daily-news/2026-05-23.md",
+        "/daily-news/2026-05-22.md",
+        "/daily-news/2026-05-21.md",
+        "/daily-news/2026-05-20.md",
+        "/daily-news/2026-05-19.md",
+        "/daily-news/2026-05-18.md",
+        "/daily-news/2026-05-17.md",
+        "/daily-news/2026-05-15.md",
+        "/daily-news/2026-05-14.md",
+        "/daily-news/2026-05-13.md",
+        "/daily-news/2026-05-12.md",
+        "/daily-news/2026-05-11.md",
+        "/daily-news/2026-05-10.md",
+        "/daily-news/2026-05-09.md",
+        "/daily-news/2026-05-08.md",
+        "/daily-news/2026-05-07.md",
+        "/daily-news/2026-05-06.md",
+        "/daily-news/2026-05-05.md",
+        "/daily-news/2026-05-04.md",
+        "/daily-news/2026-05-03.md",
+        "/daily-news/2026-05-02.md",
+        "/daily-news/2026-04-09.md"
+      ]
+    }
+  ],
+  "/issue/": [
+    {
+      "text": "踩坑记录",
+      "children": [
+        "/issue/h5.md",
+        "/issue/pc.md"
+      ]
+    }
+  ],
+  "/utils/": [
+    {
+      "text": "工具函数",
+      "children": [
+        "/utils/regexp.md",
+        "/utils/function.md",
+        "/utils/library.md"
+      ]
+    }
+  ],
+  "/online-tools/": [
+    {
+      "text": "在线工具",
+      "children": [
+        "/online-tools/",
+        "/online-tools/bookmark-scripts.md"
+      ]
+    }
+  ],
+  "/software/": [
+    {
+      "text": "软件推荐",
+      "children": [
+        "/software/cross-platform.md",
+        "/software/mac.md",
+        "/software/windows.md",
+        "/software/browser.md",
+        "/software/vscode.md",
+        "/software/webstorm.md",
+        "/software/zsh.md",
+        "/software/claude-skills-guide.md"
+      ]
+    }
+  ],
+  "/interview-prep/": [
+    {
+      "text": "面试准备",
+      "link": "/interview-prep/"
+    }
+  ],
+  "/theory/": [
+    {
+      "text": "面试题库",
+      "link": "/theory/"
+    }
+  ],
+  "/interview/": [
+    {
+      "text": "面试记录",
+      "children": [
+        "/interview/2025-04-28.md",
+        "/interview/2025-04-28-analysis.md"
+      ]
+    }
+  ],
+  "/job-description/": [
+    {
+      "text": "简历问答",
+      "children": [
+        "/job-description/ASK_LIST.md",
+        "/job-description/ASK_RECORD_SPEAK_AI.md",
+        "/job-description/ASK_CODE_EXAMPLES.md",
+        "/job-description/ASK_RECORD_KEY.md",
+        "/job-description/ASK_RECORD_BOOK_AI.md",
+        "/job-description/web前端开发工程师-彭聪.md"
+      ]
+    }
+  ]
+}

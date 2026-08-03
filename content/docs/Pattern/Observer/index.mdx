@@ -1,0 +1,147 @@
+---
+title: "观察者模式 (Observer Pattern)"
+---
+
+# 观察者模式 (Observer Pattern)
+
+## 概述
+
+观察者模式定义了对象之间的一对多依赖关系。当被观察者（Subject）状态发生变化时，所有依赖它的观察者（Observer）都会收到通知并自动更新。
+
+## 与发布订阅模式的区别
+
+| 特性     | 观察者模式         | 发布订阅模式           |
+| -------- | ------------------ | ---------------------- |
+| 耦合度   | 观察者知道 Subject | 完全解耦，通过中间调度 |
+| 关系     | 一对多             | 多对多                 |
+| 通信方式 | 直接调用           | 通过事件中心           |
+
+```text
+观察者模式：  Subject ----> Observer1
+                    \----> Observer2
+
+发布订阅：   Publisher --> EventCenter --> Subscriber1
+                                     \--> Subscriber2
+```
+
+## 核心类
+
+### Subject\&lt;T\>
+
+单个主题，管理一组观察者。
+
+```typescript
+const subject = new Subject<number>()
+
+// 添加观察者
+subject.attach((value) => console.log('Observer 1:', value))
+subject.attach((value) => console.log('Observer 2:', value))
+
+// 通知所有观察者
+subject.notify(42)
+// 输出:
+// Observer 1: 42
+// Observer 2: 42
+```
+
+## 同一需求最小示例：Counter（更像“手动发布”）
+
+需求：多个地方监听 `count`，任意地方更新时通知所有监听者。
+
+```typescript
+import { Subject } from './Subject'
+
+const counter$ = new Subject<number>()
+
+const observerA = (value: number) => {
+  console.log('A count =', value)
+}
+
+const observerB = (value: number) => {
+  console.log('B count =', value)
+}
+
+counter$.attach(observerA)
+counter$.attach(observerB)
+
+// ✅ 需要你“手动发布”一次更新
+counter$.notify(1)
+counter$.notify(10)
+
+// 取消订阅
+counter$.detach(observerA)
+counter$.detach(observerB)
+```
+
+### SubjectManager
+
+多主题管理器，按 key 管理多个 Subject。
+
+```typescript
+const manager = new SubjectManager()
+
+manager.subscribe('user', (user) => console.log(user))
+manager.publish('user', { name: 'John' })
+```
+
+## API 文档
+
+### 推荐用法（Subject/Observer 风格）
+
+```typescript
+import { subject } from './ObserverSingleton'
+```
+
+#### subject(key)
+
+获取一个“主题（Subject）”，直接用 `attach/detach/notify`。
+
+```typescript
+const user$ = subject<UserProfile>('user.profile')
+
+const handler = (profile: UserProfile) => {
+  console.log('profile:', profile)
+}
+
+user$.attach(handler)
+user$.notify({ name: 'John', age: 30 })
+
+// 读取当前状态
+const current = user$.getState()
+
+// 清空（会通知观察者，值为 undefined）
+user$.clear()
+
+// 取消订阅
+user$.detach(handler)
+```
+
+## React Hook 示例
+
+```typescript
+function useObserver<T>(key: string): T | undefined {
+  const [data, setData] = useState<T | undefined>(() =>
+    subject<T>(key).getState()
+  )
+
+  useEffect(() => {
+    const s = subject<T>(key)
+    s.attach(setData)
+    return () => s.detach(setData)
+  }, [key])
+
+  return data
+}
+
+// 使用
+function UserProfile() {
+  const user = useObserver<User>('user.profile')
+  return <div>{user?.name}</div>
+}
+```
+
+## 适用场景
+
+- 一个对象的变化需要通知多个依赖对象
+- 需要在不知道具体观察者的情况下通知更新
+- 对象间存在一对多的依赖关系

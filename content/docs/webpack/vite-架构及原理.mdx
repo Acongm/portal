@@ -1,0 +1,203 @@
+---
+title: "vite - 架构及原理"
+---
+
+# vite - 架构及原理
+
+要深入理解 **Vite 的架构与原理**，我们需要从它解决的问题出发，剖析其**核心设计思想、模块系统、构建流程、插件机制**以及**开发/生产双模式的实现差异**。以下是面向前端开发者（尤其是熟悉 Webpack 的你）的系统性剖析。
+
+---
+
+## 一、背景：为什么需要 Vite？
+
+传统构建工具（如 Webpack）在开发阶段需要：
+
+1. **打包整个应用**（包括 node_modules）；
+2. **启动慢**（大型项目可能数十秒）；
+3. **HMR（热更新）需重建依赖图**，效率低。
+
+而现代浏览器（Chrome 61+、Safari 10.1+ 等）早已支持 **原生 ES 模块（ESM）**：
+
+```html
+<script type="module" src="/src/main.js"></script>
+```
+
+Vite 正是基于这一事实，提出 **“开发时不打包，生产时再打包”** 的理念。
+
+---
+
+## 二、Vite 的整体架构
+
+Vite 由两大核心部分组成：
+
+| 模式                         | 核心技术            | 职责                               |
+| ---------------------------- | ------------------- | ---------------------------------- |
+| **开发服务器（Dev Server）** | Koa + ESM + esbuild | 提供按需加载、HMR、模块转换        |
+| **生产构建器（Builder）**    | Rollup              | 打包、Tree-shaking、代码分割、压缩 |
+
+它们共享同一套配置（`vite.config.ts`）和插件系统。
+
+> 💡 架构图简化为：
+>
+> ```
+> 源码（TS/JSX/CSS等）
+>     ↓
+> [开发模式] → Koa Dev Server → 浏览器（原生 ESM）
+>     ↓
+> [生产模式] → Rollup → 静态资源（JS/CSS/HTML）
+> ```
+
+---
+
+## 三、开发模式原理详解
+
+### 1. 启动流程
+
+1. **启动 Koa 服务器**（默认端口 5173）；
+2. **预构建依赖（Dep Pre-bundling）**：
+   - 扫描 `import` 语句，提取依赖（如 `react`, `antd`）；
+   - 使用 **esbuild**（Rust 编写，速度比 Webpack 快 10–100 倍）将 CJS/UMD 依赖转换为 ESM；
+   - 缓存到 `node_modules/.vite/`，避免重复构建；
+3. **等待浏览器请求**（如 `http://localhost:5173/src/main.tsx`）。
+
+### 2. 按需加载（On-Demand Loading）
+
+- 浏览器请求 `main.tsx` → Vite 拦截请求；
+- Vite **实时编译**该文件（TS → JS、JSX → JS、CSS Modules 处理等）；
+- 返回合法 ESM 代码，其中 `import` 路径被重写为可访问的 URL：
+
+  ```js
+  // 源码
+  import { Button } from 'antd'
+  import App from './App'
+
+  // Vite 返回给浏览器
+  import { Button } from '/node_modules/.vite/deps/antd.js?v=abc123'
+  import App from '/src/App.tsx?t=1700000000000'
+  ```
+
+- 浏览器递归加载这些模块，形成依赖树。
+
+> ✅ 关键：**不打包，只转换单个文件**，启动速度 ≈ 0。
+
+### 3. 热模块替换（HMR）
+
+- 通过 WebSocket 建立浏览器与服务器通信；
+- 当文件变化时：
+  - Vite 分析**最小受影响模块集**；
+  - 向浏览器发送 `update` 消息（含模块 ID 和新代码）；
+  - 框架插件（如 `@vitejs/plugin-react`）调用 `import.meta.hot.accept()` 执行替换；
+- React 组件可实现**状态保留的热更新**（Fast Refresh）。
+
+> 🌟 对比 Webpack HMR：Vite 无需重建整个 chunk，只更新变更模块，速度极快。
+
+---
+
+## 四、生产构建原理
+
+开发时不打包，但生产环境仍需打包优化。Vite 使用 **Rollup** 完成：
+
+1. **入口分析**：从 HTML 文件（如 `index.html）提取 &lt;script type="module"> 入口；
+2. **依赖解析**：构建完整模块图；
+3. **代码优化**：
+   - Tree-shaking（移除未引用代码）；
+   - 代码分割（动态 import 自动分块）；
+   - 资源哈希（`[name].[hash].js`）；
+   - 压缩（Terser 或 esbuild）；
+4. **输出静态目录**（默认 `dist/`）。
+
+> ⚠️ 注意：Vite 的生产构建**不使用 esbuild 打包**（因 esbuild 缺少 Tree-shaking 等高级功能），但可配置 `build.minify: 'esbuild'` 仅用于压缩。
+
+---
+
+## 五、插件系统（Plugin Architecture）
+
+Vite 插件基于 **Rollup 插件接口**扩展，支持两种模式：
+
+### 1. 通用 Hook（Dev + Build 都执行）
+
+- `config`：修改最终配置；
+- `configureServer`：扩展 Dev Server（如添加中间件）；
+- `transformIndexHtml`：修改 HTML 内容。
+
+### 2. Rollup Hook（Build 阶段为主）
+
+- `resolveId`：自定义模块解析（如虚拟模块 `virtual:my-plugin`）；
+- `load`：提供模块内容；
+- `transform`：转换单个模块（如处理 `.md` 文件）；
+- `generateBundle`：修改最终输出。
+
+### 示例：自定义插件结构
+
+```ts
+// my-vite-plugin.ts
+export default function myPlugin() {
+  return {
+    name: 'my-plugin',
+    enforce: 'pre', // 执行顺序：pre < normal < post
+    config(config, { command }) {
+      // command: 'serve' 或 'build'
+    },
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        // 自定义中间件
+      })
+    },
+    transform(code, id) {
+      if (id.endsWith('.foo')) {
+        return { code: compileFoo(code) }
+      }
+    }
+  }
+}
+```
+
+> ✅ 对你而言：可复用大量 Rollup 插件，也可编写针对 Backstage 插件加载的自定义插件。
+
+---
+
+## 六、关键设计优势总结
+
+| 特性         | 实现机制                    | 带来的优势                 |
+| ------------ | --------------------------- | -------------------------- |
+| **极速启动** | ESM + 按需加载              | 无视项目大小，启动 &lt; 500ms |
+| **瞬时 HMR** | 精准模块更新                | 修改即生效，状态不丢失     |
+| **零配置**   | 内置转换器（TS/JSX/CSS 等） | 无需 loader 配置           |
+| **生产可靠** | Rollup 构建                 | 成熟的 Tree-shaking 和优化 |
+| **生态兼容** | Rollup 插件系统             | 无缝集成现有工具链         |
+
+---
+
+## 七、与 Webpack 的根本区别
+
+| 维度           | Webpack                  | Vite                               |
+| -------------- | ------------------------ | ---------------------------------- |
+| **开发哲学**   | “一切皆模块，必须打包”   | “浏览器已支持 ESM，无需开发时打包” |
+| **依赖处理**   | 全量解析打包             | 仅预构建 + 按需加载                |
+| **HMR 粒度**   | Chunk 级                 | Module 级                          |
+| **配置复杂度** | 高（loader/plugin 分离） | 低（统一插件接口）                 |
+| **适用场景**   | 旧浏览器、复杂定制       | 现代浏览器、追求 DX                |
+
+---
+
+## 八、延伸思考：Vite 的局限性
+
+1. **不支持 IE11**（因依赖 ESM）；
+2. **大型 monorepo** 中依赖预构建可能变慢（但可缓存）；
+3. **自定义构建逻辑** 比 Webpack 少（但 Rollup 已足够强大）。
+
+> 但对你当前技术栈（React + AntD + TS + 现代浏览器），Vite 是**更优解**。
+
+---
+
+## 九、推荐深入资源
+
+- Vite 源码仓库：https://github.com/vitejs/vite
+- 核心模块：
+  - `packages/vite/src/node/server/`：Dev Server 逻辑
+  - `packages/vite/src/node/build.ts`：生产构建入口
+- 尤雨溪演讲：[Rethinking Reactivity & Tooling](https://www.youtube.com/watch?v=AdNJ3fydeao)
+
+---
+
+如果你希望我结合你的实际项目（如 `my-ticket-agent` 或 Backstage 插件）给出 Vite 迁移方案或配置示例，也可以告诉我！

@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>web前端开发工程师-彭聪-软通.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+<link rel="stylesheet" href="file:///Users/acongm/Library/Application%20Support/Code/User/styles/typora-theme-lapis-v1.2.1/lapis.css" type="text/css"><link rel="stylesheet" href="file:///Users/acongm/Library/Application%20Support/Code/User/styles/lapis-style.css" type="text/css">
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="%E5%BD%AD%E8%81%AA">彭聪</h1>
+<p>​<strong>男 | 30 岁 | 15012977144 | acongm@126.com</strong>​<br>
+​<strong>9 年经验 | 前端开发工程师 | 深圳</strong>​</p>
+<hr>
+<h2 id="%E6%8A%80%E6%9C%AF%E5%88%B6%E9%AB%98%E7%82%B9">技术制高点</h2>
+<ul>
+<li>🚀 ​<strong>复杂系统重构</strong>​：主导千万级用户系统（用户中心/RMS），日均承载 120W+请求</li>
+<li>🛠️ ​<strong>工程化专家</strong>​：低代码平台首批实践者，自研工具链提升效能 30%</li>
+<li>⚡ ​<strong>性能攻坚</strong>​：LCP 优化 28.9% | 首屏加载&lt;1.5s | 万级数据秒开</li>
+<li>📦 ​<strong>架构设计</strong>​：跨系统插件体系（公告系统）| 微前端解决方案</li>
+</ul>
+<hr>
+<h2 id="%E6%97%97%E8%88%B0%E9%A1%B9%E7%9B%AE%E7%BB%8F%E5%8E%86">旗舰项目经历</h2>
+<h3 id="%E5%A4%A7%E7%96%86%E7%94%A8%E6%88%B7%E4%B8%AD%E5%BF%83%E9%87%8D%E6%9E%84202202-202404">大疆用户中心重构（2022.02-2024.04）</h3>
+<p>​<strong>角色：前端主力开发 ​</strong>​<br>
+▶ ​<strong>项目规模</strong>​：</p>
+<ul>
+<li>服务 1000W+注册用户 | 日均登录量 120W+</li>
+<li>整合 PC/移动端代码，维护成本降低 50%</li>
+</ul>
+<p>▶ ​<strong>技术突破</strong>​：</p>
+<ul>
+<li>响应式融合开发（一套代码多端适配）</li>
+<li>性能优化四板斧：<br>
+🔹 骨架屏预渲染（LCP 从 2.3s→1.4s）<br>
+🔹 更小的代码体积（精简 core-js、压缩字体、优化打包 css）<br>
+🔹 更快的加载&amp;渲染速度（开启 TLS 1.3、合理的加载顺序、gzip 压缩）
+🔹 WebP 格式支持（兼容性兜底方案）<br>
+▶ ​<strong>业务价值</strong>​：
+登录转化率提升 18% | 客诉率下降 12%</li>
+</ul>
+<hr>
+<h3 id="%E5%A4%A7%E7%96%86%E5%94%AE%E5%90%8E-rms-%E7%B3%BB%E7%BB%9F%E9%87%8D%E6%9E%84202210-202404">大疆售后 RMS 系统重构（2022.10-2024.04）</h3>
+<p>​<strong>角色：前端主力开发 ​</strong>​<br>
+▶ ​<strong>系统复杂度</strong>​：</p>
+<ul>
+<li>支撑全球服务售后体系 | 日均处理工单 1W+</li>
+<li>包含公告插件子系统（跨 5 个业务系统接入）</li>
+<li>100+页面开发，多模块多权限相连</li>
+<li>​<strong>工程化建设</strong>​：<br>
+🔸 制定 ESLint 规范（多人开发代码风格统一，交叉开发提效 30%）
+🔸 低代码平台落地（页面开发效率+40%）<br>
+▶ ​<strong>管理成果</strong>​：<br>
+建立 Code Review 机制 | 输出 3 份技术文档 | 团队 BUG 率下降 25%</li>
+</ul>
+<hr>
+<!--
+## 技术中台项目
+
+### 大疆DevOps平台维护（2023.03-至今）
+​**角色：核心开发者**​
+▶ ​**系统模块**​：
+权限管理 | 需求管理 | 自动化测试 | 文档中心等8大模块
+▶ ​**技术亮点**​：
+- RBAC权限体系（12+角色层级）
+- 配置驱动开发（90%表单页JSON生成）
+- 虚拟滚动表格（万级数据秒开）
+▶ ​**业务价值**​：
+  流程审批效率提升60% | 日均操作量50W+
+-->
+<h3 id="%E8%B7%A8%E5%B9%B3%E5%8F%B0%E5%85%AC%E5%91%8A%E6%8F%92%E4%BB%B6%E7%B3%BB%E7%BB%9F202302-202303">跨平台公告插件系统（2023.02-2023.03）</h3>
+<p>​<strong>角色：独立开发者</strong>​<br>
+▶ ​<strong>技术架构</strong>​：Rollup Tree Shaking + Preact 信号机制<br>
+▶ ​<strong>核心突破</strong>​：</p>
+<ul>
+<li>🔸 Rollup 打包（包体积&lt;15KB）</li>
+<li>🔸 Preact 极简内核（毫秒级渲染）</li>
+<li>🔸 热插拔架构（接入周期&lt;0.5 人日/系统）</li>
+<li>🔸 多模式植入方案（CDN/Iframe/Web Component）<br>
+▶ ​<strong>业务价值</strong>​：<br>
+跨系统公告标准化 ｜ 维护成本降低 | 紧急公告触达率 100%</li>
+</ul>
+<hr>
+<h2 id="%E6%8A%80%E6%9C%AF%E6%94%BB%E5%9D%9A%E6%A1%88%E4%BE%8B">技术攻坚案例</h2>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>技术挑战</th>
+<th>解决方案</th>
+<th>关键指标</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>金融壹账通氧分子平台</td>
+<td>IE9 兼容/技术债沉重</td>
+<td>ES5 重构+Polyfill 方案</td>
+<td>错误率 15%→2%</td>
+</tr>
+<tr>
+<td>壹线</td>
+<td>前端工作量大、交付慢</td>
+<td>开发配置化表单表格组件，实现代码统一、快速交付 ​</td>
+<td>提效 40%</td>
+</tr>
+<tr>
+<td>企业大学移动端</td>
+<td>接口冗余/加载性能差</td>
+<td>接口聚合+预加载策略</td>
+<td>LCP 3.2s→1.8s</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="%E5%B7%A5%E4%BD%9C%E7%BB%8F%E5%8E%86">工作经历</h2>
+<p>​<strong>软通动力 ​</strong>​ | ​<strong>前端技术负责人</strong>​（2021.09-至今）</p>
+<ul>
+<li>同时主导用户中心+RMS 两大核心系统重构</li>
+<li>2022 年获大疆「技术突破奖」（TOP10%）</li>
+</ul>
+<p>​<strong>深圳讯锡科技 ​</strong>​ | 前端负责人（2019.07-2021.09）<br>
+​<strong>深圳市小寒科技</strong>​ | 前端负责人（2019.03-2019.07）<br>
+​<strong>深圳市华企科技</strong>​ | 前端开发（2016.08-2019.02）</p>
+<hr>
+<h2 id="%E6%8A%80%E6%9C%AF%E5%BD%B1%E5%93%8D%E5%8A%9B">技术影响力</h2>
+<ul>
+<li>获 2023 低代码大赛特等奖（实现自定义低代码组件且完成乔接），带队获团队三等奖（攻克低代码边界场景，实现多模块低代码界面拼接）</li>
+<li>分享《CICD 流水线部署指南》（下载-&gt;检查-&gt;扫描-&gt;打包-&gt;上传-&gt;changeLog/回滚）</li>
+<li>推动业务组件库落地 5 个项目（React/Vue 双框架兼容层设计，平均开发工时节省 144h/季度）</li>
+</ul>
+<hr>
+<h2 id="%E6%95%99%E8%82%B2%E8%83%8C%E6%99%AF">教育背景</h2>
+<p>江西财经大学 | 计算机应用技术（2013-2016）</p>
+
+</body>
+</html>

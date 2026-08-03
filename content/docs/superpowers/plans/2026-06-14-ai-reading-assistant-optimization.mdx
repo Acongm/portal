@@ -1,0 +1,480 @@
+---
+title: "AI Reading Assistant Optimization Implementation Plan"
+---
+
+# AI Reading Assistant Optimization Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Deliver a true streaming AI reading assistant, token-efficient chat requests, content-addressed Markdown analysis caching, and verified Preview deployments for the VuePress frontend and NestJS backend.
+
+**Architecture:** The NestJS backend adds an SSE endpoint and a provider-neutral stream interface while preserving the existing JSON endpoint. VuePress consumes SSE in a focused utility, keeps only bounded local history, renders an overlay drawer, and uses a versioned content-analysis hash so unchanged Markdown never calls the AI provider. Both repositories retain their current frameworks and deployment models.
+
+**Tech Stack:** VuePress 2 beta, Vue 3 Options API, Node.js ESM scripts and `node:test`, NestJS 10, Jest/Supertest, OpenAI-compatible SSE, Vercel Preview, GitHub Actions cache.
+
+---
+
+## File Map
+
+### Backend repository: `/Users/acongm/code/github/node-vercel-starter`
+
+- `src/adapters/ai/ai-client.interface.ts`: provider-neutral stream event and usage contracts.
+- `src/adapters/ai/openai-compatible.client.ts`: upstream SSE parsing and output limits.
+- `src/adapters/ai/mock-ai.client.ts`: deterministic stream implementation for tests.
+- `src/modules/ai/chat-message-policy.ts`: history and context character budgets.
+- `src/modules/ai/sse-response.ts`: Nest/Express SSE event writer.
+- `src/modules/ai/dto/chat-context.dto.ts`: bounded optional document content and hash.
+- `src/modules/ai/ai.service.ts`: shared request preparation for JSON and streaming chat.
+- `src/modules/ai/ai.controller.ts`: `/api/ai/chat/stream` endpoint.
+- `test/chat-message-policy.spec.ts`: unit tests for token-saving policy.
+- `test/openai-compatible-client.spec.ts`: upstream stream parser tests.
+- `test/app.e2e-spec.ts`: SSE event ordering and legacy compatibility.
+
+### Frontend repository: `/Users/acongm/code/github/vuepress`
+
+- `docs/.vuepress/utils/chat-stream.js`: SSE frame parser and abort-aware fetch helper.
+- `docs/.vuepress/utils/chat-history.js`: bounded model history and persistent UI history.
+- `docs/.vuepress/components/ai/AIChatPanel.vue`: streaming state machine and Chat actions.
+- `docs/.vuepress/components/ai/AIAssistLayout.vue`: overlay drawer shell and accessible header.
+- `docs/.vuepress/styles/ai-assist.scss`: drawer, backdrop, mobile, message and reduced-motion styles.
+- `docs/.vuepress/composables/useAiPanelState.js`: body scroll and open/close state.
+- `docs/.vuepress/utils/ai-context.js`: compact document context payload.
+- `tools/ai-summary-cache.mjs`: versioned content-analysis hashes and cache planning.
+- `tools/restore-summary-cache.mjs`: summaries plus manifest restoration.
+- `tools/generate-summaries.mjs`: dry-run, retryable failures and cache metrics.
+- `tools/test-ai-summary-cache.mjs`: Node tests for zero-call reuse and invalidation.
+- `tools/smoke-ai-bundle.mjs`: production bundle assertions for streaming UI.
+- `.github/workflows/blank.yml`: stable cache key and Preview-friendly build metrics.
+- `specs/ai-chat-api.md`: streaming protocol documentation.
+
+## Task 1: Add Backend Message Budget Policy
+
+**Files:**
+
+- Create: `/Users/acongm/code/github/node-vercel-starter/src/modules/ai/chat-message-policy.ts`
+- Create: `/Users/acongm/code/github/node-vercel-starter/test/chat-message-policy.spec.ts`
+- Modify: `/Users/acongm/code/github/node-vercel-starter/src/modules/ai/dto/chat-context.dto.ts`
+
+- [ ] **Step 1: Write failing policy tests**
+
+Test that the policy keeps at most 12 recent non-system messages, keeps the final user message, truncates document content to the configured budget, and emits exactly one system message.
+
+```ts
+expect(result.filter((item) => item.role !== 'system')).toHaveLength(12)
+expect(result.at(-1)).toEqual({ role: 'user', content: 'latest' })
+expect(result.filter((item) => item.role === 'system')).toHaveLength(1)
+expect(result[0].content.length).toBeLessThanOrEqual(SYSTEM_BUDGET)
+```
+
+- [ ] **Step 2: Run the focused test and verify red state**
+
+Run: `npm test -- --runTestsByPath test/chat-message-policy.spec.ts`
+
+Expected: FAIL because `chat-message-policy.ts` does not exist.
+
+- [ ] **Step 3: Implement the policy**
+
+Export `prepareChatMessages(dto)` and constants for history, system and document budgets. Remove client system messages, normalize whitespace, build one server-owned context prompt, slice the newest 12 conversational messages, and preserve the newest user turn.
+
+Extend `ChatContextDto` with bounded optional fields:
+
+```ts
+@IsOptional()
+@IsString()
+@Length(1, 12000)
+content?: string;
+
+@IsOptional()
+@IsString()
+@Length(1, 80)
+contentHash?: string;
+```
+
+- [ ] **Step 4: Run focused tests and typecheck**
+
+Run: `npm test -- --runTestsByPath test/chat-message-policy.spec.ts && npm run typecheck`
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit the backend policy**
+
+```bash
+git add src/modules/ai/chat-message-policy.ts src/modules/ai/dto/chat-context.dto.ts test/chat-message-policy.spec.ts
+git commit -m "feat(ai): bound chat context and history"
+```
+
+## Task 2: Add Provider-Neutral Streaming
+
+**Files:**
+
+- Modify: `/Users/acongm/code/github/node-vercel-starter/src/adapters/ai/ai-client.interface.ts`
+- Modify: `/Users/acongm/code/github/node-vercel-starter/src/adapters/ai/openai-compatible.client.ts`
+- Modify: `/Users/acongm/code/github/node-vercel-starter/src/adapters/ai/mock-ai.client.ts`
+- Modify: `/Users/acongm/code/github/node-vercel-starter/test/openai-compatible-client.spec.ts`
+
+- [ ] **Step 1: Add failing OpenAI SSE parser tests**
+
+Mock an upstream body containing two `data:` chunks, a usage chunk and `[DONE]`. Assert emitted events are:
+
+```ts
+;[
+  { type: 'delta', content: 'Fiber' },
+  { type: 'delta', content: ' works' },
+  { type: 'usage', promptTokens: 10, completionTokens: 2, totalTokens: 12 },
+  { type: 'done' }
+]
+```
+
+- [ ] **Step 2: Verify the focused test fails**
+
+Run: `npm test -- --runTestsByPath test/openai-compatible-client.spec.ts`
+
+Expected: FAIL because `streamChat` is absent.
+
+- [ ] **Step 3: Add stream contracts and implementation**
+
+Add `AiStreamEvent` and `streamChat(input): AsyncIterable&lt;AiStreamEvent>` to `AiClient`. Send `stream: true`, `stream_options: \{ include_usage: true }`, and a bounded `max_tokens`. Parse newline-delimited SSE with `TextDecoder`, ignore comments and empty frames, map `choices[0].delta.content`, map usage fields, and emit one final `done`.
+
+Implement Mock streaming by yielding deterministic word chunks and zero usage, without timers.
+
+- [ ] **Step 4: Run adapter tests, typecheck and build**
+
+Run: `npm test -- --runTestsByPath test/openai-compatible-client.spec.ts && npm run typecheck && npm run build`
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit streaming adapters**
+
+```bash
+git add src/adapters/ai test/openai-compatible-client.spec.ts
+git commit -m "feat(ai): stream provider chat completions"
+```
+
+## Task 3: Expose the NestJS SSE Endpoint
+
+**Files:**
+
+- Create: `/Users/acongm/code/github/node-vercel-starter/src/modules/ai/sse-response.ts`
+- Modify: `/Users/acongm/code/github/node-vercel-starter/src/modules/ai/ai.service.ts`
+- Modify: `/Users/acongm/code/github/node-vercel-starter/src/modules/ai/ai.controller.ts`
+- Modify: `/Users/acongm/code/github/node-vercel-starter/test/app.e2e-spec.ts`
+
+- [ ] **Step 1: Add failing E2E coverage**
+
+POST to `/api/ai/chat/stream` with one user message. Assert status 200, `content-type` starts with `text/event-stream`, and the body contains `event: meta`, `event: delta`, `event: usage`, and `event: done` in that order. Keep the existing `/api/ai/chat` assertions unchanged.
+
+- [ ] **Step 2: Verify E2E failure**
+
+Run: `npm test -- --runTestsByPath test/app.e2e-spec.ts`
+
+Expected: FAIL with 404 for the stream route.
+
+- [ ] **Step 3: Implement SSE writing and shared preparation**
+
+Create a writer that emits exactly:
+
+```ts
+response.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+```
+
+Set `content-type: text/event-stream`, `cache-control: no-cache, no-transform`, and `connection: keep-alive`. In `AiService`, use `prepareChatMessages` for both JSON and streaming paths, run web search once, and yield `meta`, provider events, optional `sources`, and `done`. Close the response in `finally`; map thrown errors to an `error` event without exposing secrets.
+
+- [ ] **Step 4: Run all backend verification**
+
+Run: `npm test && npm run typecheck && npm run build`
+
+Expected: all suites PASS.
+
+- [ ] **Step 5: Commit the endpoint**
+
+```bash
+git add src/modules/ai test/app.e2e-spec.ts
+git commit -m "feat(ai): expose streaming chat endpoint"
+```
+
+## Task 4: Version the Markdown Analysis Cache
+
+**Files:**
+
+- Modify: `/Users/acongm/code/github/vuepress/tools/ai-summary-cache.mjs`
+- Create: `/Users/acongm/code/github/vuepress/tools/test-ai-summary-cache.mjs`
+- Modify: `/Users/acongm/code/github/vuepress/package.json`
+
+- [ ] **Step 1: Write failing Node tests**
+
+Use temporary directories and assert:
+
+```js
+assert.equal(secondPlan.toProcess.length, 0)
+assert.equal(secondPlan.toReuse.length, 1)
+assert.equal(modelChangedPlan.toProcess.length, 1)
+assert.equal(promptChangedPlan.toProcess.length, 1)
+```
+
+Also assert a Git-changed file with identical normalized source content is reused.
+
+- [ ] **Step 2: Run tests and verify failure**
+
+Run: `node --test tools/test-ai-summary-cache.mjs`
+
+Expected: FAIL because analysis version inputs are unsupported.
+
+- [ ] **Step 3: Implement analysis hashes**
+
+Add constants `SUMMARY_PROMPT_VERSION` and `CONTENT_EXTRACT_VERSION`. Compute:
+
+```js
+analysisHash = hashContent(
+  JSON.stringify({
+    sourceHash,
+    model,
+    promptVersion,
+    extractVersion
+  })
+)
+```
+
+Store `sourceHash`, `analysisHash`, `model`, `promptVersion`, `extractVersion`, `status` and `processedAt`. Reuse only `status: 'success'` entries with matching `analysisHash` and an existing summary. Make content hashes authoritative; Git changes are diagnostic only.
+
+Add `"test:ai-cache": "node --test tools/test-ai-summary-cache.mjs"`.
+
+- [ ] **Step 4: Run cache tests**
+
+Run: `npm run test:ai-cache`
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit cache versioning**
+
+```bash
+git add tools/ai-summary-cache.mjs tools/test-ai-summary-cache.mjs package.json package-lock.json
+git commit -m "perf(ai): version summary analysis cache"
+```
+
+## Task 5: Restore Complete Cache Snapshots and Add Dry Run
+
+**Files:**
+
+- Modify: `/Users/acongm/code/github/vuepress/tools/restore-summary-cache.mjs`
+- Modify: `/Users/acongm/code/github/vuepress/tools/generate-summaries.mjs`
+- Modify: `/Users/acongm/code/github/vuepress/.github/workflows/blank.yml`
+- Modify: `/Users/acongm/code/github/vuepress/tools/test-ai-summary-cache.mjs`
+
+- [ ] **Step 1: Add failing restoration tests**
+
+Given a remote payload whose `_meta.files` contains analysis metadata, assert restoration writes both cache files and a subsequent plan has zero work. Assert an absent API key preserves restored summaries instead of writing an empty output.
+
+- [ ] **Step 2: Verify test failure**
+
+Run: `npm run test:ai-cache`
+
+Expected: FAIL because restore writes only summaries and no-key mode empties output.
+
+- [ ] **Step 3: Implement snapshot restoration and metrics**
+
+Embed per-file cache metadata in generated `_meta.files`. Reconstruct manifest from that metadata when restoring. Add `--dry-run` so the script prints the plan and exits before provider calls. Track duration, hit rate and AI calls. Do not persist failure placeholders as successful manifest entries.
+
+Change the Actions cache key from a full Markdown hash key to a stable version key with restore keys, so changing one document does not discard the complete prior snapshot:
+
+```yaml
+key: ai-summaries-v2-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+restore-keys: |
+  ai-summaries-v2-${{ runner.os }}-${{ github.ref_name }}-
+  ai-summaries-v2-${{ runner.os }}-
+```
+
+- [ ] **Step 4: Prove zero-call and one-file invalidation**
+
+Run the fixture generator twice with a fake provider counter; expected calls are `N` then `0`. Modify one fixture Markdown and run again; expected calls are `1`.
+
+- [ ] **Step 5: Commit restoration changes**
+
+```bash
+git add tools/restore-summary-cache.mjs tools/generate-summaries.mjs tools/test-ai-summary-cache.mjs .github/workflows/blank.yml
+git commit -m "perf(ai): restore complete summary cache snapshots"
+```
+
+## Task 6: Add the Frontend Streaming Client and History Policy
+
+**Files:**
+
+- Create: `/Users/acongm/code/github/vuepress/docs/.vuepress/utils/chat-stream.js`
+- Create: `/Users/acongm/code/github/vuepress/docs/.vuepress/utils/chat-history.js`
+- Create: `/Users/acongm/code/github/vuepress/tools/test-chat-utils.mjs`
+- Modify: `/Users/acongm/code/github/vuepress/package.json`
+
+- [ ] **Step 1: Write failing parser and history tests**
+
+Test SSE frames split across arbitrary byte boundaries, multiple frames in one chunk, malformed JSON error reporting, abort propagation, removal of summary/error messages, and newest-12 model history.
+
+- [ ] **Step 2: Verify red state**
+
+Run: `node --test tools/test-chat-utils.mjs`
+
+Expected: FAIL because both utilities are absent.
+
+- [ ] **Step 3: Implement focused utilities**
+
+`streamChat(\{ url, payload, signal, onEvent })` reads `response.body.getReader()`, buffers until blank lines, parses `event:` and `data:`, and invokes `onEvent`. `buildModelHistory(messages, limit = 12)` filters UI-only records and returns the newest bounded conversational messages. Export local storage serialization helpers that reject oversized or invalid payloads.
+
+Add `"test:chat-utils": "node --test tools/test-chat-utils.mjs"`.
+
+- [ ] **Step 4: Run utility tests**
+
+Run: `npm run test:chat-utils`
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit frontend utilities**
+
+```bash
+git add docs/.vuepress/utils/chat-stream.js docs/.vuepress/utils/chat-history.js tools/test-chat-utils.mjs package.json package-lock.json
+git commit -m "feat(ai): add streaming chat client"
+```
+
+## Task 7: Rebuild Chat Interaction Around Streaming State
+
+**Files:**
+
+- Modify: `/Users/acongm/code/github/vuepress/docs/.vuepress/components/ai/AIChatPanel.vue`
+- Modify: `/Users/acongm/code/github/vuepress/docs/.vuepress/utils/ai-context.js`
+- Modify: `/Users/acongm/code/github/vuepress/specs/ai-chat-api.md`
+- Modify: `/Users/acongm/code/github/vuepress/tools/smoke-ai-bundle.mjs`
+
+- [ ] **Step 1: Add failing smoke assertions**
+
+Require the production bundle to include `/api/ai/chat/stream`, `AbortController`, stop/regenerate labels, and bounded history helpers. Remove assertions that depend on the fake typewriter timer.
+
+- [ ] **Step 2: Build and confirm the assertion fails**
+
+Run: `npm run build && npm run smoke:ai`
+
+Expected: smoke FAIL because the stream endpoint and controls are absent.
+
+- [ ] **Step 3: Implement the streaming message state machine**
+
+Replace `askAboutPage` and answer typewriter timers with `streamChat`. Push one empty assistant message, append `delta` text, attach `sources` and `usage`, and finalize on `done`. Add `stopGeneration`, `regenerateLastAnswer`, `copyAnswer`, `clearConversation`, and retry actions. Treat user abort as `stopped`, not as an error.
+
+Send no client system message. Use `buildModelHistory`, compact `context`, `contentHash`, and article content only on the first turn or after hash changes. Use `localStorage` with a versioned key and bounded size.
+
+- [ ] **Step 4: Document and verify**
+
+Update the API spec with exact SSE events and legacy compatibility. Run:
+
+`npm run test:chat-utils && npm run build && npm run smoke:ai`
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit streaming interaction**
+
+```bash
+git add docs/.vuepress/components/ai/AIChatPanel.vue docs/.vuepress/utils/ai-context.js specs/ai-chat-api.md tools/smoke-ai-bundle.mjs
+git commit -m "feat(ai): stream reading assistant responses"
+```
+
+## Task 8: Convert the Split Layout to a Chat Drawer
+
+**Files:**
+
+- Modify: `/Users/acongm/code/github/vuepress/docs/.vuepress/components/ai/AIAssistLayout.vue`
+- Modify: `/Users/acongm/code/github/vuepress/docs/.vuepress/styles/ai-assist.scss`
+- Modify: `/Users/acongm/code/github/vuepress/docs/.vuepress/composables/useAiPanelState.js`
+- Modify: `/Users/acongm/code/github/vuepress/docs/.vuepress/components/ai/AIChatPanel.vue`
+
+- [ ] **Step 1: Replace layout smoke requirements**
+
+Assert the bundle contains dialog semantics, backdrop, reduced-motion CSS, full-screen mobile rules, message actions and stop button states.
+
+- [ ] **Step 2: Verify smoke failure**
+
+Run: `npm run build && npm run smoke:ai`
+
+Expected: FAIL on missing drawer markers.
+
+- [ ] **Step 3: Implement the approved B design**
+
+Render a fixed backdrop and right drawer with `role="dialog"`, `aria-modal="true"`, accessible close label, focus restoration, Escape close, and body scroll locking. Use width `min(560px, 46vw)`, transform/opacity transitions, a 960px full-screen breakpoint, sticky composer, compact source cards, assistant action row, and `prefers-reduced-motion: reduce` overrides.
+
+Remove `.page.ai-split-active` grid mutation so opening Chat never changes article width.
+
+- [ ] **Step 4: Build and run browser checks**
+
+Run: `npm run build && npm run smoke:ai && npm run dev`.
+
+In the in-app browser verify desktop open/close, Escape, scroll lock, stream/stop/regenerate, mobile viewport, reduced-motion behavior and no console errors.
+
+- [ ] **Step 5: Commit drawer UI**
+
+```bash
+git add docs/.vuepress/components/ai docs/.vuepress/styles/ai-assist.scss docs/.vuepress/composables/useAiPanelState.js tools/smoke-ai-bundle.mjs
+git commit -m "feat(ai): align reading assistant with chat drawer UX"
+```
+
+## Task 9: Local Cross-Repository Verification
+
+**Files:**
+
+- Modify only files needed to fix failures discovered by the commands below.
+
+- [ ] **Step 1: Verify backend**
+
+Run in `/Users/acongm/code/github/node-vercel-starter`:
+
+```bash
+npm test
+npm run typecheck
+npm run build
+```
+
+Expected: all commands exit 0.
+
+- [ ] **Step 2: Verify frontend and cache**
+
+Run in `/Users/acongm/code/github/vuepress`:
+
+```bash
+npm run test:ai-cache
+npm run test:chat-utils
+npm run build
+npm run smoke:ai
+```
+
+Expected: all commands exit 0.
+
+- [ ] **Step 3: Run a local end-to-end stream**
+
+Start the backend in mock mode and VuePress with its chat URL targeting localhost. Ask two questions, stop one response, regenerate it, reload the page, and confirm history restoration. Capture request payload byte sizes for turn one and turn two; turn two must omit document content and remain bounded.
+
+- [ ] **Step 4: Audit unrelated work**
+
+Run `git status --short` in both repositories. Confirm the existing `docs/.vuepress/config.ts`, `docs/daily-news/2026-06-14.md`, `AGENTS.md` and any other user-owned changes remain untouched and unstaged.
+
+## Task 10: Preview Deployment and Acceptance
+
+**Files:**
+
+- No source changes unless Preview reveals a reproducible defect.
+
+- [ ] **Step 1: Deploy backend Preview**
+
+Use the existing linked Vercel project and run `vercel deploy` from `/Users/acongm/code/github/node-vercel-starter`. Record the Preview URL and verify health plus `/api/ai/chat/stream` with a non-production test request.
+
+- [ ] **Step 2: Deploy VuePress test environment**
+
+Build the site with `VUEPRESS_AI_CHAT_API=&lt;backend-preview>/api/ai/chat/stream` and deploy through the repository's existing test/Preview path. Do not promote to production.
+
+- [ ] **Step 3: Execute browser acceptance**
+
+Verify on the deployed site: drawer animation, desktop and mobile layouts, first summary, true incremental network output, stop, retry, regenerate, clear, restored local history, source links, article/module scope, and no console errors.
+
+- [ ] **Step 4: Prove cache acceptance**
+
+Run two identical test builds and confirm the second reports zero AI calls. Change one test Markdown file and confirm exactly one invalidation, then restore the test file without disturbing user changes.
+
+- [ ] **Step 5: Compare token evidence**
+
+For the same two-turn conversation, record request body bytes and provider usage before/after. Acceptance requires bounded second-turn payload and lower prompt token usage than the old full-system/full-history request.
+
+- [ ] **Step 6: Final completion audit**
+
+Map each requirement from the design to test output, browser evidence, Preview URLs, cache metrics and token metrics. Only then mark the work complete.

@@ -1,0 +1,191 @@
+---
+title: "AI 阅读助手优化设计"
+---
+
+# AI 阅读助手优化设计
+
+## 背景
+
+当前 AI 阅读助手已支持文章摘要、文章/模块范围切换、联网检索、会话缓存和后端对话接口，但仍有三个关键问题：
+
+1. 前端收到完整响应后才模拟逐字显示，不是真正的网络流式对话。
+2. 每轮请求重复发送完整文章提示词和全部历史，输入 token 随对话线性增长。
+3. 构建缓存从线上恢复时只恢复摘要，不恢复 manifest，缓存目录丢失后仍会重新分析全部 Markdown。
+
+本设计在保留 VuePress 2 + NestJS 架构的前提下完成增量优化，不迁移到新的 Chat 框架，也不引入账号系统。
+
+## 目标
+
+- 桌面端提供接近主流开源 Chat 的右侧抽屉交互，移动端使用全屏面板。
+- 对话采用真实流式响应，支持停止生成、重新生成、清空会话和错误重试。
+- 限制重复上下文和历史消息，降低多轮对话 token 消耗。
+- 未修改 Markdown 在后续构建中严格复用 AI 分析结果。
+- 在 Vercel Preview 和站点测试部署中完成端到端验证。
+
+## 非目标
+
+- 不增加登录、用户账户或跨设备会话同步。
+- 不新增 Supabase Chat 会话表。
+- 不替换现有 AI Provider，也不迁移整个站点到 Vercel AI SDK。
+- 不改变现有 `/api/ai/chat` 和 OpenAI 兼容接口的行为。
+
+## 总体架构
+
+### VuePress 前端
+
+- 将现有正文分栏改为覆盖式右侧抽屉，关闭后正文恢复完整宽度。
+- `AIChatPanel` 管理流式消息、停止、重试、重新生成和本地会话。
+- 对话历史按文章路径保存在浏览器本地，仅保存可恢复的最终消息。
+- 请求只携带最近 6 轮对话；摘要消息、错误消息和 UI 状态不进入模型历史。
+- 首轮携带压缩后的文章上下文，后续请求携带稳定的上下文标识和必要元数据。
+
+### NestJS 后端
+
+- 保留 `POST /api/ai/chat`，新增 `POST /api/ai/chat/stream`。
+- 流式接口返回 `text/event-stream`，事件类型为 `meta`、`delta`、`sources`、`usage`、`done` 和 `error`。
+- 服务端统一裁剪历史、去重 system prompt、限制上下文长度和设置输出 token 上限。
+- OpenAI 兼容客户端支持上游 `stream: true`，解析并转发 SSE 数据。
+- Mock Provider 提供确定性的流式实现，供单元测试和 Preview 健康验证使用。
+
+### 构建期摘要
+
+- 缓存键由规范化 Markdown 内容、摘要 prompt 版本、模型和提取版本共同计算。
+- manifest 与 summaries 必须作为同一缓存快照恢复和保存。
+- 缓存恢复优先级为 GitHub Actions cache、本地缓存、线上静态缓存。
+- 仅内容或分析配置哈希变化的文档进入 AI 调用队列。
+
+## 交互设计
+
+### 面板
+
+- 桌面端宽度约 `min(560px, 46vw)`，从右侧滑入并带轻量遮罩。
+- 移动端覆盖整个视口，保留安全区和返回/关闭按钮。
+- Header 显示当前文章标题、文章/模块作用域和清空会话入口。
+- 打开、关闭、消息进入和 loading 使用 `transform`/`opacity` 动画，并支持 `prefers-reduced-motion`。
+
+### 消息流
+
+- 首条助手消息为结构化文章摘要，不再用定时器模拟长时间打字。
+- 流式回答创建一个空助手消息，收到 `delta` 后增量追加。
+- 生成中发送按钮变为停止按钮；停止后保留已生成内容并标记为已中断。
+- 每条助手回答提供复制和重新生成操作。
+- 引用来源在回答完成后显示为紧凑链接列表。
+
+### 输入区
+
+- 输入区固定在面板底部，自动扩展到限定高度。
+- `Enter` 发送，`Shift+Enter` 换行。
+- 显示当前作用域和联网状态，避免用户误判回答范围。
+
+## 对话协议
+
+请求示例：
+
+```json
+{
+  "messages": [{ "role": "user", "content": "Fiber 解决了什么问题？" }],
+  "context": {
+    "scope": "article",
+    "pagePath": "/react/react16.md",
+    "title": "React 16",
+    "tags": ["React"],
+    "content": "压缩后的文章正文",
+    "contentHash": "sha256:..."
+  },
+  "enableWebSearch": false
+}
+```
+
+SSE 示例：
+
+```text
+event: meta
+data: {"provider":"openai","model":"deepseek-v4-pro"}
+
+event: delta
+data: {"content":"Fiber"}
+
+event: usage
+data: {"promptTokens":820,"completionTokens":156,"totalTokens":976}
+
+event: done
+data: {}
+```
+
+客户端必须容忍无 `usage` 的 Provider。流式接口失败时显示可重试状态，不自动重复请求，避免重复计费。
+
+## Token 优化
+
+- 客户端最多发送最近 12 条非 system 消息，即 6 轮对话。
+- 服务端再次执行字符预算裁剪，不能信任客户端限制。
+- system prompt 由服务端生成；前端不再每轮发送完整 system prompt。
+- 文章正文在首轮或内容哈希变化时发送，正文进行空白规范化和长度限制。
+- 模块模式只发送高相关度的模块索引摘要，不拼接所有文档全文。
+- 默认设置合理的 `max_tokens`，联网搜索只注入标题、URL 和短摘要。
+- 返回 usage 并记录结构化日志，用于比较优化前后的 token 消耗。
+
+## 构建缓存设计
+
+### 缓存结构
+
+manifest 版本升级，单文件条目包含：
+
+```json
+{
+  "sourceHash": "sha256:...",
+  "analysisHash": "sha256:...",
+  "model": "deepseek-v4-pro",
+  "promptVersion": "summary-v2",
+  "processedAt": "..."
+}
+```
+
+`analysisHash` 覆盖内容提取版本、prompt 版本和模型，避免配置变化后错误复用。
+
+### 恢复与失效
+
+- 线上 `summaries.json` 的 `_meta` 中携带可重建 manifest 所需的每文件分析哈希。
+- 恢复脚本同时写入 `summaries.json` 和 `manifest.json`。
+- Git diff 仅作为加速提示，内容/分析哈希是最终判定依据；提交变化但内容哈希一致时仍复用缓存。
+- 失败占位不作为永久成功缓存，后续构建应重试。
+- 删除的 Markdown 同步移除摘要和 manifest 条目。
+
+### 可观测性
+
+每次构建输出：总文件数、命中数、失效数、AI 调用数、失败数、命中率和处理耗时。增加 dry-run 模式，在不调用 AI 的情况下打印处理计划。
+
+## 错误处理
+
+- 用户停止生成使用 `AbortController`，不显示网络错误提示。
+- SSE 中断保留部分内容并提供重新生成。
+- 上游错误状态和简短错误正文继续透传，但不暴露密钥或完整 Provider 响应。
+- 摘要缓存恢复失败时继续构建，并明确记录将触发的 AI 调用数量。
+- 未配置 AI Key 时保留已有静态摘要，不用空输出覆盖可用缓存。
+
+## 测试策略
+
+### VuePress
+
+- 为缓存规划、manifest 恢复、失败重试和零调用复用增加 Node 测试。
+- 扩展 AI bundle smoke test，检查流式接口、停止按钮和抽屉样式。
+- 运行 `npm run build`，并在本地浏览器验证桌面和移动断点。
+
+### NestJS
+
+- 单测历史裁剪、上下文注入、SSE 解析和 usage 映射。
+- E2E 验证 Mock 流事件顺序、停止连接、旧 JSON 接口兼容。
+- 运行 `npm test`、`npm run typecheck` 和 `npm run build`。
+
+### 测试环境验收
+
+- 后端部署到 Vercel Preview，验证 `/api/ai/chat/stream` 返回真实流式事件。
+- VuePress 测试部署指向 Preview API，验证摘要、连续追问、停止、重试、来源和移动端面板。
+- 连续运行两次相同构建，第二次必须报告未修改 Markdown 的 AI 调用数为 0。
+- 修改一个 Markdown 后构建，只允许该文件进入 AI 调用队列。
+- 对同一问题记录优化前后请求体大小和 usage，确认输入 token 明显下降。
+
+## 发布与兼容
+
+- 新流式接口独立上线，旧客户端不受影响。
+- 前端可在流式接口不可用时显示错误并允许手动重试，不静默切换导致重复计费。
+- Preview 验收通过后再合并或发布生产环境。

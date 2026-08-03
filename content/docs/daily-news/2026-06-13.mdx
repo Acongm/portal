@@ -1,0 +1,38 @@
+---
+title: "每日科技动态 - 2026年6月13日"
+---
+
+
+# 每日科技动态
+
+今天这组官方更新透露出一个很一致的方向：平台不再只发布“新能力”，而是在补“怎么更稳定地落地”。前端侧，一边是浏览器继续把底层能力做深做广，另一边是官方开始补更好理解和试用新特性的文档入口；DevOps 侧，自动化平台同时收紧基础设施约束、放开更细颗粒度的组织级控制；AI 侧，则明显朝着“规模化培训 + 行业落地”推进。由于最近 24 小时内前端官方高价值更新不足两条，本文将前端取材范围放宽到最近 7 天，以保持三类内容均衡。
+
+## 今日概览
+
+### 前端
+
+**Safari 27 beta 这次不是只追求“多上功能”，而是在把可用性和兼容性一起往前推。** 6 月 8 日，WebKit 发布《News from WWDC26: WebKit in Safari 27 beta》。正文明确写到，这一版包含 **58 个新特性、525 项修复和 4 项弃用**；首批重点包括可自定义的 `select`、Scroll Anchoring、WebAssembly JavaScript Promise Integration（JSPI）、transform-aware anchor positioning，以及 `:open`、`random-item`、`stretch` 等 CSS 能力。文章还特别强调，这一版本大量工作其实是在修正既有特性的边界行为、提升标准一致性，而不只是继续堆新 API。对前端团队来说，这比“多几个新玩具”更重要，因为它直接决定了真实生产环境里能否更放心地减少兼容性兜底。[来源](https://webkit.org/blog/17967/news-from-wwdc26-webkit-in-safari-27-beta/)
+
+**WebKit 还专门为 Grid Lanes 做了一套互动式 Field Guide，说明浏览器团队开始更认真地经营“特性教育层”。** 6 月 10 日，WebKit 发布《Introducing the Field Guide to Grid Lanes》。正文显示，这个站点不是普通说明文档，而是把 **可编辑 playground、单页速查表、示例 demos 和 Safari 开发者工具联动说明** 放到同一个入口里；开发者可以在页面里切换 Waterfall / Brick 布局、调节 `flow-tolerance`、直接编辑 CSS 并复制结果代码。这个动作的意义在于，像 Grid Lanes 这类新布局能力，真正阻碍采用的往往不是“有没有实现”，而是“团队能不能快速理解并试出来”。官方愿意把学习路径产品化，本身就是前端能力进入实用阶段的信号。[来源](https://webkit.org/blog/18098/introducing-the-field-guide-to-grid-lanes/)
+
+### DevOps
+
+**GitHub 正在把 Copilot code review 做成更像“组织级能力”而不只是仓库插件。** 6 月 12 日，GitHub Changelog 发布《Copilot code review: New configurations and controls》。正文显示，Copilot code review 现在支持 **组织级 runner type 控制**，管理员可以把默认 runner 配置统一下发到所有仓库，甚至锁定为组织级覆盖；同时，它也开始遵守仓库、组织和企业级的 **content exclusion** 规则，可按路径排除不希望被 Copilot 读取的文件；另外，`.github` 目录下 `copilot-instructions.md` 与 `*.instructions.md` 的 **4000 字符限制已移除**。这意味着团队在引入 AI 审查时，开始能更细致地处理运行环境、上下文边界和审查规范，而不是每个仓库各自摸索。[来源](https://github.blog/changelog/2026-06-12-copilot-code-review-new-configurations-and-controls)
+
+**GitHub Actions 则在反方向上收紧底座要求：自动化越大规模，越不能容忍“老旧 runner 继续混跑”。** 同样在 6 月 12 日，GitHub 发布《GitHub Actions: Minimum version enforcement timeline for self-hosted runners》。正文写到，GitHub Actions 重构后的新架构如今每天处理 **超过 1.2 亿个 jobs**，比迁移前高出三倍，并让企业每分钟可启动的 jobs 数提升到原来的 **7 倍**；在此基础上，GitHub 将恢复对 self-hosted runner 版本要求的执行。文章明确要求 runner 至少达到 **2.329.0** 才能接入新平台，并且每次新版本发布后 **30 天内必须更新**，否则将停止向其分发任务；GitHub Enterprise Cloud with Data Residency 将从 **7 月 31 日** 开始全面执行，GitHub Enterprise Cloud 则从 **9 月 25 日** 开始。对平台工程团队来说，这是一条很清楚的信号：未来自建 runner 的核心工作，不只是“能跑”，而是“持续跟得上控制面升级节奏”。[来源](https://github.blog/changelog/2026-06-12-github-actions-minimum-version-enforcement-timeline-for-self-hosted-runners)
+
+### AI
+
+**OpenAI 把“如何把 AI 真正用进工作里”单独做成课程产品，说明企业 AI 采用已经进入培训工程阶段。** 6 月 12 日，OpenAI 官方 RSS 发布《New OpenAI Academy courses for the next era of work》。官方摘要显示，OpenAI 新增了 **三门 Academy 课程**，重点帮助用户建立 **实用 AI 技能、可重复工作流，以及在日常工作中使用 agents 的方法**。这类更新看起来不像模型发布那样醒目，但很值得关注：当厂商开始把“提示、流程、代理协作”沉淀成课程体系时，意味着竞争重点正在从“会不会用模型”转向“谁能把使用方式标准化、复制化”。[来源](https://openai.com/index/academy-courses-applying-ai-at-work)
+
+**Anthropic 与 TCS 的合作，则把 Claude 继续往强监管行业深处推进。** 6 月 12 日，Anthropic 发布《TCS and Anthropic partner to bring Claude to regulated industries》。正文显示，TCS 将把 Claude 提供给 **56 个国家的 5 万名员工**，并面向 **金融服务、医疗、公共部门** 等受监管行业构建基于 Claude 的产品与服务，同时加入 Claude Partner Network。Anthropic 还明确提到，TCS 会作为“customer zero”先在自身工程、财务、法务、市场和销售团队内部使用 Claude，再把经验包装成行业化方案，例如保险理赔处理、银行贷款顾问等；文中还点名，TCS 的银行与金融产品团队会用 **Claude Code** 提升软件工程与 IT 运维效率。这说明大模型落地正在从“企业试点”进一步转向“咨询集成商批量交付”。[来源](https://www.anthropic.com/news/tcs-anthropic-partnership)
+
+## 今日观察
+
+今天最值得关注的，并不是哪一家又多发了几个新功能，而是三条技术线都在往“制度化采用”移动。前端世界开始把复杂能力的学习和试验入口做得更产品化；DevOps 平台一边增强组织级控制，一边要求基础设施跟上更严格的升级节奏；AI 厂商则把课程、伙伴网络和行业方案一起推进。技术发布正在越来越少地回答“能不能做”，越来越多地回答“团队怎么规模化地把它做对”。
+
+## 简讯
+
+- **前端**：Safari 27 beta 用 58 项新特性和 525 项修复继续补齐标准与兼容性，WebKit 还为 Grid Lanes 上线了带 playground 的官方学习入口。
+- **DevOps**：GitHub 一边给 Copilot code review 增加组织级 runner、内容排除和更长自定义指令支持，一边恢复对 self-hosted runner 版本与升级时效的强执行。
+- **AI**：OpenAI 开始把 AI 工作流和 agent 使用方法课程化，Anthropic 则借助 TCS 把 Claude 扩展到更大规模的受监管行业交付场景。

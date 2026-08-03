@@ -1,0 +1,2200 @@
+---
+title: "热插拔插件系统对比 & 各方案实现原理差异"
+---
+
+# 热插拔插件系统对比 & 各方案实现原理差异
+
+## 笔试题（6 题）
+
+### 1. 插件系统核心要素
+
+什么是"插件系统"？核心要素包括：生命周期、扩展点、上下文、隔离、通信。分别解释。
+
+**【作答】：**
+
+插件系统定义:
+插件系统是一种可扩展的架构模式，允许第三方代码在运行时或编译时扩展核心应用的功能，而无需修改核心代码。它通过定义清晰的接口和扩展点，实现功能的解耦和动态加载。
+
+生命周期:
+插件的生命周期包括：注册(register) → 初始化(init) → 激活(activate) → 执行(execute) → 停用(deactivate) → 卸载(uninstall)。
+
+- 注册：插件被发现并注册到系统中
+- 初始化：分配资源、验证依赖、准备运行环境
+- 激活：插件开始工作，注册事件监听、挂载 UI 等
+- 执行：响应扩展点调用，执行业务逻辑
+- 停用：清理临时资源，但保留状态以便重新激活
+- 卸载：完全移除插件，清理所有资源
+
+扩展点:
+扩展点(Extension Point)是系统预留的接口，插件可以在此处注入自定义逻辑。常见类型：
+
+- Hook 点：在特定时机执行（如 beforeCompile、afterBuild）
+- 命令点：注册可执行的命令（如 CLI 命令、菜单项）
+- UI 扩展点：注入 UI 组件（如工具栏按钮、侧边栏面板）
+- 数据转换点：处理数据流（如 Babel 的 AST 转换）
+
+上下文:
+上下文(Context)是插件执行时的环境信息，包括：
+
+- 系统 API：核心系统提供的接口（如文件系统、网络请求）
+- 配置信息：当前运行配置、环境变量
+- 共享状态：全局状态、事件总线
+- 依赖注入：其他插件的服务、工具函数
+
+隔离:
+隔离确保插件之间、插件与核心系统之间互不干扰：
+
+- 命名空间隔离：避免全局变量污染（如使用 Symbol、模块作用域）
+- 资源隔离：独立的样式作用域、DOM 容器
+- 错误隔离：插件错误不影响主系统（try-catch、错误边界）
+- 沙箱隔离：限制插件可访问的 API 和资源（如 iframe、Web Worker、Proxy）
+
+通信:
+插件通信机制包括：
+
+- 事件总线：发布订阅模式，插件间解耦通信
+- 服务注册：插件注册服务供其他插件使用（依赖注入）
+- 消息传递：点对点消息（如 postMessage）
+- 共享状态：通过 Context 或全局状态管理共享数据
+- 命令系统：通过命令模式调用其他插件功能
+
+---
+
+### 2. 不同插件系统对比
+
+对比：Webpack plugin / Vite plugin / Babel plugin 的 hook 模型差异、执行时机、能力边界。
+
+**【作答】：**
+
+Webpack plugin:
+Hook 模型:
+基于 Tapable 的同步/异步 Hook 系统，支持：
+
+- SyncHook：同步串行执行
+- SyncBailHook：同步串行，任一返回非 undefined 则停止
+- SyncWaterfallHook：同步串行，前一个返回值作为下一个参数
+- AsyncParallelHook：异步并行执行
+- AsyncSeriesHook：异步串行执行
+
+执行时机:
+
+- 编译前：environment、beforeCompile
+- 编译中：compile、compilation、make、buildModule
+- 编译后：afterCompile、emit、afterEmit
+- 运行时：done、failed
+
+能力边界:
+
+- 可访问整个编译过程（Compiler、Compilation）
+- 可修改模块依赖图、chunk 分割
+- 可读取/修改文件系统
+- 可注入代码、修改输出
+- 限制：不能直接修改运行时代码执行逻辑
+
+Vite plugin:
+Hook 模型:
+基于 Rollup 的插件 Hook 系统，同时支持 Vite 特有 Hook：
+
+- Rollup Hooks：buildStart、resolveId、load、transform、buildEnd
+- Vite Hooks：config、configResolved、configureServer、transformIndexHtml
+- 执行顺序：通过 enforce 控制（pre、normal、post）
+
+执行时机:
+
+- 配置阶段：config、configResolved
+- 开发服务器：configureServer（中间件注入）
+- 构建阶段：buildStart → resolveId → load → transform → buildEnd
+- HTML 处理：transformIndexHtml
+
+能力边界:
+
+- 可拦截模块请求、修改模块内容
+- 可注入开发服务器中间件
+- 可修改 HTML、CSS、JS
+- 可访问文件系统（通过 fs 模块）
+- 限制：不能直接修改 Vite 核心逻辑，受 Rollup 插件规范约束
+
+Babel plugin:
+Hook 模型:
+基于访问者模式(Visitor Pattern)的 AST 转换：
+
+- 通过 visitor 对象定义要访问的节点类型
+- 每个节点类型可定义 enter/exit 钩子
+- 支持插件顺序控制（通过配置顺序）
+
+执行时机:
+
+- 解析阶段：parse（生成 AST）
+- 转换阶段：transform（遍历 AST，执行插件）
+- 生成阶段：generate（AST → 代码）
+
+能力边界:
+
+- 可访问和修改 AST 节点
+- 可添加/删除/替换代码
+- 可分析代码结构
+- 限制：只能操作 AST，不能访问文件系统、网络等外部资源
+- 限制：不能修改 Babel 核心解析逻辑
+
+对比总结:
+
+- Webpack：最灵活，可控制整个构建流程，但复杂度高
+- Vite：平衡灵活性和性能，开发体验好，但受 Rollup 限制
+- Babel：专注代码转换，简单直接，但能力边界明确
+
+---
+
+### 3. 运行时热插拔
+
+运行时插件（浏览器）如何做到热插拔？模块加载、卸载、资源清理怎么设计？
+
+**【作答】：**
+
+模块加载:
+
+1. 动态导入：使用 import() 或 System.import() 动态加载插件模块
+
+```javascript
+const pluginModule = await import('./plugins/my-plugin.js')
+```
+
+2. 模块注册：将加载的模块注册到插件管理器
+
+   - 验证插件格式（必须导出 activate、deactivate 等）
+   - 检查依赖是否满足
+   - 分配唯一 ID 和命名空间
+
+3. 初始化上下文：为插件创建执行环境
+
+   - 创建沙箱环境（如 Proxy、iframe）
+   - 注入允许的 API（白名单）
+   - 设置错误边界
+
+4. 激活插件：调用插件的 activate 方法
+   - 传入上下文对象（API、配置等）
+   - 注册事件监听器
+   - 挂载 UI 组件
+
+模块卸载:
+
+1. 停用插件：调用 deactivate 方法
+
+   - 取消事件监听
+   - 隐藏/移除 UI 组件
+   - 清理定时器、取消网络请求
+
+2. 解绑依赖：移除插件注册的服务
+
+   - 从服务注册表中移除
+   - 通知依赖该服务的其他插件
+
+3. 释放引用：清除所有对插件的引用
+
+   - 从插件列表中移除
+   - 清除模块缓存（如 System.delete、delete require.cache）
+
+4. 内存回收：等待 GC 回收
+   - 确保没有闭包引用
+   - 移除 DOM 引用
+
+资源清理:
+
+1. DOM 清理：
+
+   - 移除插件注入的 DOM 节点
+   - 清理事件监听器（removeEventListener）
+   - 清理 MutationObserver、IntersectionObserver 等
+
+2. 网络资源：
+
+   - 取消进行中的 fetch/XMLHttpRequest
+   - 清理 WebSocket 连接
+   - 移除 Service Worker（如适用）
+
+3. 存储清理：
+
+   - 清理 localStorage/sessionStorage 中插件数据
+   - 清理 IndexedDB 数据
+   - 清理 Cookie（如适用）
+
+4. 定时器清理：
+
+   - 清除 setTimeout/setInterval
+   - 清除 requestAnimationFrame
+   - 清除自定义的定时任务
+
+5. 样式清理：
+   - 移除注入的 \&lt;style\> 标签
+   - 移除动态添加的 CSS 类
+   - 清理 CSS 变量
+
+状态恢复:
+
+1. 状态快照：卸载前保存插件状态
+
+   - 序列化插件内部状态（JSON.stringify）
+   - 保存到持久化存储（localStorage、IndexedDB）
+   - 记录 UI 状态（如面板位置、展开/折叠状态）
+
+2. 状态恢复：重新加载时恢复状态
+
+   - 从持久化存储读取状态
+   - 反序列化并应用到插件
+   - 恢复 UI 布局和交互状态
+
+3. 依赖恢复：恢复插件间的依赖关系
+
+   - 检查之前注册的服务是否仍可用
+   - 重新建立插件间的通信链路
+
+4. 错误处理：处理状态恢复失败的情况
+   - 提供默认状态
+   - 记录错误日志
+   - 允许用户手动重置
+
+实现示例：
+
+```javascript
+class PluginManager {
+  async loadPlugin(pluginPath) {
+    const module = await import(pluginPath)
+    const plugin = new module.default()
+
+    // 创建沙箱上下文
+    const context = this.createContext(plugin.id)
+
+    // 激活插件
+    await plugin.activate(context)
+
+    // 保存插件实例
+    this.plugins.set(plugin.id, { plugin, context, state: null })
+  }
+
+  async unloadPlugin(pluginId) {
+    const { plugin, context } = this.plugins.get(pluginId)
+
+    // 保存状态
+    const state = await plugin.saveState()
+
+    // 停用插件
+    await plugin.deactivate()
+
+    // 清理资源
+    this.cleanupResources(context)
+
+    // 移除模块缓存
+    await this.deleteModule(pluginId)
+
+    // 从列表中移除
+    this.plugins.delete(pluginId)
+  }
+}
+```
+
+---
+
+### 4. 插件依赖与冲突
+
+如何实现插件的依赖声明与冲突检测（semver、peerDependencies、能力集）？
+
+**【作答】：**
+
+依赖声明:
+
+1. 核心系统依赖：插件依赖的核心系统版本
+
+   ```json
+   {
+     "engines": {
+       "core-system": "^2.0.0"
+     }
+   }
+   ```
+
+2. 插件依赖：插件依赖的其他插件
+
+   ```json
+   {
+     "pluginDependencies": {
+       "plugin-a": "^1.2.0",
+       "plugin-b": "~2.1.0"
+     }
+   }
+   ```
+
+3. 能力依赖：插件依赖的系统能力（而非具体插件）
+
+   ```json
+   {
+     "capabilities": {
+       "file-system": "read-write",
+       "network": "fetch",
+       "ui": "toolbar"
+     }
+   }
+   ```
+
+4. 对等依赖(peerDependencies)：期望宿主提供的依赖
+   ```json
+   {
+     "peerDependencies": {
+       "react": "^18.0.0",
+       "lodash": ">=4.0.0"
+     }
+   }
+   ```
+
+版本管理 (semver):
+
+1. 语义化版本：遵循 semver 规范（主版本.次版本.修订版本）
+
+   - 主版本：不兼容的 API 修改
+   - 次版本：向下兼容的功能性新增
+   - 修订版本：向下兼容的问题修正
+
+2. 版本范围：
+
+   - `^1.2.3`：兼容 1.2.3 到 &lt;2.0.0
+   - `~1.2.3`：兼容 1.2.3 到 &lt;1.3.0
+   - `>=1.2.3 &lt;2.0.0`：明确范围
+   - `*` 或 `latest`：最新版本（不推荐）
+
+3. 版本解析算法：
+   - 收集所有依赖声明
+   - 构建依赖图
+   - 使用 SAT 求解器（如 npm 的）解析版本冲突
+   - 选择满足所有约束的版本组合
+
+冲突检测:
+
+1. 版本冲突检测：
+
+   ```javascript
+   function detectVersionConflict(pluginA, pluginB) {
+     // 检查是否依赖同一插件的不同版本
+     const depsA = pluginA.dependencies
+     const depsB = pluginB.dependencies
+
+     for (const [name, versionA] of Object.entries(depsA)) {
+       if (depsB[name] && !satisfies(versionA, depsB[name])) {
+         return {
+           conflict: true,
+           plugin: name,
+           versions: [versionA, depsB[name]]
+         }
+       }
+     }
+     return { conflict: false }
+   }
+   ```
+
+2. 能力冲突检测：
+
+   - 检查插件是否声明了冲突的能力需求
+   - 例如：两个插件都要求独占某个 UI 区域
+
+3. 循环依赖检测：
+
+   - 使用拓扑排序检测依赖图中的环
+   - 插件 A 依赖 B，B 依赖 A → 循环依赖
+
+4. 核心系统版本冲突：
+   - 检查插件要求的核心系统版本是否满足
+   - 插件要求 v3.0.0，但系统是 v2.0.0 → 冲突
+
+解决策略:
+
+1. 版本冲突解决：
+
+   - 自动升级：尝试升级到满足所有依赖的最新版本
+   - 降级策略：如果升级失败，尝试降级冲突的插件
+   - 用户选择：提示用户选择保留哪个版本
+   - 隔离加载：将冲突的插件隔离到不同的上下文
+
+2. 能力冲突解决：
+
+   - 优先级机制：为插件设置优先级，高优先级优先
+   - 共享模式：允许多个插件共享能力（如 UI 区域可分割）
+   - 互斥模式：明确声明互斥，只允许一个激活
+
+3. 循环依赖解决：
+
+   - 重构建议：提示开发者重构依赖关系
+   - 延迟加载：使用动态导入打破循环
+   - 依赖注入：通过服务注册而非直接依赖
+
+4. 冲突预防：
+   - 依赖分析工具：在开发阶段检测潜在冲突
+   - 版本锁定：使用 lock 文件锁定依赖版本
+   - 兼容性测试：CI/CD 中测试插件兼容性
+
+实现示例：
+
+```javascript
+class DependencyResolver {
+  resolve(plugins) {
+    const graph = this.buildDependencyGraph(plugins)
+
+    // 检测循环依赖
+    if (this.hasCycle(graph)) {
+      throw new Error('Circular dependency detected')
+    }
+
+    // 拓扑排序确定加载顺序
+    const loadOrder = this.topologicalSort(graph)
+
+    // 解析版本冲突
+    const resolvedVersions = this.resolveVersions(plugins)
+
+    return { loadOrder, resolvedVersions }
+  }
+
+  resolveVersions(plugins) {
+    // 使用 SAT 求解器或启发式算法
+    // 找到满足所有约束的版本组合
+    return this.satSolver(plugins)
+  }
+}
+```
+
+---
+
+### 5. 插件权限控制
+
+插件如何实现权限控制（读写能力、API 白名单、沙箱隔离）？
+
+**【作答】：**
+
+权限分级:
+
+1. 权限等级设计：
+
+   - 无权限：完全隔离，只能使用基础 API
+   - 只读权限：可读取数据，但不能修改
+   - 读写权限：可读写数据，但不能访问系统级 API
+   - 系统权限：可访问系统级 API（文件系统、网络等）
+   - 管理员权限：完全访问（仅核心插件）
+
+2. 权限声明：
+
+   ```json
+   {
+     "permissions": {
+       "level": "read-write",
+       "apis": ["storage.read", "storage.write", "ui.mount"],
+       "resources": ["*.json", "config/*"]
+     }
+   }
+   ```
+
+3. 权限验证：
+   - 安装时验证：检查插件声明的权限是否合理
+   - 运行时验证：每次 API 调用都检查权限
+   - 动态权限：支持运行时请求临时权限
+
+API 白名单:
+
+1. 白名单机制：
+
+   ```javascript
+   const API_WHITELIST = {
+     'storage.read': (context) => context.permissions.includes('storage.read'),
+     'storage.write': (context) =>
+       context.permissions.includes('storage.write'),
+     'network.fetch': (context) => context.permissions.includes('network'),
+     'dom.querySelector': () => true // 基础 API，所有插件可用
+   }
+
+   function createSandboxContext(plugin, permissions) {
+     return new Proxy(
+       {},
+       {
+         get(target, prop) {
+           if (API_WHITELIST[prop]) {
+             if (API_WHITELIST[prop]({ permissions })) {
+               return window[prop] // 返回真实 API
+             }
+             throw new Error(`Permission denied: ${prop}`)
+           }
+           throw new Error(`API not allowed: ${prop}`)
+         }
+       }
+     )
+   }
+   ```
+
+2. API 包装：
+
+   - 包装原生 API，添加权限检查
+   - 记录 API 调用日志（审计）
+   - 限制调用频率（防止滥用）
+
+3. 资源访问控制：
+   - 文件系统：限制可访问的路径
+   - 网络请求：限制可访问的域名（CSP）
+   - DOM 操作：限制可修改的元素范围
+
+沙箱隔离:
+
+1. iframe 沙箱：
+
+   ```javascript
+   const iframe = document.createElement('iframe')
+   iframe.sandbox = 'allow-scripts allow-same-origin'
+   iframe.src = 'data:text/html,<script>/* plugin code */</script>'
+   // 通过 postMessage 通信
+   ```
+
+2. Web Worker 隔离：
+
+   - 将插件代码运行在 Worker 中
+   - 完全隔离 DOM 访问
+   - 通过消息传递通信
+
+3. Proxy 代理隔离：
+
+   ```javascript
+   function createSandbox(pluginCode, permissions) {
+     const sandbox = {
+       console: safeConsole, // 包装的 console
+       setTimeout: safeSetTimeout // 包装的定时器
+       // ... 其他允许的 API
+     }
+
+     const context = new Proxy(sandbox, {
+       get(target, prop) {
+         if (prop in target) return target[prop]
+         if (isAllowed(prop, permissions)) {
+           return window[prop]
+         }
+         return undefined // 禁止访问
+       },
+       set(target, prop, value) {
+         if (isAllowed(prop, permissions)) {
+           target[prop] = value
+           return true
+         }
+         return false // 禁止设置
+       }
+     })
+
+     // 在隔离上下文中执行
+     return new Function(
+       'context',
+       `
+       with(context) {
+         ${pluginCode}
+       }
+     `
+     )(context)
+   }
+   ```
+
+4. Shadow DOM 样式隔离：
+
+   - 使用 Shadow DOM 隔离插件样式
+   - 防止样式污染和冲突
+
+5. 作用域隔离：
+   - 使用模块作用域、闭包隔离变量
+   - 避免全局变量污染
+
+安全检查:
+
+1. 代码静态分析：
+
+   - 使用 ESLint、JSHint 检查危险代码模式
+   - 检测 eval、Function 构造函数等
+   - 检测未授权的 API 调用
+
+2. 运行时监控：
+
+   ```javascript
+   function monitorPlugin(plugin) {
+     const originalEval = window.eval
+     window.eval = function (code) {
+       console.warn('Plugin attempted to use eval:', plugin.id)
+       throw new Error('eval is not allowed')
+     }
+
+     // 监控网络请求
+     const originalFetch = window.fetch
+     window.fetch = function (url, options) {
+       if (!isAllowedURL(url, plugin.permissions)) {
+         throw new Error('URL not allowed')
+       }
+       return originalFetch(url, options)
+     }
+   }
+   ```
+
+3. 资源限制：
+
+   - CPU 限制：使用 Web Worker 的 transferable 对象限制计算
+   - 内存限制：监控内存使用，超限则卸载插件
+   - 网络限制：限制请求频率、数据量
+
+4. 内容安全策略(CSP)：
+
+   - 为插件设置严格的 CSP
+   - 禁止内联脚本、eval
+   - 限制资源加载源
+
+5. 审计日志：
+
+   - 记录所有权限相关的操作
+   - 记录异常行为（如频繁失败、资源滥用）
+   - 支持安全审计和问题追溯
+
+6. 插件签名验证：
+   - 使用数字签名验证插件来源
+   - 防止插件被篡改
+   - 建立信任链
+
+实现示例：
+
+```javascript
+class SecurePluginManager {
+  async loadPlugin(pluginPath, manifest) {
+    // 1. 验证签名
+    if (!this.verifySignature(manifest)) {
+      throw new Error('Invalid plugin signature')
+    }
+
+    // 2. 检查权限声明
+    const permissions = this.validatePermissions(manifest.permissions)
+
+    // 3. 创建沙箱
+    const sandbox = this.createSandbox(permissions)
+
+    // 4. 加载并执行插件代码
+    const pluginCode = await this.loadPluginCode(pluginPath)
+    const plugin = this.executeInSandbox(pluginCode, sandbox)
+
+    // 5. 启动监控
+    this.startMonitoring(plugin, permissions)
+
+    return plugin
+  }
+}
+```
+
+---
+
+### 6. Hook API 设计
+
+设计一个 Hook API：同步/异步 hook、串行/并行执行、熔断/超时机制。
+
+**【作答】：**
+
+同步 vs 异步 hook:
+
+1. 同步 Hook：
+
+   - 立即执行，阻塞后续流程
+   - 适用于：数据转换、验证、同步计算
+   - 性能：快速，但会阻塞主线程
+
+   ```javascript
+   class SyncHook {
+     constructor(args) {
+       this.taps = []
+     }
+     tap(name, fn) {
+       this.taps.push({ name, fn })
+     }
+     call(...args) {
+       return this.taps.map((tap) => tap.fn(...args))
+     }
+   }
+   ```
+
+2. 异步 Hook：
+   - 返回 Promise，不阻塞主流程
+   - 适用于：网络请求、文件 I/O、复杂计算
+   - 性能：不阻塞，但需要处理异步流程
+   ```javascript
+   class AsyncHook {
+     constructor(args) {
+       this.taps = []
+     }
+     tapAsync(name, fn) {
+       this.taps.push({ name, fn, type: 'async' })
+     }
+     tapPromise(name, fn) {
+       this.taps.push({ name, fn, type: 'promise' })
+     }
+     async callAsync(...args) {
+       const callbacks = args.slice(-1)
+       const realArgs = args.slice(0, -1)
+       const promises = this.taps.map((tap) => {
+         if (tap.type === 'promise') {
+           return tap.fn(...realArgs)
+         } else {
+           return new Promise((resolve) => {
+             tap.fn(...realArgs, resolve)
+           })
+         }
+       })
+       const results = await Promise.all(promises)
+       callbacks[0](null, results)
+     }
+   }
+   ```
+
+串行 vs 并行:
+
+1. 串行执行（Series）：
+
+   - 按顺序执行，前一个完成后再执行下一个
+   - 适用于：有依赖关系的操作、需要保证顺序
+   - 实现：使用 reduce 或 for...of 循环
+
+   ```javascript
+   class AsyncSeriesHook {
+     async call(...args) {
+       const results = []
+       for (const tap of this.taps) {
+         const result = await tap.fn(...args)
+         results.push(result)
+       }
+       return results
+     }
+   }
+   ```
+
+2. 并行执行（Parallel）：
+
+   - 同时执行所有 hook
+   - 适用于：独立操作、提高性能
+   - 实现：使用 Promise.all
+
+   ```javascript
+   class AsyncParallelHook {
+     async call(...args) {
+       const promises = this.taps.map((tap) => tap.fn(...args))
+       return await Promise.all(promises)
+     }
+   }
+   ```
+
+3. 混合模式：
+
+   - 支持配置执行模式
+   - 某些 hook 串行，某些并行
+
+   ```javascript
+   class HybridHook {
+     async call(...args) {
+       const series = this.taps.filter((t) => t.mode === 'series')
+       const parallel = this.taps.filter((t) => t.mode === 'parallel')
+
+       const seriesResults = []
+       for (const tap of series) {
+         seriesResults.push(await tap.fn(...args))
+       }
+
+       const parallelResults = await Promise.all(
+         parallel.map((tap) => tap.fn(...args))
+       )
+
+       return [...seriesResults, ...parallelResults]
+     }
+   }
+   ```
+
+熔断机制:
+
+1. 熔断器模式：
+
+   - 当错误率超过阈值时，停止调用
+   - 一段时间后尝试恢复（半开状态）
+   - 成功则关闭熔断，失败则继续熔断
+
+   ```javascript
+   class CircuitBreaker {
+     constructor(options = {}) {
+       this.failureThreshold = options.failureThreshold || 5
+       this.resetTimeout = options.resetTimeout || 60000
+       this.state = 'CLOSED' // CLOSED, OPEN, HALF_OPEN
+       this.failureCount = 0
+       this.nextAttempt = Date.now()
+     }
+
+     async execute(fn) {
+       if (this.state === 'OPEN') {
+         if (Date.now() < this.nextAttempt) {
+           throw new Error('Circuit breaker is OPEN')
+         }
+         this.state = 'HALF_OPEN'
+       }
+
+       try {
+         const result = await fn()
+         this.onSuccess()
+         return result
+       } catch (error) {
+         this.onFailure()
+         throw error
+       }
+     }
+
+     onSuccess() {
+       this.failureCount = 0
+       this.state = 'CLOSED'
+     }
+
+     onFailure() {
+       this.failureCount++
+       if (this.failureCount >= this.failureThreshold) {
+         this.state = 'OPEN'
+         this.nextAttempt = Date.now() + this.resetTimeout
+       }
+     }
+   }
+   ```
+
+2. 在 Hook 中应用：
+
+   ```javascript
+   class HookWithCircuitBreaker {
+     constructor() {
+       this.taps = []
+       this.breakers = new Map()
+     }
+
+     tap(name, fn) {
+       this.taps.push({ name, fn })
+       this.breakers.set(name, new CircuitBreaker())
+     }
+
+     async call(...args) {
+       const results = []
+       for (const tap of this.taps) {
+         const breaker = this.breakers.get(tap.name)
+         try {
+           const result = await breaker.execute(() => tap.fn(...args))
+           results.push({ plugin: tap.name, result, error: null })
+         } catch (error) {
+           results.push({ plugin: tap.name, result: null, error })
+         }
+       }
+       return results
+     }
+   }
+   ```
+
+超时控制:
+
+1. 超时包装：
+
+   ```javascript
+   function withTimeout(fn, timeout) {
+     return Promise.race([
+       fn(),
+       new Promise((_, reject) =>
+         setTimeout(() => reject(new Error('Timeout')), timeout)
+       )
+     ])
+   }
+   ```
+
+2. 在 Hook 中应用：
+
+   ```javascript
+   class HookWithTimeout {
+     constructor(defaultTimeout = 5000) {
+       this.taps = []
+       this.defaultTimeout = defaultTimeout
+     }
+
+     tap(name, fn, options = {}) {
+       this.taps.push({
+         name,
+         fn,
+         timeout: options.timeout || this.defaultTimeout
+       })
+     }
+
+     async call(...args) {
+       const results = []
+       for (const tap of this.taps) {
+         try {
+           const result = await withTimeout(() => tap.fn(...args), tap.timeout)
+           results.push({ plugin: tap.name, result, error: null })
+         } catch (error) {
+           results.push({
+             plugin: tap.name,
+             result: null,
+             error: error.message
+           })
+         }
+       }
+       return results
+     }
+   }
+   ```
+
+3. 超时策略：
+   - 全局超时：所有 hook 使用相同超时时间
+   - 单独超时：每个 hook 可配置不同超时
+   - 累计超时：所有 hook 总时间不超过阈值
+
+API 设计示例:
+
+```javascript
+class PluginHookSystem {
+  constructor() {
+    this.hooks = {
+      // 同步串行
+      beforeCompile: new SyncHook(['config']),
+
+      // 异步串行
+      transform: new AsyncSeriesHook(['code', 'filename']),
+
+      // 异步并行
+      afterBuild: new AsyncParallelHook(['stats']),
+
+      // 带熔断和超时
+      apiCall: new HookWithCircuitBreaker()
+    }
+
+    // 配置超时
+    this.hooks.transform.defaultTimeout = 3000
+    this.hooks.apiCall.defaultTimeout = 5000
+  }
+
+  // 注册插件
+  registerPlugin(plugin) {
+    // 同步 hook
+    this.hooks.beforeCompile.tap(plugin.name, (config) => {
+      return plugin.beforeCompile(config)
+    })
+
+    // 异步 hook
+    this.hooks.transform.tap(
+      plugin.name,
+      async (code, filename) => {
+        return await plugin.transform(code, filename)
+      },
+      { timeout: 2000 }
+    ) // 单独超时
+
+    // 并行 hook
+    this.hooks.afterBuild.tap(plugin.name, async (stats) => {
+      await plugin.afterBuild(stats)
+    })
+  }
+
+  // 执行 hook
+  async compile(config) {
+    // 同步执行
+    const modifiedConfig = this.hooks.beforeCompile.call(config)
+
+    // 异步串行执行（带超时）
+    const transformedCode = await this.hooks.transform.call(code, filename)
+
+    // 执行编译...
+
+    // 异步并行执行
+    await this.hooks.afterBuild.call(stats)
+  }
+}
+
+// 使用示例
+const system = new PluginHookSystem()
+
+system.registerPlugin({
+  name: 'babel-plugin',
+  beforeCompile: (config) => ({ ...config, babel: true }),
+  transform: async (code) => babel.transform(code),
+  afterBuild: async (stats) => console.log('Build complete', stats)
+})
+
+await system.compile({ entry: './src/index.js' })
+```
+
+高级特性：
+
+1. Hook 拦截器：
+
+   ```javascript
+   hook.intercept({
+     register(tapInfo) {
+       // 注册时拦截
+       console.log('Registering:', tapInfo.name)
+     },
+     call(...args) {
+       // 调用时拦截
+       console.log('Calling with:', args)
+     },
+     tap(tapInfo) {
+       // 每个 tap 执行前拦截
+       console.log('Executing:', tapInfo.name)
+     }
+   })
+   ```
+
+2. Bail Hook（提前退出）：
+
+   ```javascript
+   class AsyncBailHook {
+     async call(...args) {
+       for (const tap of this.taps) {
+         const result = await tap.fn(...args)
+         if (result !== undefined) {
+           return result // 提前退出
+         }
+       }
+     }
+   }
+   ```
+
+3. Waterfall Hook（瀑布流）：
+   ```javascript
+   class AsyncWaterfallHook {
+     async call(initialValue, ...args) {
+       let value = initialValue
+       for (const tap of this.taps) {
+         value = await tap.fn(value, ...args)
+       }
+       return value
+     }
+   }
+   ```
+
+---
+
+## 面试题（4 题）
+
+### 1. 你做过的插件系统
+
+讲你做过的插件系统：为什么要做插件化？架构设计、核心难点、如何保证稳定性？
+
+**【作答】：**
+
+项目背景：低代码平台的可视化编辑器插件系统
+
+为什么要做插件化：
+
+1. 业务需求：不同客户需要不同的组件和功能，硬编码无法满足
+2. 团队协作：多个团队并行开发，需要解耦和独立发布
+3. 扩展性：第三方开发者需要扩展平台能力
+4. 维护性：核心系统与业务逻辑分离，降低复杂度
+
+架构设计：
+
+1. 核心架构：
+
+   - 插件管理器（PluginManager）：负责加载、卸载、生命周期管理
+   - 扩展点注册表（ExtensionRegistry）：管理所有扩展点
+   - 事件总线（EventBus）：插件间通信
+   - 沙箱环境（Sandbox）：隔离插件执行环境
+   - 权限系统（PermissionSystem）：控制插件访问权限
+
+2. 插件结构：
+
+   ```javascript
+   {
+     id: 'plugin-id',
+     version: '1.0.0',
+     manifest: {
+       name: 'Plugin Name',
+       entry: './index.js',
+       dependencies: { 'core-system': '^2.0.0' },
+       permissions: ['ui.mount', 'data.read'],
+       extensions: {
+         'editor.toolbar': './toolbar.js',
+         'editor.sidebar': './sidebar.js'
+       }
+     }
+   }
+   ```
+
+3. 扩展点设计：
+   - UI 扩展点：工具栏、侧边栏、菜单、弹窗
+   - 数据扩展点：数据源、数据转换、数据验证
+   - 行为扩展点：保存前、保存后、加载时
+   - 渲染扩展点：自定义组件渲染器
+
+核心难点：
+
+1. 插件热更新：
+
+   - 问题：更新插件时不能影响正在编辑的用户
+   - 解决：版本化加载，旧版本插件继续运行，新请求使用新版本
+   - 实现：使用版本号作为命名空间，支持多版本共存
+
+2. 插件依赖管理：
+
+   - 问题：插件 A 依赖插件 B，但 B 可能未加载或版本不匹配
+   - 解决：构建依赖图，拓扑排序确定加载顺序，版本冲突检测
+   - 实现：使用 semver 解析版本，SAT 求解器解决冲突
+
+3. 样式隔离：
+
+   - 问题：插件样式污染全局，多个插件样式冲突
+   - 解决：CSS Modules + Shadow DOM + 命名空间
+   - 实现：为每个插件生成唯一类名前缀，关键 UI 使用 Shadow DOM
+
+4. 状态管理：
+
+   - 问题：插件需要访问和修改编辑器状态，但需要隔离
+   - 解决：状态代理 + 权限控制 + 变更通知
+   - 实现：使用 Proxy 代理状态对象，记录变更，通知相关插件
+
+5. 错误隔离：
+   - 问题：插件错误导致整个编辑器崩溃
+   - 解决：错误边界 + 降级方案 + 错误恢复
+   - 实现：每个插件包裹在错误边界中，错误时显示降级 UI
+
+如何保证稳定性：
+
+1. 测试策略：
+
+   - 单元测试：每个插件独立测试
+   - 集成测试：插件与核心系统集成测试
+   - 兼容性测试：不同插件组合的兼容性测试
+   - 性能测试：插件加载、执行性能监控
+
+2. 监控体系：
+
+   - 错误监控：Sentry 收集插件错误，按插件分类
+   - 性能监控：监控插件加载时间、执行时间、内存使用
+   - 使用监控：统计插件使用率，识别问题插件
+   - 日志系统：详细记录插件操作，支持问题追溯
+
+3. 灰度发布：
+
+   - 新插件先发布到测试环境
+   - 小范围用户试用（5% → 20% → 50% → 100%）
+   - 监控错误率和性能指标
+   - 发现问题立即回滚
+
+4. 降级机制：
+
+   - 插件加载失败：显示占位符，不影响核心功能
+   - 插件执行错误：捕获错误，显示错误提示，允许用户禁用
+   - 插件性能问题：超时自动取消，记录日志
+
+5. 版本管理：
+
+   - 严格遵循 semver
+   - 重大更新提供迁移指南
+   - 保持向后兼容（至少支持 2 个主版本）
+   - 废弃 API 提前通知，给足迁移时间
+
+6. 代码质量：
+
+   - ESLint + Prettier 统一代码风格
+   - TypeScript 提供类型安全
+   - 代码审查：所有插件代码必须经过审查
+   - 文档要求：完善的 README 和 API 文档
+
+7. 安全措施：
+   - 插件签名验证
+   - 权限最小化原则
+   - 沙箱隔离执行
+   - 定期安全审计
+
+实际效果：
+
+- 插件数量：从 0 增长到 50+
+- 开发效率：新功能开发时间减少 60%
+- 稳定性：插件相关错误率 &lt; 0.1%
+- 用户满意度：支持自定义扩展，用户满意度提升 40%
+
+---
+
+### 2. 插件生态建设
+
+如果你要建设一个插件生态，你会如何规划：文档、开发工具、市场、审核、监控？
+
+**【作答】：**
+
+生态建设是一个系统性工程，需要从开发者体验、用户信任、平台治理等多个维度规划。
+
+一、文档体系
+
+1. 核心文档：
+
+   - 快速开始：5 分钟上手的 Hello World 示例
+   - API 参考：完整的 API 文档，包含示例代码
+   - 架构指南：插件系统设计理念、最佳实践
+   - 迁移指南：版本升级、API 变更的迁移说明
+
+2. 教程文档：
+
+   - 基础教程：插件开发的基础概念和流程
+   - 进阶教程：高级特性、性能优化、安全实践
+   - 实战案例：真实场景的插件开发案例
+   - 视频教程：可视化教学，降低学习门槛
+
+3. 文档质量：
+   - 可搜索：全文搜索，快速定位
+   - 可交互：在线代码编辑器，直接运行示例
+   - 可反馈：文档评论区，收集改进建议
+   - 多语言：支持中英文，扩大开发者群体
+
+二、开发工具
+
+1. 脚手架工具：
+
+   ```bash
+   npm create my-plugin
+   # 自动生成项目结构、配置文件、示例代码
+   ```
+
+2. 开发调试工具：
+
+   - 本地开发服务器：热重载、错误提示
+   - 调试工具：插件状态查看、性能分析
+   - 测试工具：单元测试模板、集成测试框架
+   - 构建工具：一键打包、发布
+
+3. CLI 工具：
+
+   ```bash
+   plugin-cli init          # 初始化项目
+   plugin-cli dev          # 开发模式
+   plugin-cli build        # 构建插件
+   plugin-cli publish      # 发布到市场
+   plugin-cli test         # 运行测试
+   plugin-cli validate    # 验证插件格式
+   ```
+
+4. IDE 插件：
+
+   - VS Code 插件：代码补全、语法高亮、调试支持
+   - 代码模板：常用代码片段、快速生成
+   - 实时预览：开发时实时预览插件效果
+
+5. 可视化工具：
+   - 插件配置生成器：可视化配置 manifest
+   - 依赖关系图：可视化插件依赖
+   - 性能分析器：可视化性能瓶颈
+
+三、插件市场
+
+1. 市场功能：
+
+   - 插件浏览：分类、搜索、排序、筛选
+   - 插件详情：描述、截图、演示、评分、评论
+   - 版本管理：版本历史、更新日志、下载统计
+   - 安装管理：一键安装、更新、卸载
+
+2. 推荐机制：
+
+   - 热门插件：基于下载量、评分
+   - 新插件推荐：新上架优质插件
+   - 个性化推荐：基于用户使用习惯
+   - 官方推荐：官方精选插件
+
+3. 社交功能：
+
+   - 插件评分和评论
+   - 开发者主页：展示开发者所有插件
+   - 插件收藏和分享
+   - 社区讨论区
+
+4. 商业化支持：
+   - 免费/付费插件
+   - 订阅模式
+   - 试用机制
+   - 收入分成
+
+四、审核机制
+
+1. 自动审核：
+
+   - 代码扫描：检测危险代码模式（eval、innerHTML 等）
+   - 依赖检查：验证依赖版本、检测安全漏洞
+   - 格式验证：验证 manifest 格式、必需字段
+   - 性能检测：检测性能问题（内存泄漏、CPU 占用）
+
+2. 人工审核：
+
+   - 功能审核：验证功能描述是否准确
+   - 安全审核：检查权限声明是否合理
+   - 质量审核：代码质量、文档完整性
+   - 合规审核：检查是否违反平台规则
+
+3. 审核流程：
+
+   ```
+   提交 → 自动审核 → 人工初审 → 测试环境验证 → 人工终审 → 上架
+          ↓ 失败        ↓ 失败       ↓ 失败          ↓ 失败
+        反馈问题      反馈问题     反馈问题        反馈问题
+   ```
+
+4. 审核标准：
+
+   - 功能完整性：插件功能与描述一致
+   - 代码质量：遵循代码规范，无严重 bug
+   - 安全性：权限最小化，无安全漏洞
+   - 性能：不影响系统性能
+   - 文档：README 完整，API 文档清晰
+
+5. 持续监控：
+   - 上架后持续监控错误率
+   - 用户反馈处理
+   - 定期复查：检查是否仍符合规范
+   - 违规处理：下架、封禁等
+
+五、监控体系
+
+1. 插件监控：
+
+   - 安装量：统计插件安装数量
+   - 使用率：活跃用户数、使用频率
+   - 错误率：插件错误发生频率、错误类型
+   - 性能指标：加载时间、执行时间、内存占用
+
+2. 系统监控：
+
+   - 插件系统整体健康度
+   - 插件冲突检测
+   - 资源使用情况
+   - 安全事件监控
+
+3. 用户反馈：
+
+   - 评分和评论收集
+   - 问题反馈渠道
+   - 功能请求收集
+   - 用户满意度调研
+
+4. 数据分析：
+
+   - 插件趋势分析：哪些插件受欢迎
+   - 使用模式分析：用户如何使用插件
+   - 问题分析：常见问题、错误模式
+   - 优化建议：基于数据给出优化建议
+
+5. 告警机制：
+   - 错误率告警：超过阈值立即通知
+   - 性能告警：性能下降通知
+   - 安全告警：检测到安全威胁
+   - 自动处理：严重问题自动下架
+
+六、社区建设
+
+1. 开发者社区：
+
+   - 论坛：技术讨论、问题解答
+   - 技术分享会：定期举办技术分享
+   - 开发者大赛：激励创新
+   - 贡献者计划：表彰优秀贡献者
+
+2. 支持体系：
+
+   - 官方支持：技术支持、问题解答
+   - 社区支持：开发者互助
+   - 文档支持：完善的文档和教程
+   - 培训支持：开发者培训课程
+
+3. 激励机制：
+   - 优秀插件奖励
+   - 贡献者奖励
+   - 推广奖励
+   - 认证开发者计划
+
+七、实施路线图
+阶段一（0-3 个月）：基础建设
+
+- 完善核心文档
+- 开发基础工具（脚手架、CLI）
+- 建立审核流程
+- 搭建基础监控
+
+阶段二（3-6 个月）：市场建设
+
+- 上线插件市场
+- 完善开发工具
+- 建立社区论坛
+- 启动推广计划
+
+阶段三（6-12 个月）：生态繁荣
+
+- 吸引更多开发者
+- 丰富插件类型
+- 优化推荐算法
+- 建立商业化机制
+
+阶段四（12 个月+）：持续优化
+
+- 基于数据持续优化
+- 扩展生态边界
+- 建立行业标准
+- 探索新技术
+
+---
+
+### 3. 插件性能与安全
+
+插件系统如何平衡"开放性"与"性能/安全"？如何防止恶意插件？如何监控插件质量？
+
+**【作答】：**
+
+这是插件系统设计的核心挑战，需要在开放性和安全性之间找到平衡点。
+
+一、平衡开放性与性能/安全
+
+1. 分层权限设计：
+
+   - 基础层：所有插件可用的安全 API（只读操作、基础 UI）
+   - 标准层：需要声明权限的 API（读写操作、网络请求）
+   - 高级层：需要审核的特殊权限（文件系统、系统配置）
+   - 核心层：仅核心插件可用（系统级操作）
+
+2. 渐进式开放：
+
+   - 新插件默认最小权限
+   - 根据使用情况逐步开放更多权限
+   - 用户可手动授权额外权限
+   - 权限使用情况透明化
+
+3. 性能预算机制：
+
+   ```javascript
+   class PerformanceBudget {
+     constructor(budget) {
+       this.budget = {
+         loadTime: budget.loadTime || 1000, // 加载时间限制
+         executeTime: budget.executeTime || 100, // 单次执行时间
+         memoryLimit: budget.memoryLimit || 50, // 内存限制(MB)
+         cpuTime: budget.cpuTime || 50 // CPU 时间限制(ms)
+       }
+     }
+
+     async check(fn) {
+       const startTime = performance.now()
+       const startMemory = performance.memory?.usedJSHeapSize || 0
+
+       try {
+         const result = await fn()
+         const endTime = performance.now()
+         const endMemory = performance.memory?.usedJSHeapSize || 0
+
+         if (endTime - startTime > this.budget.executeTime) {
+           throw new Error('Execution time exceeded')
+         }
+
+         if (
+           (endMemory - startMemory) / 1024 / 1024 >
+           this.budget.memoryLimit
+         ) {
+           throw new Error('Memory limit exceeded')
+         }
+
+         return result
+       } catch (error) {
+         this.reportViolation(error)
+         throw error
+       }
+     }
+   }
+   ```
+
+4. 资源限制：
+
+   - 网络请求：限制频率、数据量、域名白名单
+   - 文件操作：限制可访问路径、文件大小
+   - DOM 操作：限制可修改范围、操作频率
+   - 计算资源：限制 CPU 时间、内存使用
+
+5. 沙箱隔离：
+   - 代码隔离：在独立环境中执行
+   - 资源隔离：限制可访问的资源
+   - 样式隔离：防止样式污染
+   - 错误隔离：插件错误不影响主系统
+
+二、防止恶意插件
+
+1. 代码静态分析：
+
+   ```javascript
+   class SecurityScanner {
+     scan(code) {
+       const risks = []
+
+       // 检测危险模式
+       const dangerousPatterns = [
+         /eval\s*\(/,
+         /Function\s*\(/,
+         /innerHTML\s*=/,
+         /document\.write/,
+         /XMLHttpRequest/,
+         /fetch\s*\(/
+       ]
+
+       dangerousPatterns.forEach((pattern) => {
+         if (pattern.test(code)) {
+           risks.push({
+             type: 'dangerous_pattern',
+             pattern: pattern.toString(),
+             severity: 'high'
+           })
+         }
+       })
+
+       // 检测未授权 API 调用
+       const unauthorizedAPIs = ['localStorage', 'sessionStorage', 'indexedDB']
+       unauthorizedAPIs.forEach((api) => {
+         if (new RegExp(`\\b${api}\\b`).test(code)) {
+           risks.push({
+             type: 'unauthorized_api',
+             api,
+             severity: 'medium'
+           })
+         }
+       })
+
+       return risks
+     }
+   }
+   ```
+
+2. 运行时监控：
+
+   ```javascript
+   class RuntimeMonitor {
+     constructor(plugin) {
+       this.plugin = plugin
+       this.activities = []
+       this.setupMonitoring()
+     }
+
+     setupMonitoring() {
+       // 监控网络请求
+       const originalFetch = window.fetch
+       window.fetch = (...args) => {
+         this.recordActivity('fetch', args)
+         if (!this.isAllowedURL(args[0])) {
+           throw new Error('URL not allowed')
+         }
+         return originalFetch(...args)
+       }
+
+       // 监控 DOM 操作
+       const originalAppendChild = Node.prototype.appendChild
+       Node.prototype.appendChild = function (child) {
+         if (!this.monitor.isAllowedDOMOperation(this, child)) {
+           throw new Error('DOM operation not allowed')
+         }
+         this.monitor.recordActivity('appendChild', { parent: this, child })
+         return originalAppendChild.call(this, child)
+       }
+
+       // 监控存储操作
+       const originalSetItem = Storage.prototype.setItem
+       Storage.prototype.setItem = function (key, value) {
+         if (!this.monitor.isAllowedStorage(key)) {
+           throw new Error('Storage operation not allowed')
+         }
+         this.monitor.recordActivity('setItem', { key, value })
+         return originalSetItem.call(this, key, value)
+       }
+     }
+
+     detectAnomaly() {
+       // 检测异常行为
+       const recentActivities = this.activities.slice(-100)
+
+       // 检测频繁操作
+       const frequency = this.calculateFrequency(recentActivities)
+       if (frequency > this.threshold) {
+         return { type: 'high_frequency', activities: recentActivities }
+       }
+
+       // 检测可疑操作序列
+       const suspiciousPatterns =
+         this.detectSuspiciousPatterns(recentActivities)
+       if (suspiciousPatterns.length > 0) {
+         return { type: 'suspicious_pattern', patterns: suspiciousPatterns }
+       }
+
+       return null
+     }
+   }
+   ```
+
+3. 权限最小化：
+
+   - 默认拒绝：未明确允许的操作一律拒绝
+   - 权限声明：插件必须明确声明所需权限
+   - 权限审核：人工审核权限声明的合理性
+   - 权限使用监控：监控权限实际使用情况，发现滥用
+
+4. 内容安全策略(CSP)：
+
+   ```html
+   <meta
+     http-equiv="Content-Security-Policy"
+     content="default-src 'self';
+                  script-src 'self' 'unsafe-inline';
+                  style-src 'self' 'unsafe-inline';
+                  connect-src https://api.example.com;"
+   />
+   ```
+
+5. 插件签名验证：
+
+   ```javascript
+   class PluginVerifier {
+     async verify(plugin, signature) {
+       // 验证插件签名
+       const publicKey = await this.getPublicKey(plugin.publisher)
+       const isValid = await crypto.subtle.verify(
+         'RSASSA-PKCS1-v1_5',
+         publicKey,
+         signature,
+         this.hashPlugin(plugin)
+       )
+
+       if (!isValid) {
+         throw new Error('Invalid plugin signature')
+       }
+
+       // 验证发布者证书
+       const certValid = await this.verifyCertificate(plugin.publisher)
+       if (!certValid) {
+         throw new Error('Invalid publisher certificate')
+       }
+
+       return true
+     }
+   }
+   ```
+
+6. 白名单机制：
+
+   - API 白名单：只允许调用白名单中的 API
+   - URL 白名单：网络请求只能访问白名单域名
+   - 资源白名单：只能访问白名单中的资源
+   - 动态更新：根据安全威胁动态更新白名单
+
+7. 用户确认机制：
+   - 敏感操作需要用户确认
+   - 权限升级需要用户授权
+   - 首次使用提示风险
+   - 定期提醒权限使用情况
+
+三、监控插件质量
+
+1. 性能监控：
+
+   ```javascript
+   class PerformanceMonitor {
+     monitor(plugin) {
+       return {
+         // 加载性能
+         loadTime: this.measureLoadTime(plugin),
+
+         // 执行性能
+         executeTime: this.measureExecuteTime(plugin),
+
+         // 内存使用
+         memoryUsage: this.measureMemory(plugin),
+
+         // CPU 使用
+         cpuUsage: this.measureCPU(plugin),
+
+         // 网络请求
+         networkRequests: this.trackNetwork(plugin),
+
+         // DOM 操作
+         domOperations: this.trackDOM(plugin)
+       }
+     }
+
+     measureLoadTime(plugin) {
+       const start = performance.now()
+       return plugin.load().then(() => {
+         return performance.now() - start
+       })
+     }
+
+     measureMemory(plugin) {
+       if (performance.memory) {
+         const before = performance.memory.usedJSHeapSize
+         plugin.execute()
+         const after = performance.memory.usedJSHeapSize
+         return (after - before) / 1024 / 1024 // MB
+       }
+       return null
+     }
+   }
+   ```
+
+2. 错误监控：
+
+   ```javascript
+   class ErrorMonitor {
+     setup(plugin) {
+       // 捕获同步错误
+       window.addEventListener('error', (event) => {
+         if (this.isPluginError(event, plugin)) {
+           this.reportError({
+             plugin: plugin.id,
+             type: 'synchronous',
+             message: event.message,
+             stack: event.error?.stack,
+             timestamp: Date.now()
+           })
+         }
+       })
+
+       // 捕获异步错误
+       window.addEventListener('unhandledrejection', (event) => {
+         if (this.isPluginError(event, plugin)) {
+           this.reportError({
+             plugin: plugin.id,
+             type: 'asynchronous',
+             message: event.reason?.message,
+             stack: event.reason?.stack,
+             timestamp: Date.now()
+           })
+         }
+       })
+     }
+
+     reportError(error) {
+       // 发送到监控服务
+       fetch('/api/errors', {
+         method: 'POST',
+         body: JSON.stringify(error)
+       })
+
+       // 本地统计
+       this.errorStats[error.plugin] = (this.errorStats[error.plugin] || 0) + 1
+     }
+   }
+   ```
+
+3. 使用监控：
+
+   ```javascript
+   class UsageMonitor {
+     track(plugin, action) {
+       const usage = {
+         plugin: plugin.id,
+         action,
+         timestamp: Date.now(),
+         user: this.getUserId(),
+         session: this.getSessionId()
+       }
+
+       // 发送使用数据
+       this.sendUsage(usage)
+
+       // 更新统计
+       this.updateStats(plugin.id, action)
+     }
+
+     getStats(pluginId) {
+       return {
+         installs: this.getInstallCount(pluginId),
+         activeUsers: this.getActiveUserCount(pluginId),
+         usageFrequency: this.getUsageFrequency(pluginId),
+         userRetention: this.getUserRetention(pluginId)
+       }
+     }
+   }
+   ```
+
+4. 质量评分：
+
+   ```javascript
+   class QualityScorer {
+     calculateScore(plugin) {
+       const metrics = {
+         // 性能得分 (0-30)
+         performance: this.scorePerformance(plugin),
+
+         // 稳定性得分 (0-30)
+         stability: this.scoreStability(plugin),
+
+         // 安全性得分 (0-20)
+         security: this.scoreSecurity(plugin),
+
+         // 用户体验得分 (0-20)
+         userExperience: this.scoreUserExperience(plugin)
+       }
+
+       const totalScore = Object.values(metrics).reduce((a, b) => a + b, 0)
+
+       return {
+         total: totalScore,
+         breakdown: metrics,
+         level: this.getLevel(totalScore) // A/B/C/D
+       }
+     }
+
+     scorePerformance(plugin) {
+       const loadTime = plugin.metrics.loadTime
+       const executeTime = plugin.metrics.executeTime
+
+       let score = 30
+       if (loadTime > 2000) score -= 10
+       if (loadTime > 5000) score -= 10
+       if (executeTime > 100) score -= 5
+       if (executeTime > 500) score -= 5
+
+       return Math.max(0, score)
+     }
+
+     scoreStability(plugin) {
+       const errorRate = plugin.metrics.errorRate
+       let score = 30
+
+       if (errorRate > 0.01) score -= 10 // 1% 错误率
+       if (errorRate > 0.05) score -= 10 // 5% 错误率
+       if (errorRate > 0.1) score -= 10 // 10% 错误率
+
+       return Math.max(0, score)
+     }
+   }
+   ```
+
+5. 自动化测试：
+
+   - 单元测试覆盖率要求（>80%）
+   - 集成测试：与核心系统集成测试
+   - 兼容性测试：不同环境、浏览器测试
+   - 性能测试：自动化性能基准测试
+
+6. 用户反馈：
+
+   - 评分系统：用户对插件评分
+   - 评论系统：收集用户反馈
+   - 问题报告：用户报告问题
+   - 功能请求：用户请求新功能
+
+7. 质量报告：
+   - 定期生成质量报告
+   - 质量趋势分析
+   - 问题插件识别
+   - 改进建议
+
+四、最佳实践
+
+1. 开发阶段：
+
+   - 使用 TypeScript 提供类型安全
+   - 遵循代码规范
+   - 编写单元测试
+   - 进行安全扫描
+
+2. 审核阶段：
+
+   - 代码审查
+   - 安全审核
+   - 性能测试
+   - 功能验证
+
+3. 发布阶段：
+
+   - 灰度发布
+   - 监控指标
+   - 用户反馈
+   - 快速响应
+
+4. 运营阶段：
+   - 持续监控
+   - 定期更新
+   - 问题处理
+   - 性能优化
+
+---
+
+### 4. 插件系统演进
+
+一个插件系统从 0 到 1 再到成熟，你认为会经历哪些阶段？每个阶段的重点是什么？
+
+**【作答】：**
+
+插件系统的演进是一个渐进的过程，需要根据实际需求和资源情况逐步完善。
+
+阶段一：MVP（最小可行产品）- 0 到 1
+目标：验证插件化的可行性和价值
+
+核心功能：
+
+1. 基础的插件加载机制
+
+   - 简单的模块加载（如 require、import）
+   - 基本的生命周期（activate、deactivate）
+   - 简单的扩展点（1-2 个核心扩展点）
+
+2. 最小化的 API
+
+   - 提供最核心的 API（如数据访问、UI 挂载）
+   - 简单的权限控制（全有或全无）
+
+3. 基础文档
+   - 快速开始指南
+   - 简单的 API 文档
+   - 1-2 个示例插件
+
+重点：
+
+- 快速验证：快速实现，验证核心价值
+- 内部使用：先内部团队使用，收集反馈
+- 简单优先：避免过度设计，保持简单
+- 核心场景：只支持最核心的使用场景
+
+风险：
+
+- 技术债务：快速实现可能带来技术债务
+- 扩展性不足：可能无法满足后续需求
+- 稳定性问题：缺乏完善的错误处理
+
+阶段二：基础完善 - 1 到可用
+目标：让插件系统稳定可用，支持更多场景
+
+核心功能：
+
+1. 完善的插件管理
+
+   - 插件注册表
+   - 依赖管理（基础版本）
+   - 生命周期完善（init、activate、deactivate、uninstall）
+   - 错误处理和恢复
+
+2. 扩展点体系
+
+   - 多个扩展点（UI、数据、行为等）
+   - Hook 系统（同步/异步）
+   - 事件系统（插件间通信）
+
+3. 开发工具
+
+   - 脚手架工具
+   - 本地开发服务器
+   - 基础调试工具
+
+4. 文档完善
+   - 完整的 API 文档
+   - 开发指南
+   - 最佳实践
+   - 常见问题
+
+重点：
+
+- 稳定性：完善错误处理，提高稳定性
+- 易用性：改善开发体验，降低开发门槛
+- 扩展性：支持更多使用场景
+- 内部推广：在内部更多团队推广使用
+
+里程碑：
+
+- 内部有 5-10 个插件在使用
+- 插件系统稳定运行 3 个月以上
+- 开发者反馈良好
+
+阶段三：对外开放 - 可用到生态
+目标：对外开放，建立插件生态
+
+核心功能：
+
+1. 插件市场
+
+   - 插件浏览和搜索
+   - 插件详情页
+   - 安装和管理
+   - 评分和评论
+
+2. 安全和权限
+
+   - 完善的权限系统
+   - 沙箱隔离
+   - 安全审核
+   - 代码扫描
+
+3. 审核机制
+
+   - 自动审核（代码扫描、格式验证）
+   - 人工审核流程
+   - 审核标准
+
+4. 监控体系
+
+   - 性能监控
+   - 错误监控
+   - 使用统计
+   - 质量评分
+
+5. 社区建设
+   - 开发者论坛
+   - 技术文档
+   - 示例和教程
+   - 技术支持
+
+重点：
+
+- 生态建设：吸引外部开发者
+- 质量保证：建立审核和监控机制
+- 用户体验：优化插件发现和安装体验
+- 安全优先：确保平台和用户安全
+
+里程碑：
+
+- 外部开发者超过 50 人
+- 插件数量超过 100 个
+- 插件安装量超过 10 万次
+- 建立活跃的开发者社区
+
+阶段四：生态繁荣 - 生态到成熟
+目标：生态繁荣，系统成熟稳定
+
+核心功能：
+
+1. 高级特性
+
+   - 插件热更新
+   - 插件版本管理
+   - 插件依赖解析
+   - 插件组合和编排
+
+2. 开发工具完善
+
+   - IDE 插件
+   - 可视化工具
+   - 性能分析工具
+   - 测试工具
+
+3. 商业化支持
+
+   - 付费插件
+   - 订阅模式
+   - 收入分成
+   - 推广机制
+
+4. 数据分析
+
+   - 插件趋势分析
+   - 用户行为分析
+   - 推荐算法
+   - 数据驱动的优化
+
+5. 企业级功能
+   - 企业插件市场
+   - 私有插件仓库
+   - 权限管理
+   - 审计日志
+
+重点：
+
+- 生态繁荣：插件类型丰富，满足各种需求
+- 质量提升：持续提升插件质量
+- 用户体验：优化整体用户体验
+- 商业化：建立可持续的商业模式
+
+里程碑：
+
+- 插件数量超过 500 个
+- 活跃开发者超过 500 人
+- 插件安装量超过 100 万次
+- 建立可持续的商业模式
+
+阶段五：平台化 - 成熟到平台
+目标：成为行业标准，建立平台生态
+
+核心功能：
+
+1. 平台能力
+
+   - 多租户支持
+   - 国际化
+   - 多语言支持
+   - 跨平台支持
+
+2. 标准化
+
+   - 插件规范标准化
+   - API 标准化
+   - 审核标准公开
+   - 行业标准制定
+
+3. 生态扩展
+
+   - 插件市场 API
+   - 第三方工具集成
+   - 开发者工具链
+   - 合作伙伴计划
+
+4. 技术创新
+   - 新特性探索
+   - 性能优化
+   - 安全增强
+   - 新技术应用
+
+重点：
+
+- 行业影响：成为行业标准
+- 技术创新：持续技术创新
+- 生态扩展：扩展生态边界
+- 可持续发展：建立长期发展机制
+
+里程碑：
+
+- 成为行业标准
+- 生态覆盖多个领域
+- 建立强大的技术壁垒
+- 实现可持续发展
+
+各阶段关键指标：
+
+阶段一（MVP）：
+
+- 插件数量：1-5 个
+- 开发者：内部 1-2 个团队
+- 稳定性：基础可用
+- 文档：快速开始
+
+阶段二（基础完善）：
+
+- 插件数量：5-20 个
+- 开发者：内部 5-10 个团队
+- 稳定性：稳定运行
+- 文档：完整文档
+
+阶段三（对外开放）：
+
+- 插件数量：20-100 个
+- 开发者：50-200 人
+- 稳定性：生产级稳定
+- 文档：完善的文档和社区
+
+阶段四（生态繁荣）：
+
+- 插件数量：100-500 个
+- 开发者：200-1000 人
+- 稳定性：企业级稳定
+- 文档：丰富的文档和资源
+
+阶段五（平台化）：
+
+- 插件数量：500+ 个
+- 开发者：1000+ 人
+- 稳定性：行业标准
+- 文档：完整的知识体系
+
+演进原则：
+
+1. 渐进式演进：每个阶段基于前一阶段，逐步完善
+2. 用户驱动：根据用户反馈和需求调整方向
+3. 技术债务管理：及时偿还技术债务，避免积累
+4. 平衡创新和稳定：在创新和稳定之间找到平衡
+5. 社区参与：让社区参与设计和决策
+
+常见陷阱：
+
+1. 过度设计：在早期阶段过度设计，导致开发缓慢
+2. 忽视安全：早期忽视安全，后期难以弥补
+3. 文档不足：文档跟不上功能发展
+4. 缺乏监控：缺乏监控导致问题发现不及时
+5. 生态建设滞后：技术完善但生态建设滞后
+
+---

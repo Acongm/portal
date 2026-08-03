@@ -1,0 +1,2261 @@
+---
+title: "代码规范 & Umi/ESLint 规范为什么这样设计 & 如何落地"
+---
+
+# 代码规范 & Umi/ESLint 规范为什么这样设计 & 如何落地
+
+## 笔试题（6 题）
+
+### 1. 代码规范的意义
+
+代码规范的意义是什么？包括哪些维度（格式、命名、架构、最佳实践）？如何平衡规范与效率？
+
+**【作答】：**
+
+代码规范意义:
+
+1. 提升代码可读性和可维护性，降低团队协作成本
+2. 减少代码审查时的主观争议，提高开发效率
+3. 降低 Bug 率，通过静态检查发现潜在问题
+4. 形成团队知识沉淀，帮助新人快速融入
+5. 提升代码质量，建立工程化标准
+
+包括的维度:
+
+1. 格式规范:
+
+   - 缩进、空格、换行、引号使用（单引号/双引号）
+   - 最大行长度、文件末尾空行
+   - 使用 Prettier 统一格式化
+
+2. 命名规范:
+
+   - 变量/函数使用 camelCase（如：getUserInfo）
+   - 组件/类使用 PascalCase（如：UserProfile）
+   - 常量使用 UPPER_SNAKE_CASE（如：MAX_COUNT）
+   - 私有属性使用前缀 \_（如：\_privateMethod）
+   - 布尔值使用 is/has/should 前缀（如：isVisible, hasError）
+
+3. 架构规范:
+
+   - 目录结构约定（如：components/、utils/、hooks/）
+   - 模块职责划分（单一职责原则）
+   - 依赖关系管理（避免循环依赖）
+   - 分层架构（UI 层、逻辑层、数据层）
+
+4. 最佳实践:
+   - React Hooks 使用规范（依赖数组、自定义 Hooks）
+   - 状态管理模式（避免过度使用全局状态）
+   - 性能优化建议（memo、useMemo、useCallback）
+   - 错误处理机制（Error Boundary、异常捕获）
+   - 安全规范（XSS 防护、数据验证）
+
+平衡规范与效率:
+
+1. 自动化工具：使用 ESLint + Prettier 自动修复，减少人工成本
+2. 渐进式推进：核心规则强制，非关键规则警告，逐步收紧
+3. 团队共识：规则由团队讨论决定，而非强制推行
+4. 灵活豁免：提供 eslint-disable 等机制应对特殊场景
+5. 持续优化：定期回顾规则有效性，删除过时规则
+6. **使用业界标准配置：站在巨人的肩膀上，减少从零制定成本**
+   - 直接使用成熟的 ESLint 配置（Airbnb、Umi、Ant Design）
+   - 在标准配置基础上微调，而非完全自定义
+   - 降低学习成本，新人更容易理解和接受
+
+---
+
+### 2. ESLint 工作原理
+
+ESLint 的工作原理是什么？AST、规则引擎、修复器如何协同？自定义规则如何编写？
+
+**【作答】：**
+
+工作原理:
+
+1. 解析（Parse）：将代码转换为 AST（抽象语法树）
+2. 遍历（Traverse）：遍历 AST 节点，触发规则监听器
+3. 检查（Check）：规则引擎执行各项规则检查
+4. 报告（Report）：收集错误和警告信息
+5. 修复（Fix）：自动修复可修复的问题
+
+AST 解析:
+
+- ESLint 使用 espree 解析器（基于 Acorn）
+- 将 JavaScript 代码解析为符合 ESTree 规范的 AST
+- 支持最新的 ECMAScript 语法和 JSX
+- 示例：const a = 1 → VariableDeclaration 节点
+  └─ VariableDeclarator
+  ├─ Identifier (name: "a")
+  └─ Literal (value: 1)
+
+规则引擎:
+
+- 每个规则都是一个独立的模块，导出 create 函数
+- 通过访问者模式（Visitor Pattern）监听 AST 节点
+- 规则可监听进入/离开节点（如：Identifier、FunctionDeclaration）
+- 规则之间相互独立，可插拔配置
+- 支持规则级别：off(0)、warn(1)、error(2)
+
+自动修复:
+
+- 规则可提供 fix 函数，返回修复操作
+- 通过 fixer API 操作代码：insertTextBefore、replaceText、remove
+- 修复器支持范围操作，指定替换位置 [start, end]
+- 多轮修复：某些修复可能触发其他规则，需要迭代修复
+- 使用 --fix 参数自动修复
+
+```js
+// 自定义规则编写:
+module.exports = {
+  meta: {
+    type: 'problem',
+    docs: { description: '禁止使用 var' },
+    fixable: 'code'
+  },
+  create(context) {
+    return {
+      VariableDeclaration(node) {
+        if (node.kind === 'var') {
+          context.report({
+            node,
+            message: '请使用 const 或 let',
+            fix(fixer) {
+              return fixer.replaceText(node, node.raw.replace('var', 'const'))
+            }
+          })
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
+### 2.5. 业界标准 ESLint 配置（重点推荐）
+
+**为什么使用标准配置？**
+
+```
+优势：
+1. 经过大量项目验证，规则成熟稳定
+2. 减少团队争论，"业界标准"就是最好的说服理由
+3. 开箱即用，大幅降低配置成本
+4. 社区活跃，持续更新维护
+5. 新人容易接受（很多人已经熟悉）
+
+原则：
+- 80% 使用标准配置，20% 根据团队定制
+- 优先选择与技术栈匹配的配置（React 选 Airbnb，Umi 项目选 @umijs/fabric）
+- 避免过度定制，增加维护成本
+```
+
+**常见标准配置对比：**
+
+```
+1. eslint-config-airbnb（最流行，React 项目首选）
+  npm install --save-dev eslint-config-airbnb eslint-plugin-import eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-jsx-a11y
+
+  特点：
+  ✅ GitHub 4万+ Star，最受欢迎的配置
+  ✅ 规则严格，代码质量高
+  ✅ 完善的 React/JSX 支持
+  ✅ 包含无障碍性（a11y）规则
+  ❌ 规则较严，初期可能不适应
+
+  配置示例：
+  {
+    "extends": [
+      "airbnb",           // 完整版（包含 React）
+      "airbnb-base"       // 基础版（纯 JS，不含 React）
+    ]
+  }
+
+  适用场景：React/React Native 项目
+
+---
+
+2. @umijs/fabric（Umi/Ant Design 生态首选）
+  npm install --save-dev @umijs/fabric
+
+  特点：
+  ✅ 由蚂蚁集团前端团队维护
+  ✅ 针对 Umi + Ant Design + DVA 生态优化
+  ✅ 包含 ESLint + Prettier + Stylelint 全家桶
+  ✅ 内置 TypeScript 支持
+  ✅ 规则相对温和，适合国内团队
+
+  配置示例：
+  {
+    "extends": [
+      "@umijs/fabric"     // 自动包含 eslint + prettier
+    ]
+  }
+
+  .prettierrc.js：
+  const fabric = require('@umijs/fabric');
+  module.exports = fabric.prettier;
+
+  适用场景：Umi/Ant Design Pro/中后台项目
+
+---
+
+3. eslint-config-standard（零配置，简洁风格）
+  npm install --save-dev eslint-config-standard eslint-plugin-import eslint-plugin-node eslint-plugin-promise
+
+  特点：
+  ✅ 零配置，开箱即用
+  ✅ 无分号风格（受 Vue 社区欢迎）
+  ✅ 规则宽松，易于上手
+  ❌ 缺少 React 专项规则
+
+  配置示例：
+  {
+    "extends": ["standard"]
+  }
+
+  适用场景：Node.js/Vue 项目
+
+---
+
+4. eslint-config-google（Google 风格）
+  npm install --save-dev eslint-config-google
+
+  特点：
+  ✅ Google 官方风格指南
+  ✅ 规则保守，稳定性高
+  ❌ 社区不如 Airbnb 活跃
+
+  配置示例：
+  {
+    "extends": ["google"]
+  }
+
+---
+
+5. @ant-design/eslint-config-antd（Ant Design 官方）
+  npm install --save-dev @ant-design/eslint-config-antd
+
+  特点：
+  ✅ Ant Design 官方维护
+  ✅ 专为 Ant Design 组件库优化
+  ✅ 适合 Ant Design 深度使用者
+
+  配置示例：
+  {
+    "extends": ["@ant-design"]
+  }
+
+---
+
+6. eslint-config-alloy（腾讯 AlloyTeam 出品）
+  npm install --save-dev eslint-config-alloy
+
+  特点：
+  ✅ 腾讯团队维护
+  ✅ 支持 React/Vue/TypeScript
+  ✅ 规则详细，有中文注释
+
+  配置示例：
+  {
+    "extends": [
+      "alloy",
+      "alloy/react",
+      "alloy/typescript"
+    ]
+  }
+```
+
+**实战推荐配置（根据项目类型）：**
+
+```
+场景 1：Umi + Ant Design + TypeScript 项目（中后台）
+推荐：@umijs/fabric
+
+package.json：
+{
+  "devDependencies": {
+    "@umijs/fabric": "^3.0.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0",
+    "stylelint": "^15.0.0"
+  }
+}
+
+.eslintrc.js：
+module.exports = {
+  extends: [require.resolve('@umijs/fabric/dist/eslint')],
+
+  // 团队定制规则（仅少量调整）
+  rules: {
+    'no-console': process__.env.NODE_ENV === 'production' ? 'error' : 'warn',
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }]
+  }
+}
+
+.prettierrc.js：
+const fabric = require('@umijs/fabric');
+module.exports = fabric.prettier;
+
+.stylelintrc.js：
+module.exports = {
+  extends: [require.resolve('@umijs/fabric/dist/stylelint')]
+};
+
+---
+
+场景 2：React + TypeScript 通用项目
+推荐：Airbnb + TypeScript
+
+package.json：
+{
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "eslint-config-airbnb": "^19.0.0",
+    "eslint-config-airbnb-typescript": "^17.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint-plugin-import": "^2.28.0",
+    "eslint-plugin-jsx-a11y": "^6.7.0",
+    "eslint-plugin-react": "^7.33.0",
+    "eslint-plugin-react-hooks": "^4.6.0"
+  }
+}
+
+.eslintrc.js：
+module.exports = {
+  extends: [
+    'airbnb',
+    'airbnb-typescript',
+    'airbnb/hooks'
+  ],
+  parserOptions: {
+    project: './tsconfig.json'
+  },
+  rules: {
+    // 团队定制
+    'react/react-in-jsx-scope': 'off',  // React 17+ 不需要导入 React
+    'import/prefer-default-export': 'off',
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }]
+  }
+}
+
+---
+
+场景 3：Node.js/Vue 项目
+推荐：Standard
+
+package.json：
+{
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-vue": "^9.0.0"
+  }
+}
+
+.eslintrc.js：
+module.exports = {
+  extends: [
+    'standard',
+    'plugin:vue/vue3-recommended'
+  ]
+}
+
+---
+
+场景 4：从零开始，没有历史包袱
+推荐：@umijs/fabric（国内团队） 或 Airbnb（国际化团队）
+
+理由：
+- @umijs/fabric：中文文档，国内最佳实践，全家桶配置
+- Airbnb：国际标准，社区最活跃
+```
+
+**如何选择配置？决策树：**
+
+```
+是否使用 Umi 框架？
+├─ 是 → @umijs/fabric（官方推荐，零配置）
+└─ 否 → 是否使用 React？
+      ├─ 是 → 是否使用 TypeScript？
+      │      ├─ 是 → airbnb + airbnb-typescript
+      │      └─ 否 → airbnb
+      └─ 否 → 是否使用 Vue？
+              ├─ 是 → standard + plugin:vue
+              └─ 否 → standard（Node.js 项目）
+
+特殊场景：
+- Ant Design 组件库开发 → @ant-design/eslint-config-antd
+- 腾讯系项目 → eslint-config-alloy
+- Google 风格偏好 → eslint-config-google
+```
+
+**配置继承与定制：**
+
+```javascript
+// 推荐做法：基于标准配置微调
+module.exports = {
+  // 1. 继承标准配置（80%）
+  extends: [require.resolve('@umijs/fabric/dist/eslint')],
+
+  // 2. 团队定制规则（20%）
+  rules: {
+    // 关闭不合适的规则
+    'no-console': 'off',
+
+    // 调整规则级别
+    complexity: ['warn', 15], // 降低复杂度要求
+
+    // 添加团队特殊规则
+    'no-restricted-imports': [
+      'error',
+      {
+        patterns: ['../*'] // 禁止相对路径导入上级目录
+      }
+    ]
+  },
+
+  // 3. 特殊目录配置
+  overrides: [
+    {
+      files: ['**/*.test.ts', '**/*.spec.ts'],
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off' // 测试文件允许 any
+      }
+    }
+  ]
+}
+```
+
+**Umi 项目完整配置示例（推荐）：**
+
+```javascript
+// .eslintrc.js
+module.exports = {
+  extends: [require.resolve('@umijs/fabric/dist/eslint')],
+  globals: {
+    ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION: true,
+    page: true
+  },
+  rules: {
+    // 生产环境禁止 console
+    'no-console': process__.env.NODE_ENV === 'production' ? 'error' : 'warn',
+
+    // 允许下划线开头的未使用参数（常见于回调函数）
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
+    ],
+
+    // 允许命名导出
+    'import/prefer-default-export': 'off',
+
+    // React 17+ 不需要导入 React
+    'react/react-in-jsx-scope': 'off',
+
+    // 允许 JSX 在 tsx 文件中
+    'react/jsx-filename-extension': [1, { extensions: ['.tsx'] }]
+  }
+}
+
+// .prettierrc.js
+const fabric = require('@umijs/fabric')
+
+module.exports = {
+  ...fabric.prettier,
+  // 团队定制（可选）
+  printWidth: 100, // 行宽 100（默认 80）
+  singleQuote: true, // 单引号
+  trailingComma: 'es5' // 尾随逗号
+}
+
+// .stylelintrc.js
+module.exports = {
+  extends: [require.resolve('@umijs/fabric/dist/stylelint')],
+  rules: {
+    // 定制 CSS 规则
+  }
+}
+```
+
+**最佳实践建议：**
+
+```
+1. 优先选择标准配置
+  ❌ 从零开始编写 100+ 条规则
+  ✅ 使用 @umijs/fabric 或 Airbnb，微调 5-10 条规则
+
+2. 根据技术栈选择
+  - Umi 生态 → @umijs/fabric
+  - React 通用 → Airbnb
+  - Vue → Standard + vue
+  - Node.js → Standard
+
+3. 团队定制不超过 20%
+  - 保留 80% 的标准配置
+  - 只调整真正不适合团队的规则
+  - 避免过度定制
+
+4. 定期更新配置包
+  - 每季度更新一次 @umijs/fabric 等配置包
+  - 查看 Changelog，了解新规则
+  - 渐进式采纳新规则
+
+5. 文档化定制原因
+  // ✅ 好的做法
+  rules: {
+    // 团队约定：业务代码允许 console.log 用于调试
+    'no-console': 'off'
+  }
+
+  // ❌ 不好的做法
+  rules: {
+    'no-console': 'off'  // 为什么关闭？
+  }
+```
+
+---
+
+### 3. Prettier vs ESLint
+
+Prettier 和 ESLint 的区别是什么？为什么需要两者配合？如何避免冲突？
+
+**【作答】：**
+
+```
+Prettier:
+- 定位：代码格式化工具（Opinionated Code Formatter）
+- 职责：专注于代码风格/格式（缩进、换行、引号、分号等）
+- 特点：
+  · 几乎无配置，开箱即用
+  · 不可定制性强（减少争议）
+  · 支持多语言（JS、TS、CSS、HTML、JSON、Markdown等）
+  · 只管格式，不管代码质量
+
+ESLint:
+- 定位：代码质量检查工具（Code Quality Linter）
+- 职责：代码质量 + 部分代码风格检查
+- 特点：
+  · 高度可配置（规则、插件、解析器）
+  · 可检查潜在错误（未使用变量、==误用等）
+  · 可自定义规则
+  · 支持自动修复（但不如 Prettier 全面）
+
+两者配合:
+1. 分工明确：
+   - Prettier 负责格式化（缩进、换行、空格）
+   - ESLint 负责代码质量（逻辑错误、最佳实践）
+
+2. 协作流程：
+   - 先执行 Prettier 格式化
+   - 再执行 ESLint 检查代码质量
+   - 在 IDE 保存时自动触发
+
+3. 优势互补：
+   - Prettier 保证格式统一，减少 ESLint 格式规则
+   - ESLint 保证代码质量，发现潜在 Bug
+   - 提升开发体验，减少代码审查成本
+
+避免冲突:
+1. 使用 eslint-config-prettier：
+   - 关闭所有与 Prettier 冲突的 ESLint 格式规则
+   - 安装：npm i -D eslint-config-prettier
+   - 配置：extends: ['prettier'] // 放在最后
+
+2. 使用 eslint-plugin-prettier（可选）：
+   - 将 Prettier 作为 ESLint 规则运行
+   - 格式问题会显示为 ESLint 错误
+   - 配置：extends: ['plugin:prettier/recommended']
+
+3. 推荐配置：
+   {
+     "extends": [
+       "eslint:recommended",
+       "plugin:react/recommended",
+       "prettier"  // 必须放在最后，关闭冲突规则
+     ],
+     "plugins": ["prettier"],
+     "rules": {
+       "prettier/prettier": "error"
+     }
+   }
+
+4. 编辑器集成：
+   - VSCode 安装 Prettier 和 ESLint 插件
+   - 配置保存时自动格式化：
+     "editor.formatOnSave": true,
+     "editor.defaultFormatter": "esbenp.prettier-vscode"
+```
+
+---
+
+### 4. Umi 规范设计
+
+Umi 的规范为什么这样设计（约定式路由、配置式路由、插件机制）？背后的设计哲学是什么？
+
+**【作答】：**
+
+```
+约定式路由:
+- 基于文件系统的路由（Convention over Configuration）
+- 目录结构即路由结构：
+  pages/
+    index.tsx        → /
+    users/
+      index.tsx      → /users
+      [id].tsx       → /users/:id
+      [id]/edit.tsx  → /users/:id/edit
+
+- 优势：
+  · 零配置，开箱即用
+  · 目录结构即文档，一目了然
+  · 自动生成路由配置
+  · 减少心智负担
+
+- 特殊文件：
+  · _layout.tsx：布局文件
+  · 404.tsx：404 页面
+  · $.tsx：通配符路由
+
+配置式路由:
+- 通过 .umirc.ts 或 config/config.ts 配置
+- 适用场景：
+  · 复杂权限控制
+  · 动态路由需求
+  · 需要精细控制路由行为
+  · 路由元信息配置（title、access 等）
+
+- 示例配置：
+  export default {
+    routes: [
+      { path: '/', component: '@/pages/index' },
+      {
+        path: '/admin',
+        component: '@/layouts/AdminLayout',
+        access: 'canAdmin',
+        routes: [
+          { path: '/admin/users', component: '@/pages/users' }
+        ]
+      }
+    ]
+  }
+
+- 优势：
+  · 灵活性强，可精确控制
+  · 支持路由级权限配置
+  · 可配置路由元信息
+
+插件机制:
+- Umi 采用插件化架构，核心功能都是插件
+- 插件生命周期：
+  · onPluginReady：插件准备完成
+  · modifyConfig：修改配置
+  · modifyPaths：修改路径
+  · onGenerateFiles：生成临时文件
+  · modifyWebpackConfig：修改 Webpack 配置
+
+- 官方插件：
+  · @umijs/plugin-access：权限管理
+  · @umijs/plugin-model：简易数据流
+  · @umijs/plugin-antd：Ant Design 集成
+  · @umijs/plugin-request：网络请求
+
+- 自定义插件：
+  export default (api) => {
+    api.describe({ key: 'myPlugin' })
+    api.modifyConfig((memo) => {
+      // 修改配置
+      return memo
+    })
+  }
+
+设计哲学:
+1. 约定优于配置（Convention over Configuration）
+   - 减少配置文件，降低学习成本
+   - 通过约定降低决策成本
+   - 保持一致性，提升团队协作效率
+
+2. 渐进式增强（Progressive Enhancement）
+   - 默认提供最佳实践（路由、构建、部署）
+   - 需要时可深度定制（配置式路由、插件）
+   - 满足不同复杂度项目需求
+
+3. 开箱即用（Out of the Box）
+   - 内置路由、构建、Mock、代理等功能
+   - 零配置启动项目
+   - 降低项目初始化成本
+
+4. 插件化（Plugin System）
+   - 核心功能插件化，按需加载
+   - 生态丰富，社区活跃
+   - 可扩展性强
+
+5. 企业级（Enterprise-ready）
+   - 面向中后台应用场景
+   - 内置权限、国际化、数据流等企业级需求
+   - 稳定性和性能优先
+
+6. 研发体验优先
+   - 快速热更新
+   - 友好的错误提示
+   - 完善的文档和示例
+```
+
+---
+
+### 5. Git Hooks 与规范落地
+
+如何用 Git Hooks（husky、lint-staged、commitlint）落地代码规范？完整的工作流是什么?
+
+**【作答】：**
+
+```
+husky:
+- 定位：Git Hooks 管理工具
+- 作用：在 Git 操作时自动触发脚本（如：pre-commit、commit-msg）
+- 安装配置：
+  npm install husky -D
+  npx husky install
+  npm pkg set scripts.prepare="husky install"
+  npx husky add .husky/pre-commit "npx lint-staged"
+  npx husky add .husky/commit-msg "npx commitlint --edit $1"
+
+- 常用 Hooks：
+  · pre-commit：提交前检查（代码格式、lint）
+  · commit-msg：提交信息检查（规范性）
+  · pre-push：推送前检查（测试、构建）
+
+- 优势：
+  · 统一团队 Git Hooks 配置
+  · 自动安装，无需手动配置
+  · 跨平台兼容
+
+lint-staged:
+- 定位：只对暂存区文件执行 lint
+- 作用：提升性能，只检查本次修改的文件
+- 配置（package.json）：
+  {
+    "lint-staged": {
+      "*.{js,jsx,ts,tsx}": [
+        "eslint --fix",
+        "prettier --write"
+      ],
+      "*.{css,less,scss}": [
+        "stylelint --fix",
+        "prettier --write"
+      ],
+      "*.{json,md}": [
+        "prettier --write"
+      ]
+    }
+  }
+
+- 工作流程：
+  1. git add 文件到暂存区
+  2. git commit 触发 pre-commit
+  3. lint-staged 获取暂存文件列表
+  4. 对匹配的文件执行命令
+  5. 自动 git add 修复后的文件
+  6. 继续提交流程
+
+- 优势：
+  · 只检查修改文件，速度快
+  · 自动修复并重新暂存
+  · 支持多种文件类型
+
+commitlint:
+- 定位：Git 提交信息规范检查工具
+- 作用：强制团队使用统一的提交信息格式
+- 安装配置：
+  npm install @commitlint/{cli,config-conventional} -D
+  echo "module.exports = {extends: ['@commitlint/config-conventional']}" > commitlint.config.js
+
+- 规范格式（Conventional Commits）：
+  <type>(<scope>): <subject>
+
+  <body>
+
+  <footer>
+
+- type 类型：
+  · feat：新功能
+  · fix：bug 修复
+  · docs：文档修改
+  · style：代码格式（不影响功能）
+  · refactor：重构
+  · perf：性能优化
+  · test：测试相关
+  · chore：构建/工具变动
+
+- 示例：
+  feat(user): 添加用户登录功能
+  fix(api): 修复接口超时问题
+  docs(readme): 更新安装文档
+
+完整工作流:
+1. 开发阶段：
+   - 编写代码
+   - IDE 保存时自动格式化（Prettier）
+   - 实时 ESLint 错误提示
+
+2. 提交前（pre-commit）：
+   git add .
+   git commit -m "feat: xxx"
+   ↓
+   触发 husky pre-commit hook
+   ↓
+   执行 lint-staged
+   ↓
+   - ESLint 检查并自动修复
+   - Prettier 格式化
+   - Stylelint 检查样式
+   ↓
+   检查通过 → 继续提交
+   检查失败 → 阻止提交，显示错误
+
+3. 提交信息检查（commit-msg）：
+   ↓
+   触发 husky commit-msg hook
+   ↓
+   执行 commitlint
+   ↓
+   检查提交信息格式
+   ↓
+   符合规范 → 完成提交
+   不符合 → 阻止提交，提示错误
+
+4. 推送前（pre-push，可选）：
+   git push
+   ↓
+   触发 husky pre-push hook
+   ↓
+   - 执行单元测试
+   - 执行构建检查
+   - 执行类型检查（tsc --noEmit）
+   ↓
+   检查通过 → 允许推送
+   检查失败 → 阻止推送
+
+5. CI/CD 阶段：
+   - 再次执行 ESLint 全量检查
+   - 执行完整测试套件
+   - 生成代码质量报告
+   - 构建部署
+
+完整配置示例（package.json）：
+{
+  "scripts": {
+    "prepare": "husky install",
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix",
+    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css,less,json,md}\""
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": ["eslint --fix", "prettier --write"],
+    "*.{css,less}": ["stylelint --fix", "prettier --write"]
+  },
+  "devDependencies": {
+    "husky": "^8.0.0",
+    "lint-staged": "^13.0.0",
+    "@commitlint/cli": "^17.0.0",
+    "@commitlint/config-conventional": "^17.0.0"
+  }
+}
+```
+
+---
+
+### 6. TypeScript 类型规范
+
+TypeScript 项目的类型规范应该如何制定？any 的使用原则、类型覆盖率、严格模式配置？
+
+**【作答】：**
+
+```
+any 使用原则:
+1. 禁止使用场景：
+   - 业务逻辑代码中禁止使用 any
+   - 公共组件/工具函数禁止使用 any
+   - 接口定义禁止使用 any
+
+2. 允许使用场景（需添加注释说明）：
+   - 第三方库没有类型定义（临时方案，应补充 @types）
+   - 复杂类型推导性能问题（极少数情况）
+   - 动态数据类型确实无法预知（需业务说明）
+
+3. 替代方案：
+   - 使用 unknown 替代 any（类型安全）
+   - 使用泛型 <T> 保持类型信息
+   - 使用联合类型 string | number
+   - 使用类型断言 as Type（谨慎使用）
+
+4. ESLint 规则：
+   @typescript-eslint/no-explicit-any: "error"
+   @typescript-eslint/no-unsafe-assignment: "warn"
+
+5. 示例对比：
+   ❌ 错误：function process__(data: any) { return data.value }
+   ✅ 正确：function process__<T>(data: T) { return data }
+   ✅ 正确：function process__(data: unknown) {
+              if (typeof data === 'object') { ... }
+            }
+
+类型覆盖率:
+1. 目标设定：
+   - 核心业务代码：>95%
+   - 工具函数：100%
+   - 组件库：100%
+   - 测试代码：>80%
+
+2. 检测工具：
+   - 使用 type-coverage 检查类型覆盖率
+     npx type-coverage --detail
+   - 在 CI 中配置最低覆盖率阈值
+   - 生成类型覆盖率报告
+
+3. 配置示例（package.json）：
+   {
+     "scripts": {
+       "type-check": "tsc --noEmit",
+       "type-coverage": "type-coverage --at-least 95"
+     },
+     "typeCoverage": {
+       "atLeast": 95,
+       "strict": true,
+       "ignoreFiles": ["**/*.spec.ts", "**/mock/**"]
+     }
+   }
+
+4. 提升覆盖率策略：
+   - 优先处理覆盖率低的核心模块
+   - 为第三方库补充 .d.ts 声明文件
+   - 重构 any 类型为具体类型
+   - 使用泛型增强类型推导
+
+严格模式配置:
+tsconfig.json 推荐配置：
+{
+  "compilerOptions": {
+    // 严格模式（开启所有严格检查）
+    "strict": true,
+
+    // 或单独配置各项严格检查：
+    "noImplicitAny": true,              // 禁止隐式 any
+    "strictNullChecks": true,           // 严格空值检查
+    "strictFunctionTypes": true,        // 严格函数类型检查
+    "strictBindCallApply": true,        // 严格 bind/call/apply
+    "strictPropertyInitialization": true, // 严格属性初始化
+    "noImplicitThis": true,             // 禁止隐式 this
+    "alwaysStrict": true,               // 始终启用严格模式
+
+    // 额外的严格检查
+    "noUnusedLocals": true,             // 未使用的局部变量
+    "noUnusedParameters": true,         // 未使用的参数
+    "noImplicitReturns": true,          // 函数必须有返回值
+    "noFallthroughCasesInSwitch": true, // switch 必须有 break
+    "noUncheckedIndexedAccess": true,   // 索引访问可能为 undefined
+    "noPropertyAccessFromIndexSignature": true, // 索引签名访问
+
+    // 模块解析
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+
+    // 其他
+    "skipLibCheck": true,               // 跳过库文件检查（提升性能）
+    "forceConsistentCasingInFileNames": true
+  }
+}
+
+类型规范实践:
+1. 接口定义规范：
+   // ✅ 使用 interface 定义对象结构
+   interface User {
+     id: number
+     name: string
+     email?: string  // 可选属性
+     readonly createdAt: Date  // 只读属性
+   }
+
+   // ✅ 使用 type 定义联合类型/工具类型
+   type Status = 'pending' | 'success' | 'error'
+   type Partial<T> = { [P in keyof T]?: T[P] }
+
+2. 函数类型规范：
+   // ✅ 明确参数和返回值类型
+   function fetchUser(id: number): Promise<User> {
+     return api.get(`/users/${id}`)
+   }
+
+   // ✅ 使用泛型增强复用性
+   function mapArray<T, U>(arr: T[], fn: (item: T) => U): U[] {
+     return arr.map(fn)
+   }
+
+3. React 组件类型规范：
+   // ✅ 使用 FC 或显式定义 props
+   interface ButtonProps {
+     text: string
+     onClick: () => void
+     disabled?: boolean
+   }
+
+   const Button: React.FC<ButtonProps> = ({ text, onClick, disabled }) => {
+     return <button onClick={onClick} disabled={disabled}>{text}</button>
+   }
+
+   // ✅ 使用泛型组件
+   interface ListProps<T> {
+     items: T[]
+     renderItem: (item: T) => React.ReactNode
+   }
+
+   function List<T>({ items, renderItem }: ListProps<T>) {
+     return <>{items.map(renderItem)}</>
+   }
+
+4. 工具类型使用：
+   // Partial：所有属性可选
+   type PartialUser = Partial<User>
+
+   // Required：所有属性必填
+   type RequiredUser = Required<User>
+
+   // Pick：选择部分属性
+   type UserBasic = Pick<User, 'id' | 'name'>
+
+   // Omit：排除部分属性
+   type UserWithoutEmail = Omit<User, 'email'>
+
+   // Record：定义键值对
+   type UserMap = Record<number, User>
+
+5. 类型守卫：
+   function isUser(obj: any): obj is User {
+     return typeof obj === 'object' && 'id' in obj && 'name' in obj
+   }
+
+   if (isUser(data)) {
+     // TypeScript 知道 data 是 User 类型
+     console.log(data.name)
+   }
+
+6. 避免类型断言滥用：
+   // ❌ 危险的类型断言
+   const user = data as User
+
+   // ✅ 使用类型守卫
+   if (isUser(data)) {
+     const user = data
+   }
+
+   // ✅ 使用类型收窄
+   if (typeof value === 'string') {
+     // TypeScript 自动推导 value 为 string
+   }
+```
+
+---
+
+## 面试题（4 题）
+
+### 1. 团队规范落地
+
+如果让你在团队推行代码规范，你会如何做？从制定、宣导、落地、监控到持续改进。
+
+**【作答】：**
+
+```
+第一阶段：调研与制定（1-2周）
+1. 现状调研：
+   - 统计团队现有代码风格（缩进、命名、架构）
+   - 收集团队成员痛点（代码审查争议点、常见 Bug）
+   - 调研业界标准（Airbnb、Google、Standard）
+
+2. 规范制定（关键：不要从零开始！）：
+   - **直接采用成熟的标准配置**（80% 工作已完成）：
+     · Umi 项目 → @umijs/fabric（蚂蚁官方，全家桶）
+     · React 项目 → eslint-config-airbnb（社区最流行）
+     · Vue 项目 → eslint-config-standard + plugin:vue
+     · Node.js → eslint-config-standard
+
+   - **团队定制**（仅 20%）：
+     · 只调整真正不适合团队的规则（如 max-lines、complexity）
+     · 基于实际痛点定制，避免过度配置
+     · 记录每条定制规则的原因
+
+   - **达成共识**：
+     · 组织团队讨论会，投票决定使用哪个标准配置
+     · 用"业界标准"说服成员，减少主观争论
+     · 输出简洁的规范文档（标准配置 + 团队定制）
+
+3. 工具选型（推荐方案）：
+   - **Umi 项目**：
+     npm install -D @umijs/fabric
+     → 自动包含 ESLint + Prettier + Stylelint + TypeScript 配置
+
+   - **React 项目**：
+     npm install -D eslint-config-airbnb-typescript
+     → Airbnb 规范 + TypeScript 支持
+
+   - **通用工具**：
+     · husky + lint-staged（Git Hooks）
+     · commitlint（提交信息规范）
+     · TypeScript strict mode
+
+第二阶段：试点与宣导（2-3周）
+1. 小范围试点：
+   - 选择 1-2 个新项目先行试点
+   - 收集反馈，优化规则配置
+   - 总结最佳实践和常见问题
+
+2. 团队宣导：
+   - 组织技术分享会，讲解规范意义和工具使用
+   - 编写新手指南和 FAQ 文档
+   - 录制视频教程（IDE 配置、插件安装）
+   - 建立答疑渠道（Slack/飞书群）
+
+3. 开发环境配置：
+   - 提供统一的 VSCode 配置文件（.vscode/settings.json）
+   - 编写一键配置脚本（安装依赖、配置插件）
+   - 提供项目模板（create-react-app + 规范配置）
+
+第三阶段：全面落地（1个月）
+1. 存量代码处理（渐进式）：
+   - 不强制改造存量代码（避免大规模冲突）
+   - 在修改文件时顺带修复（减少变更范围）
+   - 设置 .eslintignore 忽略历史代码
+   - 逐步清理技术债务
+
+2. 增量代码强制（Git Hooks）：
+   - 所有新代码必须通过 lint 检查
+   - pre-commit：lint-staged 自动修复
+   - commit-msg：commitlint 检查提交信息
+   - pre-push：类型检查和单元测试
+
+3. CI/CD 集成：
+   - 在 CI 流程中强制执行 lint 检查
+   - 生成质量报告（ESLint、类型覆盖率）
+   - 检查不通过则阻止合并/部署
+
+   示例（.gitlab-ci.yml）：
+   lint:
+     script:
+       - npm run lint
+       - npm run type-check
+       - npm run type-coverage
+
+第四阶段：监控与度量（持续）
+1. 数据收集：
+   - 统计每次 MR 的 lint 错误数量
+   - 统计类型覆盖率趋势
+   - 统计代码质量评分（SonarQube）
+   - 统计 Bug 率变化
+
+2. 质量报告：
+   - 每周发布质量周报（错误 Top10、改进趋势）
+   - 在团队会议上同步质量数据
+   - 表彰规范执行好的成员
+
+3. 代码审查强化：
+   - 在 Code Review 中强调规范执行
+   - 建立 CR Checklist（规范项、安全项、性能项）
+   - 培养团队规范意识
+
+第五阶段：持续改进（季度）
+1. 定期回顾（每季度）：
+   - 收集规则争议点和误报问题
+   - 评估规则有效性（是否真正减少 Bug）
+   - 删除无效规则，优化配置
+
+2. 规范演进：
+   - 跟进 ESLint/TypeScript 新特性
+   - 引入新工具（如 SonarQube、Codecov）
+   - 补充新的最佳实践（性能、安全）
+
+3. 团队能力建设：
+   - 分享优秀代码案例
+   - 组织规范培训（新人入职培训）
+   - 鼓励贡献自定义规则
+
+关键成功因素：
+✅ 自动化优先：减少人工干预，降低执行成本
+✅ 渐进式推进：先试点后推广，先增量后存量
+✅ 数据驱动：用数据说话，证明规范价值
+✅ 持续优化：规范是动态的，不是一成不变
+✅ 团队共识：规范不是强制，是团队约定
+
+潜在阻力与应对：
+1. "规范太严格，影响开发效率"
+   → 强调自动修复，实际上是提升效率
+   → 展示数据：规范后 Bug 率下降 30%，CR 时间减少 50%
+
+2. "历史代码改造成本太高"
+   → 采用渐进式策略，不强制改造存量代码
+   → 只对新增/修改代码执行规范
+
+3. "规则太多，记不住"
+   → 依赖工具自动检查和修复，不需要记忆
+   → 提供配置好的开发环境，开箱即用
+
+4. "某些规则不合理"
+   → 建立规则讨论机制，民主决策
+   → 提供豁免机制（eslint-disable + 注释说明）
+```
+
+---
+
+### 2. 规范与灵活性
+
+代码规范如何平衡"统一性"与"灵活性"？什么情况下可以豁免规则？如何设计例外机制？
+
+**【作答】：**
+
+```
+一、平衡统一性与灵活性的策略
+
+1. 分层规则设计：
+   - Error 级别（强制，阻止提交）：
+     · 可能导致 Bug 的规则（如 no-unused-vars）
+     · 安全相关规则（如 no-eval）
+     · 类型安全规则（如 @typescript-eslint/no-explicit-any）
+
+   - Warn 级别（警告，不阻止提交）：
+     · 代码质量建议（如 complexity 复杂度）
+     · 性能优化建议（如 react-hooks/exhaustive-deps）
+     · 风格偏好（如 prefer-const）
+
+   - Off 级别（关闭）：
+     · 团队认为不适用的规则
+     · 与项目特性冲突的规则
+
+2. 核心规则 + 可选规则：
+   - 核心规则（20%）：所有项目必须遵守
+     · 格式化（Prettier 全权处理）
+     · 明显错误（no-undef、no-unreachable）
+     · 安全问题（no-eval、no-implied-eval）
+
+   - 可选规则（80%）：各项目根据情况选择
+     · 命名风格（驼峰/下划线）
+     · 文件组织方式
+     · 注释要求
+
+3. 项目级定制：
+   - 全局配置（.eslintrc.js）：团队统一规则
+   - 项目级覆盖（project/.eslintrc.js）：特殊项目定制
+   - 目录级覆盖（src/legacy/.eslintrc.js）：老代码兼容
+
+   示例：
+   // 全局配置
+   module.exports = {
+     extends: ['@company/eslint-config']
+   }
+
+   // 项目级定制
+   module.exports = {
+     extends: ['@company/eslint-config'],
+     rules: {
+       'max-lines': ['warn', 500]  // 覆盖全局配置
+     }
+   }
+
+二、可以豁免规则的场景
+
+1. 技术原因：
+   ✅ 第三方库类型缺失：
+      // @ts-ignore: 第三方库 xyz 缺少类型定义，已提 Issue #123
+      import xyz from 'xyz'
+
+   ✅ 性能优化需要：
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      useEffect(() => {
+        // 只在首次渲染时执行，故意不添加依赖
+        initSDK()
+      }, [])
+
+   ✅ 算法逻辑复杂度：
+      // eslint-disable-next-line complexity
+      function complexBusinessLogic() {
+        // 业务逻辑确实复杂，无法拆分
+      }
+
+2. 业务原因：
+   ✅ 遗留代码兼容：
+      // .eslintignore
+      src/legacy/**/*
+      src/vendor/**/*
+
+   ✅ 自动生成代码：
+      /* eslint-disable */
+      // 此文件由工具自动生成，请勿手动修改
+      export const API = { ... }
+      /* eslint-enable */
+
+   ✅ 测试代码特殊性：
+      // test/.eslintrc.js
+      module.exports = {
+        rules: {
+          '@typescript-eslint/no-explicit-any': 'off',  // 测试代码允许 any
+          'max-lines': 'off'  // 测试文件可以很长
+        }
+      }
+
+3. 临时豁免：
+   ✅ 快速修复线上问题（事后补充 TODO）：
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // TODO: 临时修复，待重构时补充类型 @张三 2024-12-28
+      const temp: any = legacyData
+
+三、例外机制设计
+
+1. 内联注释（最常用）：
+   - 单行豁免：
+     // eslint-disable-next-line rule-name
+     const x = dangerous()
+
+   - 块级豁免：
+     /* eslint-disable rule-name */
+     const a = 1
+     const b = 2
+     /* eslint-enable rule-name */
+
+   - 文件级豁免：
+     /* eslint-disable */
+     // 整个文件忽略
+
+   - TypeScript 忽略：
+     // @ts-ignore: 说明原因
+     // @ts-expect-error: 期望报错（用于测试）
+     // @ts-nocheck: 整个文件不检查
+
+2. 豁免规范（强制要求）：
+   ❌ 禁止：无注释的豁免
+   // eslint-disable-next-line
+
+   ✅ 要求：必须说明原因
+   // eslint-disable-next-line no-console
+   // 保留 console 用于调试生产环境问题
+   console.log('debug:', data)
+
+   ✅ 要求：指定具体规则（不使用 eslint-disable 全局禁用）
+
+   ✅ 要求：临时豁免必须添加 TODO 和负责人
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   // TODO: 补充类型定义 @张三 #123
+
+3. 豁免审查流程：
+   - 在 Code Review 中重点关注豁免代码
+   - 检查豁免原因是否充分
+   - 评估是否有更好的解决方案
+   - 临时豁免必须创建 Issue 跟踪
+
+   CR Checklist:
+   □ 豁免是否必要？
+   □ 豁免原因是否清晰？
+   □ 是否有技术债务跟踪？
+   □ 是否可以优化代码避免豁免？
+
+4. 豁免监控：
+   - 统计豁免次数（通过 grep 统计 eslint-disable）
+   - 定期清理不必要的豁免
+   - 在质量报告中展示豁免趋势
+
+   示例脚本：
+   # 统计豁免次数
+   grep -r "eslint-disable" src/ | wc -l
+
+   # 查找无注释的豁免
+   grep -r "eslint-disable-next-line$" src/
+
+四、实践建议
+
+1. 80/20 原则：
+   - 80% 的价值来自 20% 的核心规则
+   - 不要追求规则的完美，避免过度规范
+   - 优先解决高频问题
+
+2. 渐进式收紧：
+   - 新项目：严格模式（Error）
+   - 老项目：先 Warn，逐步升级为 Error
+   - 团队新规则：试运行期 Warn，稳定后 Error
+
+3. 民主决策：
+   - 规则调整需团队讨论
+   - 定期回顾规则有效性
+   - 接受合理的豁免请求
+
+4. 数据驱动优化：
+   - 统计误报率高的规则（考虑关闭）
+   - 统计豁免次数多的规则（考虑调整）
+   - 统计真实发现的 Bug（证明价值）
+
+5. 文化建设：
+   - 规范是帮助而非限制
+   - 鼓励提出改进建议
+   - 豁免不是失败，是务实的选择
+```
+
+---
+
+### 3. 规范工具链建设
+
+如何建设完整的规范工具链？编辑器集成、CI/CD 集成、自动化修复、质量报告？
+
+**【作答】：**
+
+```
+一、编辑器集成（开发阶段）
+
+1. VSCode 配置（推荐）：
+   .vscode/settings.json（提交到代码库）：
+   {
+     // 保存时自动格式化
+     "editor.formatOnSave": true,
+     "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+     // 保存时自动修复 ESLint 错误
+     "editor.codeActionsOnSave": {
+       "source.fixAll.eslint": true
+     },
+
+     // ESLint 验证的文件类型
+     "eslint.validate": [
+       "javascript",
+       "javascriptreact",
+       "typescript",
+       "typescriptreact"
+     ],
+
+     // 禁用 VSCode 自带的 JS/TS 验证（避免重复）
+     "javascript.validate.enable": false,
+     "typescript.validate.enable": false,
+
+     // 配置文件关联
+     "files.associations": {
+       "*.css": "css",
+       "*.less": "less"
+     }
+   }
+
+   .vscode/extensions.json（推荐插件）：
+   {
+     "recommendations": [
+       "dbaeumer.vscode-eslint",
+       "esbenp.prettier-vscode",
+       "stylelint.vscode-stylelint",
+       "ms-vscode.vscode-typescript-next"
+     ]
+   }
+
+2. 其他编辑器：
+   - WebStorm：内置 ESLint 和 Prettier 支持
+   - Sublime Text：需安装 SublimeLinter-eslint
+   - Vim/Neovim：使用 ALE 或 coc-eslint
+
+3. 一键配置脚本：
+   scripts/setup-editor.sh：
+   #!/bin/bash
+   echo "安装 VSCode 扩展..."
+   code --install-extension dbaeumer.vscode-eslint
+   code --install-extension esbenp.prettier-vscode
+
+   echo "安装项目依赖..."
+   npm install
+
+   echo "配置 Git Hooks..."
+   npx husky install
+
+   echo "✅ 开发环境配置完成！"
+
+二、本地开发工具链
+
+1. 包管理器配置：
+   package.json：
+   {
+     "scripts": {
+       // 检查类
+       "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
+       "lint:css": "stylelint 'src/**/*.{css,less,scss}'",
+       "type-check": "tsc --noEmit",
+       "type-coverage": "type-coverage --at-least 95",
+
+       // 修复类
+       "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix",
+       "lint:css:fix": "stylelint 'src/**/*.{css,less,scss}' --fix",
+       "format": "prettier --write 'src/**/*.{js,jsx,ts,tsx,css,less,json,md}'",
+
+       // 组合命令
+       "check": "npm run lint && npm run type-check && npm run test",
+       "fix": "npm run lint:fix && npm run format"
+     }
+   }
+
+2. Git Hooks 配置：
+   .husky/pre-commit：
+   #!/bin/sh
+   . "$(dirname "$0")/_/husky.sh"
+
+   npx lint-staged
+
+   .husky/commit-msg：
+   #!/bin/sh
+   . "$(dirname "$0")/_/husky.sh"
+
+   npx commitlint --edit $1
+
+   .husky/pre-push：
+   #!/bin/sh
+   . "$(dirname "$0")/_/husky.sh"
+
+   npm run type-check
+   npm run test
+
+   package.json：
+   {
+     "lint-staged": {
+       "*.{js,jsx,ts,tsx}": [
+         "eslint --fix",
+         "prettier --write"
+       ],
+       "*.{css,less,scss}": [
+         "stylelint --fix",
+         "prettier --write"
+       ],
+       "*.{json,md}": [
+         "prettier --write"
+       ]
+     }
+   }
+
+三、CI/CD 集成（持续集成）
+
+1. GitLab CI 配置：
+   .gitlab-ci.yml：
+   stages:
+     - install
+     - lint
+     - test
+     - build
+     - deploy
+
+   # 安装依赖（使用缓存加速）
+   install:
+     stage: install
+     script:
+       - npm ci
+     cache:
+       key: ${CI_COMMIT_REF_SLUG}
+       paths:
+         - node_modules/
+     artifacts:
+       paths:
+         - node_modules/
+       expire_in: 1 hour
+
+   # 代码质量检查
+   lint:
+     stage: lint
+     dependencies:
+       - install
+     script:
+       - npm run lint
+       - npm run lint:css
+     allow_failure: false  # 失败则阻止合并
+
+   # 类型检查
+   type-check:
+     stage: lint
+     dependencies:
+       - install
+     script:
+       - npm run type-check
+       - npm run type-coverage
+     artifacts:
+       reports:
+         coverage_report:
+           coverage_format: cobertura
+           path: coverage/type-coverage.xml
+
+   # 单元测试
+   test:
+     stage: test
+     dependencies:
+       - install
+     script:
+       - npm run test:coverage
+     coverage: '/Statements\s*:\s*(\d+\.\d+)%/'
+     artifacts:
+       reports:
+         coverage_report:
+           coverage_format: cobertura
+           path: coverage/cobertura-coverage.xml
+       paths:
+         - coverage/
+
+   # 代码质量报告（SonarQube）
+   sonar:
+     stage: lint
+     dependencies:
+       - test
+     script:
+       - sonar-scanner
+     only:
+       - main
+       - develop
+
+2. GitHub Actions 配置：
+   .github/workflows/ci.yml：
+   name: CI
+
+   on:
+     push:
+       branches: [main, develop]
+     pull_request:
+       branches: [main, develop]
+
+   jobs:
+     lint:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v3
+         - uses: actions/setup-node@v3
+           with:
+             node-version: '18'
+             cache: 'npm'
+
+         - name: Install dependencies
+           run: npm ci
+
+         - name: Run ESLint
+           run: npm run lint
+
+         - name: Run StyleLint
+           run: npm run lint:css
+
+         - name: Type Check
+           run: npm run type-check
+
+         - name: Type Coverage
+           run: npm run type-coverage
+
+         - name: Run Tests
+           run: npm run test:coverage
+
+         - name: Upload coverage to Codecov
+           uses: codecov/codecov-action@v3
+           with:
+             files: ./coverage/coverage-final.json
+
+3. 合并请求检查：
+   - 设置 MR/PR 必须通过 CI 才能合并
+   - 代码质量评分低于阈值则阻止合并
+   - 类型覆盖率下降则发出警告
+
+四、自动化修复
+
+1. 本地自动修复：
+   - 保存时自动修复（编辑器集成）
+   - 提交时自动修复（lint-staged）
+   - 手动执行：npm run fix
+
+2. CI 自动修复（可选）：
+   .gitlab-ci.yml：
+   auto-fix:
+     stage: lint
+     script:
+       - npm run lint:fix
+       - npm run format
+       - |
+         if [[ `git status --porcelain` ]]; then
+           git config user.email "bot@company.com"
+           git config user.name "Lint Bot"
+           git add .
+           git commit -m "chore: auto fix lint errors [skip ci]"
+           git push origin HEAD:${CI_COMMIT_REF_NAME}
+         fi
+     only:
+       - merge_requests
+     when: manual  # 手动触发
+
+3. IDE 插件自动修复：
+   - VSCode：Cmd+Shift+P → "ESLint: Fix all auto-fixable Problems"
+   - WebStorm：Cmd+Alt+L（格式化）
+
+五、质量报告
+
+1. SonarQube 集成：
+   sonar-project.properties：
+   sonar.projectKey=my-project
+   sonar.sources=src
+   sonar.tests=src
+   sonar.test.inclusions=**/*.spec.ts,**/*.test.ts
+   sonar.javascript.lcov.reportPaths=coverage/lcov.info
+   sonar.eslint.reportPaths=eslint-report.json
+
+   生成 ESLint 报告：
+   npx eslint src --format json --output-file eslint-report.json
+
+2. 质量门禁（Quality Gate）：
+   - 代码覆盖率 > 80%
+   - 类型覆盖率 > 95%
+   - 重复代码率 < 3%
+   - 代码复杂度 < 15
+   - 新增技术债务 = 0
+
+3. 自定义质量报告：
+   scripts/quality-report.js：
+   const fs = require('fs')
+   const { ESLint } = require('eslint')
+
+   async function generateReport() {
+     const eslint = new ESLint()
+     const results = await eslint.lintFiles(['src/**/*.{js,ts,jsx,tsx}'])
+
+     const totalErrors = results.reduce((sum, r) => sum + r.errorCount, 0)
+     const totalWarnings = results.reduce((sum, r) => sum + r.warningCount, 0)
+
+     const report = {
+       timestamp: new Date().toISOString(),
+       errors: totalErrors,
+       warnings: totalWarnings,
+       files: results.length
+     }
+
+     fs.writeFileSync('quality-report.json', JSON.stringify(report, null, 2))
+     console.log(`✅ 质量报告已生成：${totalErrors} errors, ${totalWarnings} warnings`)
+   }
+
+   generateReport()
+
+4. 可视化报告：
+   - ESLint HTML Reporter：
+     npx eslint src -f html -o eslint-report.html
+
+   - 类型覆盖率报告：
+     npx type-coverage --detail --output-dir type-coverage-report
+
+5. 团队仪表盘：
+   - 展示每日质量趋势（错误数、覆盖率）
+   - 展示团队成员贡献（提交质量评分）
+   - 展示 Top10 问题（高频错误、重复代码）
+
+六、完整工具链架构
+
+开发阶段：
+├─ 编辑器插件（实时提示）
+├─ 保存时修复（快速反馈）
+└─ Git Hooks（提交前检查）
+
+提交阶段：
+├─ pre-commit（lint-staged）
+├─ commit-msg（commitlint）
+└─ pre-push（type-check + test）
+
+CI/CD 阶段：
+├─ ESLint 检查（阻止合并）
+├─ 类型检查（阻止合并）
+├─ 单元测试（阻止合并）
+├─ SonarQube 扫描（质量门禁）
+└─ 质量报告生成
+
+持续监控：
+├─ 质量趋势分析
+├─ 技术债务跟踪
+└─ 团队质量评分
+
+七、实施建议
+
+1. 分阶段推进：
+   - 第一周：编辑器集成 + Git Hooks
+   - 第二周：CI/CD 集成
+   - 第三周：质量报告 + SonarQube
+   - 第四周：监控优化
+
+2. 性能优化：
+   - 使用 ESLint 缓存：--cache --cache-location .eslintcache
+   - 使用 TypeScript 增量编译：--incremental
+   - CI 缓存 node_modules
+
+3. 开发体验：
+   - 快速反馈（< 5秒）
+   - 友好的错误提示
+   - 一键修复
+```
+
+---
+
+### 4. 规范实践经验
+
+讲一个你推动代码规范落地的经验：遇到的阻力、如何说服团队、最终效果如何？
+
+**【作答】：**
+
+```
+项目背景：
+- 团队规模：15 人前端团队（3 个业务组）
+- 项目现状：5 个 React 项目，代码风格不统一，Code Review 经常争论格式问题
+- 痛点：
+  · 每次 MR 有 30% 的评论是关于代码格式的
+  · 新人不知道该遵循什么规范
+  · 存在大量隐藏 Bug（如未使用的变量、==误用、类型断言滥用）
+  · TypeScript 项目 any 使用率高达 40%
+
+第一阶段：问题调研与方案设计（2 周）
+
+1. 数据收集：
+   - 统计 100 个 MR 的评论，发现 30% 是格式争议，20% 是命名争议
+   - 统计线上 Bug，发现 15% 是可以被 ESLint 发现的（如 ==、未定义变量）
+   - 调研团队成员：80% 的人支持引入规范，但担心改造成本
+
+2. 方案设计：
+   - **技术选型**：
+     · 核心：@umijs/fabric（团队主要使用 Umi + Ant Design）
+     · 理由：蚂蚁官方维护，开箱即用，包含 ESLint + Prettier + Stylelint
+     · 备选方案（非 Umi 项目）：eslint-config-airbnb-typescript
+
+   - **规则策略**（80/20 原则）：
+     · 80%：直接使用 @umijs/fabric 标准配置（零争议）
+     · 20%：团队定制（仅调整 5 条规则）
+       - no-console: 开发环境 warn，生产环境 error
+       - max-lines: 500（默认 300 太严格）
+       - complexity: warn（降级为警告）
+       - @typescript-eslint/no-unused-vars: 允许下划线开头
+       - import/prefer-default-export: off（团队偏好命名导出）
+
+   - **推进策略**：新项目先行 → 存量项目渐进式
+
+   - **成功指标**：
+     · MR 格式评论减少 80%
+     · 类型覆盖率 > 90%
+     · ESLint 发现的潜在 Bug 数量
+
+3. 试点项目：
+   - 选择 1 个新项目进行试点（用户中心项目）
+
+   - **一键配置脚本**（5 分钟完成）：
+     # 安装依赖
+     npm install -D @umijs/fabric husky lint-staged @commitlint/cli @commitlint/config-conventional
+
+     # 初始化 husky
+     npx husky install
+     npm pkg set scripts.prepare="husky install"
+
+     # 创建配置文件
+     echo "module.exports = { extends: [require.resolve('@umijs/fabric/dist/eslint')] };" > .eslintrc.js
+     echo "module.exports = require('@umijs/fabric').prettier;" > .prettierrc.js
+     echo "module.exports = { extends: ['@commitlint/config-conventional'] };" > commitlint.config.js
+
+     # 配置 Git Hooks
+     npx husky add .husky/pre-commit "npx lint-staged"
+     npx husky add .husky/commit-msg "npx commitlint --edit $1"
+
+   - **package.json 配置**：
+     {
+       "scripts": {
+         "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
+         "lint:fix": "npm run lint -- --fix",
+         "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css,less,json,md}\""
+       },
+       "lint-staged": {
+         "*.{js,jsx,ts,tsx}": ["eslint --fix", "prettier --write"],
+         "*.{css,less}": ["stylelint --fix", "prettier --write"]
+       }
+     }
+
+   - 运行 2 周，收集反馈
+   - **关键成果**：团队反馈"配置太简单了，比想象中容易"
+
+第二阶段：遇到的阻力
+
+1. 阻力 1："影响开发效率"
+   - 表现：开发抱怨每次提交都要等 lint 检查
+   - 本质：工具配置不当，检查速度慢（全量检查耗时 30 秒）
+
+   解决方案：
+   ✅ 使用 lint-staged 只检查修改文件（耗时降至 3 秒）
+   ✅ 启用 ESLint 缓存：--cache
+   ✅ 编辑器集成，保存时自动修复（无感知）
+
+   效果：
+   - 提交前检查时间从 30 秒降至 3 秒
+   - 90% 的问题在编辑器中自动修复，无需等到提交
+
+2. 阻力 2："存量代码改造成本太高"
+   - 表现：运行 lint 后，发现 5000+ 错误，团队觉得无法改完
+   - 本质：畏难情绪，担心改出新 Bug
+
+   解决方案：
+   ✅ 不强制改造存量代码，使用 .eslintignore 忽略
+   ✅ 制定渐进式策略：
+      - 修改文件时顺带修复 lint 错误
+      - 每周选 1 个模块集中清理
+      - 使用 --fix 自动修复 80% 的格式问题
+   ✅ 建立技术债务看板，可视化进度
+
+   效果：
+   - 3 个月内，错误数从 5000 降至 500（-90%）
+   - 每次修改文件时顺带修复，无额外成本
+   - 团队有成就感（每周看到错误数下降）
+
+3. 阻力 3："规则太严格，不合理"
+   - 表现：有些规则频繁触发，开发觉得不合理
+   - 示例：
+     · max-lines: 300（文件不能超过 300 行）
+     · complexity: 10（圈复杂度不能超过 10）
+     · react-hooks/exhaustive-deps（严格依赖检查）
+
+   解决方案：
+   ✅ 组织团队讨论会，投票决定规则级别
+   ✅ 调整规则配置：
+      - max-lines: 500（放宽限制）
+      - complexity: warn（降为警告）
+      - 允许合理豁免（需注释说明）
+   ✅ 建立规则调整机制（每月回顾）
+
+   效果：
+   - 规则接受度从 60% 提升至 95%
+   - 形成团队共识，减少争议
+
+4. 阻力 4："TypeScript 严格模式太难"
+   - 表现：开启 strict: true 后，类型错误 3000+
+   - 本质：历史代码类型不完善，大量 any
+
+   解决方案：
+   ✅ 渐进式收紧：
+      - 第一周：noImplicitAny: false
+      - 第二周：noImplicitAny: true，但允许显式 any
+      - 第四周：启用 @typescript-eslint/no-explicit-any: warn
+      - 第八周：升级为 error
+   ✅ 提供类型工具函数（减少重复类型定义）
+   ✅ 组织 TypeScript 培训（2 次，每次 2 小时）
+
+   效果：
+   - 类型覆盖率从 60% 提升至 92%
+   - any 使用率从 40% 降至 5%
+   - 类型错误帮助发现 20+ 潜在 Bug
+
+第三阶段：如何说服团队
+
+1. 用数据说话：
+   - 展示试点项目数据：
+     · MR 格式评论从 30% 降至 5%
+     · Code Review 时间减少 40%
+     · 发现 15 个潜在 Bug（ESLint 自动发现）
+
+   - 计算投入产出比：
+     · 初始投入：每人 2 小时配置环境
+     · 每周节省：每人 2 小时 CR 时间
+     · ROI：第二周就回本
+
+2. 降低迁移成本：
+   - **强调使用标准配置的优势**：
+     · "我们使用的是蚂蚁/Airbnb 的标准配置，不是我随便定的"
+     · "80% 的规则都是业界最佳实践，只定制了 5 条"
+     · "其他大厂也在用，这是站在巨人的肩膀上"
+     · "你去面试也能加分，因为很多公司都用这套规范"
+
+   - 提供一键配置脚本（setup.sh）：
+     #!/bin/bash
+     # 一键安装 @umijs/fabric 全家桶
+     npm install -D @umijs/fabric
+     npx @umijs/fabric setup  # 自动生成配置文件
+
+   - 录制视频教程（10 分钟快速上手）
+   - 提供模板项目（clone 即用）
+   - 安排专人答疑（Slack 频道）
+
+3. 树立标杆：
+   - 选择影响力强的开发者先使用
+   - 在团队会议上分享正面反馈
+   - 展示自动修复的便利性（Live Demo）
+
+4. 强调长期价值：
+   - 新人融入更快（明确的规范）
+   - 代码质量提升（减少低级错误）
+   - 团队协作更顺畅（减少争议）
+   - 技术品牌提升（专业的工程化）
+
+第四阶段：全面推广（1 个月）
+
+1. 推广策略：
+   - Week 1：2 个项目试点
+   - Week 2：新项目强制使用
+   - Week 3：存量项目接入（5 个）
+   - Week 4：全员使用，CI 强制检查
+
+2. 配套措施：
+   - 建立答疑群（每日解答问题）
+   - 每周发布质量周报（排行榜）
+   - 奖励执行好的成员（月度之星）
+   - 持续优化规则（收集反馈）
+
+最终效果（3 个月后）
+
+定量效果：
+✅ MR 格式评论占比：30% → 3%（-90%）
+✅ Code Review 时间：平均 45 分钟 → 25 分钟（-44%）
+✅ 类型覆盖率：60% → 92%（+32%）
+✅ ESLint 发现潜在 Bug：累计 50+ 个
+✅ 代码格式统一率：100%（Prettier 自动格式化）
+✅ 提交信息规范率：从 40% → 95%（commitlint）
+
+定性效果：
+✅ 团队协作更顺畅（减少争议）
+✅ 新人上手更快（明确的规范）
+✅ 代码质量提升（更少 Bug）
+✅ 技术氛围更好（工程化意识提升）
+✅ 招聘加分（展示团队专业度）
+
+团队反馈：
+- 前端 Leader："Code Review 效率提升明显，可以更关注业务逻辑"
+- 资深开发："一开始觉得麻烦，现在离不开了"
+- 新人："规范让我快速了解团队标准，很有帮助"
+
+意外收获：
+🎉 推动了单元测试覆盖率提升（从 30% → 60%）
+🎉 建立了 Monorepo 共享配置（@company/eslint-config）
+   - 基于 @umijs/fabric 封装公司级配置
+   - 内部 10+ 项目复用，配置成本接近零
+   - 新项目只需：npm install -D @company/eslint-config
+🎉 输出了团队工程化博客（外部影响力提升）
+   - "为什么我们选择 @umijs/fabric 而不是 Airbnb"
+   - 吸引了外部优秀人才（"你们团队很专业"）
+🎉 促进了前端技术委员会成立（跨团队规范统一）
+   - 推动公司级前端规范制定
+   - 其他团队也采用相同的标准配置
+   - 跨团队协作成本大幅降低
+
+关键成功因素总结：
+
+1. 渐进式推进：不追求一步到位，降低阻力
+2. 数据驱动：用数据证明价值，而非强制推行
+3. 工具化：自动化工具降低执行成本
+4. 团队共识：民主决策，而非一言堂
+5. 持续优化：定期回顾，不断改进
+
+反思与改进：
+
+不足之处：
+- 初期工具配置复杂，应提供更傻瓜化的配置
+- 缺少培训，导致部分开发者不理解规则意义
+- 监控不足，未能及时发现规则问题
+
+改进措施：
+- 开发 CLI 工具：npx @company/init（一键初始化）
+- 建立培训体系：新人必修课
+- 建立反馈机制：每月规则回顾会
+```
+
+---
+
+## 补充：如何封装公司级 ESLint 配置
+
+### 为什么需要封装公司级配置？
+
+```
+场景：
+- 公司有 10+ 个前端项目
+- 每个项目都要配置一遍 ESLint
+- 团队定制的规则分散在各个项目中
+- 规则更新时需要逐个项目修改
+
+问题：
+❌ 配置重复，维护成本高
+❌ 规则不一致，难以统一
+❌ 新项目配置门槛高
+❌ 规则升级困难
+
+解决方案：
+✅ 封装公司级 ESLint 配置包
+✅ 基于 @umijs/fabric 或 Airbnb 二次封装
+✅ 统一管理团队定制规则
+✅ 一行代码接入，零配置成本
+```
+
+### 实战：封装 @company/eslint-config
+
+**1. 创建配置包项目：**
+
+```bash
+# 初始化项目
+mkdir eslint-config-company
+cd eslint-config-company
+npm init -y
+
+# 安装依赖（基于 @umijs/fabric）
+npm install @umijs/fabric eslint prettier stylelint
+```
+
+**2. 目录结构：**
+
+```
+eslint-config-company/
+├── package.json
+├── index.js              # ESLint 配置入口
+├── prettier.js           # Prettier 配置
+├── stylelint.js          # Stylelint 配置
+├── typescript.js         # TypeScript 专项配置
+├── react.js              # React 专项配置
+└── README.md
+```
+
+**3. 编写配置（index.js）：**
+
+```javascript
+module.exports = {
+  // 继承标准配置（80%）
+  extends: [require.resolve('@umijs/fabric/dist/eslint')],
+
+  // 公司级定制规则（20%）
+  rules: {
+    // 1. 生产环境禁止 console
+    'no-console': process__.env.NODE_ENV === 'production' ? 'error' : 'warn',
+
+    // 2. 允许下划线开头的未使用变量
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        destructuredArrayIgnorePattern: '^_'
+      }
+    ],
+
+    // 3. 文件长度限制（放宽）
+    'max-lines': [
+      'warn',
+      { max: 500, skipBlankLines: true, skipComments: true }
+    ],
+
+    // 4. 圈复杂度（降级为警告）
+    complexity: ['warn', 15],
+
+    // 5. 允许命名导出
+    'import/prefer-default-export': 'off',
+
+    // 6. React 17+ 不需要导入 React
+    'react/react-in-jsx-scope': 'off',
+
+    // 7. 允许 JSX 在 tsx 文件中
+    'react/jsx-filename-extension': [1, { extensions: ['.tsx', '.jsx'] }],
+
+    // 8. 公司特殊规则：禁止使用特定库
+    'no-restricted-imports': [
+      'error',
+      {
+        paths: [
+          {
+            name: 'moment',
+            message: '请使用 dayjs 替代 moment，体积更小'
+          }
+        ]
+      }
+    ]
+  },
+
+  // 特殊目录配置
+  overrides: [
+    {
+      // 测试文件宽松规则
+      files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off',
+        'max-lines': 'off',
+        'no-console': 'off'
+      }
+    },
+    {
+      // 配置文件宽松规则
+      files: ['*.config.js', '*.config.ts', '.*.js'],
+      rules: {
+        '@typescript-eslint/no-var-requires': 'off',
+        'import/no-commonjs': 'off'
+      }
+    }
+  ]
+}
+```
+
+**4. Prettier 配置（prettier.js）：**
+
+```javascript
+const fabric = require('@umijs/fabric')
+
+module.exports = {
+  ...fabric.prettier,
+
+  // 公司定制
+  printWidth: 100, // 行宽 100
+  singleQuote: true, // 单引号
+  trailingComma: 'es5', // 尾随逗号
+  tabWidth: 2, // 缩进 2 空格
+  semi: true, // 分号
+  arrowParens: 'always' // 箭头函数参数括号
+}
+```
+
+**5. package.json 配置：**
+
+```json
+{
+  "name": "@company/eslint-config",
+  "version": "1.0.0",
+  "description": "公司前端 ESLint 配置",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "prettier.js",
+    "stylelint.js",
+    "typescript.js",
+    "react.js"
+  ],
+  "peerDependencies": {
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@umijs/fabric": "^3.0.0"
+  },
+  "keywords": ["eslint", "eslintconfig", "prettier", "company"]
+}
+```
+
+**6. 项目中使用（只需一行）：**
+
+```bash
+# 安装
+npm install -D @company/eslint-config
+
+# .eslintrc.js（只需一行！）
+module.exports = {
+  extends: ['@company']
+};
+
+# .prettierrc.js（只需一行！）
+module.exports = require('@company/eslint-config/prettier');
+```
+
+### 收益分析
+
+**配置前（每个项目单独配置）：**
+
+- 新项目配置时间：2 小时
+- 规则维护成本：每个项目单独修改
+- 规则一致性：差（各项目规则不统一）
+
+**配置后（使用 @company/eslint-config）：**
+
+- 新项目配置时间：5 分钟（-95%）
+- 规则维护成本：修改一次，全部项目受益
+- 规则一致性：完全统一
+
+**投入产出比：**
+
+- 初始投入：1 人天（封装配置包）
+- 每个项目节省：1.9 小时
+- 10 个项目即可回本
+- 长期收益：规则统一、维护简单
+
+---

@@ -1,0 +1,210 @@
+---
+title: "单例状态容器 (Singleton Store)"
+---
+
+# 单例状态容器 (Singleton Store)
+
+## 概述
+
+单例状态容器是最简单的全局状态管理方案，使用单一对象存储应用状态，并提供订阅机制监听状态变化。
+
+## 特点
+
+- ✅ 实现简单，零学习成本
+- ✅ 全局单例，任意位置访问
+- ✅ 支持状态快照和批量更新
+- ✅ 回调可获取前一个值
+- ⚠️ 无中间件机制
+- ⚠️ 无时间旅行调试
+
+## 核心类
+
+### Store\&lt;T\>
+
+```typescript
+interface AppState {
+  user: User
+  theme: 'light' | 'dark'
+  cart: CartItem[]
+}
+
+const store = new Store<AppState>()
+
+// 设置状态
+store.setState('user', { id: 1, name: 'John' })
+
+// 获取状态
+const user = store.getState('user')
+
+// 订阅（返回取消订阅函数）
+const unsubscribe = store.subscribe('user', (newUser, prevUser) => {
+  console.log('User changed from', prevUser, 'to', newUser)
+})
+
+// 取消订阅
+unsubscribe()
+
+// 批量更新
+store.batchUpdate({
+  theme: 'dark',
+  cart: []
+})
+
+// 获取快照
+const snapshot = store.getSnapshot()
+```
+
+## API 文档
+
+### 推荐用法（Store 风格）
+
+```typescript
+import {
+  setState,
+  getState,
+  deleteState,
+  subscribe,
+  getSnapshot,
+  batchUpdate,
+  resetStore
+} from './StoreSingleton'
+```
+
+#### setState(key, value)
+
+设置状态，通知订阅者。
+
+```typescript
+setState('user.settings', { language: 'zh-CN' })
+```
+
+#### getState(key)
+
+获取状态值。
+
+```typescript
+const settings = getState<UserSettings>('user.settings')
+```
+
+#### subscribe(key, callback)
+
+订阅状态变化。如果已有值，立即触发回调。
+
+```typescript
+const unsubscribe = subscribe('user.settings', (settings) => {
+  applySettings(settings)
+})
+
+// 取消订阅
+unsubscribe()
+```
+
+#### deleteState(key)
+
+删除状态并通知订阅者。
+
+```typescript
+deleteState('user.settings')
+```
+
+#### getSnapshot()
+
+获取所有状态的快照。
+
+```typescript
+const allState = getSnapshot()
+console.log(allState)
+// { 'user.settings': {...}, 'cart.items': [...] }
+```
+
+#### batchUpdate(updates)
+
+批量更新多个状态。
+
+```typescript
+batchUpdate({
+  'user.profile': { name: 'John' },
+  'user.settings': { theme: 'dark' }
+})
+```
+
+#### resetStore()
+
+重置所有状态（会触发所有订阅者）。
+
+```typescript
+resetStore()
+```
+
+## React Hook 示例
+
+```typescript
+function useStore<T>(key: string): [T | undefined, (value: T) => void] {
+  const [value, setValue] = useState<T | undefined>(() => getState<T>(key))
+
+  useEffect(() => {
+    return subscribe<T>(key, (next) => setValue(next))
+  }, [key])
+
+  const setStoreValue = useCallback(
+    (newValue: T) => {
+      setState(key, newValue)
+    },
+    [key]
+  )
+
+  return [value, setStoreValue]
+}
+
+// 使用
+function ThemeToggle() {
+  const [theme, setTheme] = useStore<'light' | 'dark'>('app.theme')
+
+  return (
+    <button onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
+      当前主题: {theme}
+    </button>
+  )
+}
+```
+
+## 带前值的订阅
+
+Store 的订阅回调可以获取前一个值：
+
+```typescript
+import { store } from './StoreSingleton'
+
+store.subscribe('counter', (newValue, prevValue) => {
+  console.log(`Counter changed from ${prevValue} to ${newValue}`)
+})
+```
+
+## 类型安全用法
+
+使用 `createStore` 创建类型安全的 Store：
+
+```typescript
+import { createStore } from './Store'
+
+interface MyAppState {
+  user: User | null
+  products: Product[]
+  cart: { items: CartItem[]; total: number }
+}
+
+const appStore = createStore<MyAppState>()
+
+// 类型安全
+appStore.setState('user', { id: 1, name: 'John' }) // ✅
+appStore.setState('user', 'invalid') // ❌ 类型错误
+
+const user = appStore.getState('user') // 类型: User | null | undefined
+```
+
+## 适用场景
+
+- 小型应用的全局状态管理
+- 需要简单状态共享的场景
+- 不想引入 Redux/Zustand 等库
+- 需要状态快照功能

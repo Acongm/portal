@@ -1,0 +1,44 @@
+---
+title: "每日科技动态 - 2026年8月3日"
+---
+
+
+# 每日科技动态
+
+今天这组更新里，最明显的趋势是：平台方开始同时补两类“开发者基础设施”。一类是前端运行时本身——浏览器继续把 Wasm、CSS、Temporal、WebGPU 这些能力做得更完整；另一类是工程治理层——从 GitHub Copilot 的模型访问策略，到 npm 高风险令牌的收紧，再到 OpenAI 对研究与合规边界的同步披露，平台都在把“默认可用”和“默认更安全”一起往前推。由于最近 24 小时内前端官方主力更新不足两条，前端部分时间范围放宽到了最近 7 天。
+
+## 今日概览
+
+### 前端
+
+**Safari 26.6 和 Safari Technology Preview 249 连续两次更新，说明浏览器厂商正在把“高级能力可用”推进到“高级能力可直接拿来落地”。** 一条偏稳定版修补工作流边角，一条偏预览版扩平台能力，两者合起来比单独看版本号更有意义。
+
+**Safari 26.6 补上了一个会直接影响 Wasm 生产用法的细节：流式编译现在也能接收 `compileOptions`。** WebKit 7 月 27 日发布的《WebKit Features for Safari 26.6》显示，`WebAssembly.compileStreaming()` 和 `WebAssembly.instantiateStreaming()` 现在支持 `compileOptions` 参数，因此开发者在使用 Wasm JS String Builtins 时，不必再为了传 options 而退回非流式编译路径。与此同时，这个版本还修复了 8 个和日常开发直接相关的问题，覆盖 CSS、Service Workers、Networking、Web Extensions 与 WebRTC，例如 `ic` 长度单位缩放异常、`position-area` 回退不正确、缺失脚本的 service worker 无法自动注销，以及扩展 service worker 注册库膨胀导致性能下降等问题。[来源](https://webkit.org/blog/18178/webkit-features-for-safari-26-6/)
+
+**Safari Technology Preview 249 则把更多“下一阶段可依赖的 Web 平台能力”提前摆到了开发者面前。** WebKit 7 月 29 日发布的《Release Notes for Safari Technology Preview 249》显示，这一版在 CSS 侧新增了 `attr()`、`if()`、`calc-mix()`、`@function` 自定义函数规则、`outline-offset: inset`，并预览支持 `wrap-inside`、`text-decoration-inset` 与 `::marker` 上的 `content`。同时它还加入了 `popover=hint`、JavaScript `Temporal` 对象、WebGPU subgroups、dialog 的 close watchers，以及 Web Inspector 对 source map range mappings 和逐元素 layout invalidation 事件的支持。对前端团队来说，这意味着浏览器不仅在补语法点，还在补调试链路和 agent / tool 友好的基础设施。[来源](https://webkit.org/blog/18182/release-notes-for-safari-technology-preview-249/)
+
+### DevOps
+
+**GitHub 这波更新的核心，不是单个功能更强，而是“AI 治理边界”和“供应链高风险入口”都在往更细粒度、更少例外的方向收紧。** 这会直接影响企业给开发团队开权限、发模型和做自动发布的方式。
+
+**GitHub 开始把 Copilot 的模型访问策略从组织级下沉到企业团队级。** 7 月 31 日，GitHub 发布《Enterprise teams model policy targeting in public preview》。官方说明显示，GitHub Enterprise 客户现在可以先在企业层设置全员模型基线，再把额外模型授权给特定 enterprise teams，用角色、训练阶段或职能来分配模型，而不再只能依赖组织级统一设置。预览版里，企业层模型可设为“全员可用”“全员不可用”或“可分配给 enterprise teams”，并采用 least-restrictive 策略：用户只要从任一团队获得某模型，就能在其企业上下文中使用该模型。对大型组织来说，这比一刀切的 org 级策略更贴近真实治理需求，也意味着“谁能试前沿模型”开始成为一个可配置的企业管理面板，而不是口头约定。[来源](https://github.blog/changelog/2026-07-31-enterprise-teams-model-policy-targeting-in-public-preview)
+
+**npm 则继续缩小可绕过 2FA 的自动化入口，进一步把高风险操作从长期令牌手里收回到交互式审批。** GitHub 7 月 31 日发布《Restricting npm bypass-2FA granular access tokens》，宣布配置为绕过 2FA 的 npm granular access tokens 不能再执行敏感的账号、组织和包管理操作，这些动作现在需要交互式 2FA 挑战。官方列出的受影响操作包括创建或删除 token、修改包访问权限或 maintainer、调整 trusted publishing 配置，以及管理组织 / 团队成员和 package grants。公告还明确下一步将在 2027 年 1 月前后进一步取消这类 token 的直接发布能力，建议迁移到 trusted publishing（OIDC）或 staged publishing。对 DevOps 团队来说，这条更新的含义很直接：凡是还依赖“能绕过 2FA 的长生命周期发布令牌”维持 CI/CD 的流程，现在都应该开始迁移。[来源](https://github.blog/changelog/2026-07-31-restricting-npm-bypass-2fa-granular-access-tokens)
+
+### AI
+
+**OpenAI 最近两条更新一条偏能力上限，一条偏合规落地，合起来传递出一个很清楚的信号：前沿模型平台正在同时争取“更强”和“更能被制度接受”。** 这对想把 AI 真正纳入生产系统的团队，比单看模型排行榜更重要。
+
+**OpenAI 披露了 10 项面向数学和理论计算机科学的最新结果，继续强化“模型不仅是应用层助手，也能参与基础研究探索”的叙事。** 8 月 1 日，OpenAI 在《Ten advances in mathematics and theoretical computer science》中公布了一组新结果。官方 RSS 显示，这篇文章覆盖几何、密码学与复杂性理论等长期开放问题；官方搜索摘要进一步显示，这 10 项结果涉及高维几何、编码理论、算术电路复杂性、群论、算子代数、量子复杂性、格密码学和极值组合学等方向，并强调这些问题大多在至少十年内没有主结果进展。对 AI 工程团队而言，这条消息的重要性不只是“研究又突破了”，而是模型能力的评估边界正在从 benchmark 和代码生成，继续外扩到更抽象、更长链条的推理任务。[来源](https://openai.com/index/ten-advances-in-mathematics)
+
+**在治理层面，OpenAI 也在主动把自身的安全、透明度和 provenance 叙事对齐到欧洲监管节奏。** 7 月 31 日，OpenAI 发布《Advancing responsible AI across Europe》。官方 RSS 将这篇文章概括为：随着 EU AI Act 进入下一阶段，OpenAI 正披露其在 safety、security、transparency 和 provenance 方面如何支持欧洲的负责任 AI 治理；官方搜索摘要还显示，OpenAI 提到自 2026 年 5 月启动 EU Cyber Action Plan 以来，已与欧盟及各国网络安全机构、私营部门伙伴和关键基础设施运营方合作，帮助部署更先进的网络安全模型。对企业用户来说，这类更新的价值在于：平台方开始越来越频繁地把“模型能做什么”与“模型如何被监管和证明合规”放在同一篇官方叙事里，采购、法务和安全团队会更早进入 AI 项目的主流程。[来源](https://openai.com/index/advancing-responsible-ai-across-europe)
+
+## 今日观察
+
+如果把今天这些消息连起来看，会发现平台竞争的重点已经不只是“谁先发布一个新能力”，而是谁能把能力、治理和默认工作流一起打包成更稳的基础设施。浏览器在补开发者真正会踩到的细节，GitHub 在把模型权限和发布权限做细，OpenAI 则在同步扩张研究叙事与合规叙事。对团队来说，这意味着未来一段时间的技术决策，越来越像是在选择“哪套平台默认值更适合生产”。
+
+## 简讯
+
+- **前端**：Safari 26.6 补齐 Wasm 流式编译的 `compileOptions`，STP 249 同时推进 `attr()`、`if()`、`Temporal`、WebGPU subgroups 和更强的 Web Inspector，浏览器能力与调试链路一起往前走。
+- **DevOps**：GitHub 一边把 Copilot 模型治理下沉到 enterprise teams，一边继续收紧 npm 绕过 2FA 的高风险令牌，企业 AI 权限和软件供应链权限都在变得更细粒度、更少例外。
+- **AI**：OpenAI 一边发布覆盖数学与理论计算机科学开放问题的 10 项新结果，一边把欧洲合规、安全与 provenance 叙事前置到官方更新中，说明前沿模型平台正同时争取能力上限与制度可接受性。

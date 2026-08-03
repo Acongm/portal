@@ -1,0 +1,244 @@
+---
+title: "原生自定义事件 (Custom Events)"
+---
+
+# 原生自定义事件 (Custom Events)
+
+## 概述
+
+Custom Events 是浏览器原生的事件机制，可用于实现跨组件、跨框架的通信。通过 `CustomEvent` 和 `dispatchEvent` API 实现。
+
+## 特点
+
+- ✅ **原生 API**：无需任何依赖
+- ✅ **跨框架**：React、Vue、Angular 都可使用
+- ✅ **跨微前端**：不同子应用间通信
+- ✅ **浏览器支持好**：IE9+ 都支持
+- ⚠️ 仅限同一页面内（不跨标签页）
+- ⚠️ 需要手动管理事件监听器
+
+## 原生用法
+
+```typescript
+// 发布事件
+window.dispatchEvent(
+  new CustomEvent('user:login', {
+    detail: { userId: 123, name: 'John' }
+  })
+)
+
+// 订阅事件
+window.addEventListener('user:login', (e: CustomEvent) => {
+  console.log('User logged in:', e.detail)
+})
+```
+
+## 核心类
+
+### CustomEventBridge
+
+封装原生 API，添加缓存和类型安全。
+
+```typescript
+const bridge = new CustomEventBridge(window, 'app:')
+
+// 发布
+bridge.publish('user', { id: 1, name: 'John' })
+
+// 订阅
+bridge.subscribe('user', (user) => {
+  console.log('User:', user)
+})
+
+// 获取缓存
+const user = bridge.get('user')
+
+// 取消订阅
+bridge.unsubscribe('user', handler)
+
+// 一次性订阅
+bridge.once('ready', () => {
+  console.log('Ready!')
+})
+```
+
+## API 文档
+
+### 推荐用法（DOM 事件风格）
+
+```typescript
+import { on, off, dispatch, once, get, clear } from './CustomEventSingleton'
+```
+
+#### dispatch(key, detail)
+
+发布数据，触发 CustomEvent。
+
+```typescript
+dispatch('notification', {
+  type: 'success',
+  message: '操作成功'
+})
+```
+
+#### get(key)
+
+获取缓存的数据。
+
+```typescript
+const notification = get<Notification>('notification')
+```
+
+#### on(key, callback)
+
+订阅事件。如果已有缓存数据，立即触发回调。
+
+```typescript
+on('notification', (data) => {
+  showToast(data)
+})
+```
+
+#### off(key, callback)
+
+取消订阅（必须传入相同的函数引用）。
+
+```typescript
+const handler = (data) => console.log(data)
+on('key', handler)
+// 稍后...
+off('key', handler)
+```
+
+#### clear(key)
+
+清除数据并通知订阅者。
+
+```typescript
+clear('notification')
+```
+
+#### once(key, callback)
+
+一次性订阅，触发后自动移除。
+
+```typescript
+once('app:initialized', () => {
+  console.log('App ready!')
+})
+```
+
+## React Hook 示例
+
+```typescript
+function useCustomEvent<T>(key: string): T | undefined {
+  const [data, setData] = useState<T | undefined>(() => get<T>(key))
+
+  useEffect(() => {
+    on(key, setData)
+    return () => off(key, setData)
+  }, [key])
+
+  return data
+}
+
+// 使用
+function NotificationToast() {
+  const notification = useCustomEvent<Notification>('notification')
+
+  if (!notification) return null
+
+  return (
+    <div className={`toast toast-${notification.type}`}>
+      {notification.message}
+    </div>
+  )
+}
+```
+
+## 跨框架通信示例
+
+### React 组件
+
+```tsx
+// React 发布
+function ReactButton() {
+  const handleClick = () => {
+    dispatch('button:clicked', { from: 'react' })
+  }
+  return <button onClick={handleClick}>React Button</button>
+}
+```
+
+### Vue 组件
+
+```vue
+<script setup>
+import { onMounted, onUnmounted } from 'vue'
+import { on, off } from './CustomEventSingleton'
+
+const handler = (data) => {
+  console.log('Received from React:', data)
+}
+
+onMounted(() => {
+  on('button:clicked', handler)
+})
+
+onUnmounted(() => {
+  off('button:clicked', handler)
+})
+</script>
+```
+
+### 原生 JavaScript
+
+```javascript
+// 直接使用原生 API 也可以接收
+window.addEventListener('shared:button:clicked', (e) => {
+  console.log('Received:', e.detail)
+})
+```
+
+## 微前端通信
+
+```typescript
+// 主应用
+dispatch('micro:route:change', { path: '/dashboard' })
+
+// 子应用 A (React)
+on('micro:route:change', (route) => {
+  navigate(route.path)
+})
+
+// 子应用 B (Vue)
+on('micro:route:change', (route) => {
+  router.push(route.path)
+})
+```
+
+## 事件名前缀
+
+默认使用 `shared:` 前缀，避免与其他事件冲突：
+
+```typescript
+// 实际触发的事件名
+'shared:user'
+'shared:notification'
+'shared:cart'
+```
+
+自定义前缀：
+
+```typescript
+const bridge = new CustomEventBridge(window, 'myapp:')
+// 事件名变为 'myapp:user'
+```
+
+## 适用场景
+
+- 跨框架组件通信（React + Vue + Angular）
+- 微前端子应用间通信
+- 与第三方脚本通信
+- 需要最大兼容性的场景
+- 不想引入任何依赖的场景

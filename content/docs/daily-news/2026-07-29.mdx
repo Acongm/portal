@@ -1,0 +1,38 @@
+---
+title: "每日科技动态 - 2026年7月29日"
+---
+
+
+# 每日科技动态
+
+今天这组更新的共同点是：平台一边继续把新能力前移，一边也在把“默认治理”做得更靠前。前端侧，浏览器与工具链开始更明确地把兼容性判断和权限交互做成开发流程的一部分；DevOps 侧，GitHub 把供应链防护从“发现问题”继续推进到“拦截与申报”；AI 侧，OpenAI 和 Anthropic 则分别展示了 agent 已经如何进入科研软件工程，以及模型开放边界该如何被重新定义。由于最近 24 小时内前端官方主力更新不足两条，本文前端部分放宽到最近 7 天。
+
+## 今日概览
+
+### 前端
+
+**Lighthouse 现在可以直接告诉团队：你的页面到底用了哪些 Baseline 能力，以及它们在浏览器里的互操作状态。** 7 月 27 日，web.dev 发布《The Baseline Features audit is now available in Lighthouse》。官方正文显示，这个新 audit 已进入 Lighthouse 的 Best Practices 分类，会识别页面中使用到的 Web 平台特性，包括第三方脚本和活跃浏览器扩展带来的特性使用；同时，它会给出这些能力的 Baseline 状态——Widely available、Newly available 或 Limited availability——并直接标出特性在源码中的出现位置，还会链接到 webstatus.dev 对应条目。对前端团队来说，这条更新的价值在于：浏览器兼容性判断开始从“上线前人工查资料”变成“性能/质量检查链路里的内建步骤”，尤其适合多依赖、多人协作、需要持续控制兼容性风险的项目。[来源](https://web.dev/blog/baseline-lighthouse-features-audit)
+
+**Chrome 155 将在 Android 上把通知权限提示改成更轻量的非阻塞交互，推送订阅代码也需要跟着适配。** 7 月 22 日，Chrome for Developers 发布《Lighter notification prompts on Android》。官方正文显示，自 Chrome 155 起，Android 版 Chrome 会采用新的通知授权体验，以降低用户在浏览网页时被通知弹窗打断的摩擦；如果用户在非阻塞提示到期前没有做出决定，`Notification.requestPermission()` 仍可能返回 `default`，因此站点不能只在请求当下判断是否已授权，还应监听 `navigator.permissions.query(\{ name: 'notifications' })` 的状态变化，在用户之后通过站点控件开启通知时补做订阅。对做消息触达、PWA 和内容订阅的团队而言，这不是单纯的交互调整，而是权限获取流程与订阅时机都需要随浏览器 UX 一起重构。[来源](https://developer.chrome.com/blog/notification-prompts-android)
+
+### DevOps
+
+**GitHub Actions 开始自动拦截可疑工作流运行，公共仓库的 CI/CD 不再默认“推上去就跑”。** 7 月 28 日，GitHub 发布《GitHub Actions holds potentially malicious workflows for approval》。官方正文显示，GitHub 现在会针对部分被识别为潜在恶意的工作流运行先行 hold 住，不让它直接执行；只有具备写权限的仓库协作者通过已认证的网页会话审核并批准后，工作流才会继续。GitHub 同时强调，这项保护默认自动启用，无需额外配置，但当前仅适用于 github.com 上的公共仓库，GitHub Enterprise Server 暂未提供。对平台与安全团队来说，这意味着 GitHub 正把供应链攻击的防线前移到“执行前审批”，而不是等凭据被盗、Runner 被利用后再回头补救。[来源](https://github.blog/changelog/2026-07-28-github-actions-holds-potentially-malicious-workflows-for-approval)
+
+**npm 发布链路也在同步收紧：包在真正可用前就会先过一遍恶意扫描，双重用途内容还必须显式申报。** 同样在 7 月 28 日，GitHub 发布《npm publish-time malware scanning and dual-use metadata》。官方公告显示，npm 正在把自动恶意扫描前移到 publish 时点；对于带有双重用途特征的包，维护者还需要在包根目录声明 `contentPolicy` 字段并附带纯文本 `DISCLOSURE` 文件，说明双重用途能力及其合法使用场景。更关键的是，这种声明一旦进入已发布包，后续版本不能移除相关字段和文件，否则发布会被拒绝。与其把它理解成一次额外表单，不如把它看成包生态开始要求“高风险能力必须自带上下文和责任边界”——这对安全工具、自动化脚本和攻防研究类包的发布流程都会产生直接影响。[来源](https://github.blog/changelog/2026-07-28-npm-publish-time-malware-scanning-and-dual-use-metadata)
+
+### AI
+
+**OpenAI 最新 field report 显示，agent 已经开始进入科研软件工程的“脏活累活”，把科学软件现代化从高成本项目拉回可做区间。** 7 月 28 日，OpenAI 发布《Scientific computing in the age of agentic AI》。官方搜索摘要显示，这份探索性报告汇总了 8 个 agent-assisted scientific computing 项目案例，其中 5 个使用 Codex，3 个结合了 Codex 与 Claude Code；项目覆盖从例行维护、定向优化，到大规模语言迁移与面向 GPU 的重构。OpenAI 还指出，贡献者普遍反馈 agents 能显著降低繁琐实现工作的成本，让研究团队更快原型验证、更容易维护长期软件资产，并把更多精力重新放回科学发现本身。对 AI 工程和科研基础设施团队而言，这条更新的重要性不在于又多了一个 demo，而在于“agent 做科研软件工程”正在形成可复用的方法论轮廓。[来源](https://openai.com/index/scientific-computing-agentic-ai)
+
+**Anthropic 明确表态：它反对把 open-weights 一刀切地当成风险源，更主张围绕算力、蒸馏与安全测试做精确治理。** 7 月 27 日，Anthropic 发布《Our position on open-weights models》。官方搜索摘要显示，Anthropic 明确表示自己并不主张把 open-weights 模型作为一个类别整体封禁；相反，更应把监管重点放在阻止强大芯片流向威权政体、遏制工业级蒸馏，以及要求所有足够强的模型——无论开放还是闭源——接受安全测试。摘要同时强调，不具危险能力的 open-weights 模型本身是一种公共品，能以较低运行成本为企业、开发者和研究者提供价值。相比泛泛而谈“开源好还是不好”，这篇文章给出的更像是一套 AI 治理现实主义框架：监管不再围着许可证标签打转，而是围着能力门槛、扩散路径和可验证安全性来划线。[来源](https://www.anthropic.com/news/position-open-weights-models)
+
+## 今日观察
+
+今天最值得注意的变化，是“默认前置”。前端工具开始把兼容性状态和权限路径前置到开发与交互链路里；DevOps 平台开始把供应链风控前置到执行和发布的入口；AI 厂商则把 agent 落地场景与模型治理边界前置到公开讨论中。接下来真正拉开差距的，未必是谁先喊出更大的愿景，而是谁先把这些前置能力做成可持续、可审计、可运营的基础设施。
+
+## 简讯
+
+- **前端**：Lighthouse 已能直接审计页面使用的 Baseline 特性及其浏览器互操作状态，而 Chrome 155 也将用更轻量的 Android 通知权限体验倒逼站点重写订阅流程。
+- **DevOps**：GitHub 一边让可疑 Actions 工作流先审批再执行，一边把 npm 恶意扫描和双重用途申报前移到发布入口，供应链防线继续前推。
+- **AI**：OpenAI 用 8 个科研软件工程案例展示 coding agents 的实际生产力边界，Anthropic 则明确提出 open-weights 不该被一刀切封禁，而应按算力、蒸馏和安全测试精确治理。

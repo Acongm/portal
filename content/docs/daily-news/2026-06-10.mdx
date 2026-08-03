@@ -1,0 +1,40 @@
+---
+title: "每日科技动态 - 2026年6月10日"
+---
+
+
+# 每日科技动态
+
+6 月 9 日，Anthropic 发布了首个面向公众开放的 Mythos 级模型 Claude Fable 5，标志着顶级 AI 能力从「实验室专属」走向「一般可用」的分水岭。同一天，npm 宣布 v12 将默认关闭安装脚本执行，GitHub Dependabot 新增对 Deno 生态的支持，WebKit 则推出了完全重写的 MapKit JS 6。这一天的主线很清晰：安全、能力、和开发者体验都在同步收紧与升级。
+
+## 今日概览
+
+### 前端
+
+**WebKit 发布 MapKit JS 6，Apple Maps 网页框架完全重写。** 6 月 9 日，WebKit 团队推出了面向现代 Web 开发者重建的 MapKit JS 6。这套 JavaScript 框架让开发者可以将 Apple Maps 的地图数据、服务与设计品质直接嵌入网页或 Web App，无需依赖第三方地图服务。MapKit JS 6 强调隐私优先（privacy-first），提供标注、覆盖层和地理搜索等核心能力，支持通过 Apple Developer 账号获取访问令牌。对于需要店铺定位、旅行规划或原生应用配套 Web 体验的场景，这是一个值得关注的官方方案。[来源](https://webkit.org/blog/18027/discover-mapkit-js-6-rebuilt-for-todays-web-developer/)
+
+**Safari Technology Preview 245 发布，修复多项 CSS 互操作问题。** 6 月 8 日推出的 STP 245 将 `animation` 属性添加到 `AnimationEvent` 和 `TransitionEvent` 接口，并新增 `position-anchor` CSS 属性的 `normal` 和 `none` 值支持。本次更新还修复了 `-webkit-text-fill-color` 错误覆盖 `text-decoration-color`、CSS `zoom` 与 `font-weight` 的交互异常，以及跨树 `::part()` 样式中 `sibling-index()` / `sibling-count()` 返回错误值等互操作问题。[来源](https://webkit.org/blog/17970/release-notes-for-safari-technology-preview-245/)
+
+### DevOps
+
+**npm v12 将迎来重大安全默认值变更。** 6 月 9 日，GitHub 宣布 npm v12（预计 2026 年 7 月发布）将把两项关键行为从「默认开启」改为「显式选择加入」：`allowScripts` 默认关闭——`npm install` 不再自动执行依赖包中的 `preinstall` / `install` / `postinstall` 脚本，需通过 `npm approve-scripts` 逐包授权；`--allow-git` 默认值为 `none`——不再自动解析 Git 依赖。所有变更已在 npm 11.16.0 中以警告形式提供预览。这是 npm 多年来最大的一次安全姿态调整，意味着供应链攻击面将大幅收窄。[来源](https://github.blog/changelog/2026-06-09-upcoming-breaking-changes-for-npm-v12)
+
+**Dependabot 版本更新正式支持 Deno 生态。** 同一天，GitHub Dependabot 新增对 Deno 的版本更新支持（不包括安全更新）。开发者只需在 `.github/dependabot.yml` 中添加 Deno 条目，Dependabot 即可自动提交依赖升级 PR。这是 Dependabot 继 npm、GitHub Actions、pip 等之后支持的又一运行时生态，反映出 Deno 在企业级项目中的采用率正在上升。[来源](https://github.blog/changelog/2026-06-09-dependabot-version-updates-now-support-the-deno-ecosystem)
+
+### AI
+
+**Anthropic 发布 Claude Fable 5：首个面向公众开放的 Mythos 级模型。** 6 月 9 日，Anthropic 正式推出 Claude Fable 5——一个经过安全调校后向一般用户开放的 Mythos 级模型，在几乎所有测试基准上达到最先进水平，任务越长越复杂，相对其他模型的优势越明显。Fable 5 在软件工程领域表现尤为突出：Stripe 在 5000 万行 Ruby 代码库中完成了一次全库迁移，Fable 5 用一天完成了原本需要全团队两个月的工作量。该模型在知识工作（Hebbia 金融基准最高分）、视觉（可仅凭截图重建 Web App 源码、用纯视觉通关 Pokémon FireRed）和长上下文记忆（持久文件记忆对性能的提升是 Opus 4.8 的三倍）方面也设立了新标杆。安全方面，约 5% 的敏感查询会被重定向至 Claude Opus 4.8 处理。同时发布的 Claude Mythos 5 是同一底层模型的安全限制放宽版，通过 Project Glasswing 向美国政府的网络防御合作伙伴开放，具备全球最强的网络安全能力。定价为每百万输入 token $10、输出 token $50，不到 Mythos Preview 的一半。[来源](https://www.anthropic.com/news/claude-fable-5-mythos-5)
+
+**OpenAI 密集发布 Codex 企业落地案例，展示知识工作扩展路径。** 6 月 9 日，OpenAI 同时发布两篇 Codex 客户案例：Nextdoor 工程师使用 Codex + GPT-5.5 调查难以复现的线上问题，并跨平台构建功能；Notion 则用 Codex 实现「一次性 spec」——从需求描述直接生成可工作的实现，并利用 Codex 为 Web 端构建了 AI Voice Input 功能。同周（6 月 4 日），Endava 的案例展示了如何用 AI agent、ChatGPT Enterprise 和 Codex 重构软件交付流程。这些案例共同指向一个趋势：Codex 正从「开发者的编码辅助」向「工程组织的生产力平台」演进。[来源](https://openai.com/index/nextdoor) [2](https://openai.com/index/notion) [3](https://openai.com/index/endava-frontiers)
+
+## 今日观察
+
+Anthropic 选择在 OpenAI S-1 提交的次日发布 Fable 5，时间点值得玩味——资本市场叙事与技术能力叙事正在 AI 赛道交替上演。Fable 5 的核心信号不是「又强了一点」，而是 Mythos 级能力首次对公众开放，且定价只有预览版的一半不到。这轮发布同时拉高了安全护栏的基线：敏感查询自动降级处理正在成为前沿模型发布的标配模式。
+
+前端侧，MapKit JS 6 的重写和 npm v12 的安全默认值转向，分别代表了「Web 与系统生态的深度整合」和「供应链安全从建议变为默认」两条主线。两者都在让开发者的选择变得更「窄」也更安全。
+
+## 简讯
+
+- **前端**：WebKit 发布 MapKit JS 6（Apple Maps 网页框架完全重写，隐私优先）；Safari Technology Preview 245 修复多项 CSS 互操作问题。
+- **DevOps**：npm v12 默认关闭安装脚本执行与 Git 依赖解析，预计 2026 年 7 月发布；Dependabot 新增 Deno 生态版本更新支持。
+- **AI**：Anthropic 发布 Claude Fable 5（首个公众可用的 Mythos 级模型），配套 Mythos 5 通过 Project Glasswing 面向网络防御开放；OpenAI 发布 Nextdoor、Notion 等 Codex 企业落地案例。

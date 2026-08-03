@@ -1,0 +1,19 @@
+{
+  "name": "portal",
+  "version": "0.0.1",
+  "private": true,
+  "description": "acongm portal — Next.js + Fumadocs documentation site",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "start": "pnpm --filter web start",
+    "types:check": "pnpm --filter web types:check",
+    "migrate:docs": "node scripts/migrate-docs.mjs"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "sharp"]
+  }
+}

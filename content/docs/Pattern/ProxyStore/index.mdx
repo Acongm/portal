@@ -1,0 +1,296 @@
+---
+title: "代理模式状态容器 (Proxy Store)"
+---
+
+# 代理模式状态容器 (Proxy Store)
+
+## 概述
+
+使用 ES6 Proxy 实现的响应式状态容器。可以像操作普通对象一样操作状态，自动触发订阅者更新。这是 Vue 3 响应式系统和 Valtio 的核心原理。
+
+## 特点
+
+- ✅ **透明操作**：像普通对象一样读写
+- ✅ **自动响应**：修改即触发更新
+- ✅ **细粒度订阅**：可订阅特定 key
+- ✅ **批量更新**：一次通知多个变化
+- ⚠️ 不支持 IE 浏览器
+- ⚠️ 深层嵌套需要额外处理
+
+## 核心原理
+
+```typescript
+const state = new Proxy(
+  { count: 0 },
+  {
+    set(target, key, value) {
+      target[key] = value
+      // 自动通知订阅者
+      notifySubscribers(key, value)
+      return true
+    }
+  }
+)
+
+// 直接赋值即可触发更新
+state.count = 1 // 自动通知订阅者
+```
+
+## 核心类
+
+### ProxyStore\&lt;T\>
+
+```typescript
+interface AppState {
+  count: number
+  user: User | null
+}
+
+const store = new ProxyStore<AppState>({ count: 0, user: null })
+
+// 直接操作代理对象
+store.proxy.count = 10 // 自动触发订阅
+store.proxy.user = { id: 1, name: 'John' }
+
+// 读取
+console.log(store.proxy.count) // 10
+
+// 订阅（返回取消订阅函数）
+const unsubscribe = store.subscribe('count', (value, key, prevValue) => {
+  console.log(`${key} changed from ${prevValue} to ${value}`)
+})
+
+// 批量更新
+store.batch({ count: 20, user: null })
+
+// 获取快照
+const snapshot = store.getSnapshot()
+```
+
+## API 文档
+
+### 推荐用法（Vue 3 Composition API 风格）
+
+```typescript
+import {
+  state,
+  watch,
+  watchEffect,
+  computed,
+  ref,
+  getSnapshot,
+  batchUpdate,
+  resetStore
+} from './ProxyStoreSingleton'
+```
+
+#### state
+
+单例响应式对象（`reactive` 包装）：直接读写即可，并且支持依赖收集。
+
+```typescript
+state.theme = 'dark'
+console.log(state.theme)
+delete state.temp
+```
+
+#### watch(source, callback, options?)
+
+监听响应式数据变化（返回停止函数）。
+
+```typescript
+const stop = watch(
+  () => state.theme,
+  (next, prev) => {
+    console.log('theme:', prev, '->', next)
+  },
+  { immediate: true }
+)
+
+// 停止监听
+stop()
+```
+
+#### watchEffect(effect)
+
+自动追踪 effect 中读取到的响应式依赖。
+
+```typescript
+const stop = watchEffect(() => {
+  console.log('count is', state.count)
+})
+
+stop()
+```
+
+#### computed(getter)
+
+派生状态（简化版 computed）。
+
+```typescript
+const double = computed(() => (state.count ?? 0) * 2)
+console.log(double.value)
+```
+
+### 扩展 API
+
+#### getProxy()
+
+获取代理对象，直接操作。
+
+```typescript
+// 等价于直接使用 `state`
+const proxy = state
+
+// 直接赋值
+proxy.count = 100
+proxy.user = { name: 'John' }
+
+// 删除
+delete proxy.tempData
+```
+
+#### getSnapshot()
+
+获取当前状态快照（普通对象）。
+
+```typescript
+const snapshot = getSnapshot()
+console.log(JSON.stringify(snapshot))
+```
+
+#### batchUpdate(updates)
+
+批量更新多个值。
+
+```typescript
+batchUpdate({
+  count: 10,
+  theme: 'dark',
+  user: { name: 'John' }
+})
+```
+
+#### subscribeAll(callback)
+
+订阅所有变化（仍然可用，偏底层/事件风格）。
+
+```typescript
+const unsubscribe = subscribeAll((value, key, prevValue) => {
+  console.log(`[${key}] ${prevValue} -> ${value}`)
+})
+```
+
+## React Hook 示例
+
+### 基础用法
+
+```typescript
+function useProxyState<T>(key: string): [T | undefined, (value: T) => void] {
+  const [value, setValue] = useState<T | undefined>(() => (state as any)[key])
+
+  useEffect(() => {
+    return watch(
+      () => (state as any)[key],
+      (next) => setValue(next as T),
+      { immediate: true }
+    )
+  }, [key])
+
+  const setProxyValue = useCallback(
+    (newValue: T) => {
+      ;(state as any)[key] = newValue
+    },
+    [key]
+  )
+
+  return [value, setProxyValue]
+}
+
+// 使用
+function Counter() {
+  const [count, setCount] = useProxyState<number>('count')
+
+  return (
+    <button onClick={() => setCount((count ?? 0) + 1)}>
+      Count: {count ?? 0}
+    </button>
+  )
+}
+```
+
+### 直接使用代理对象
+
+```typescript
+function useProxy<T extends object>(): T {
+  const proxy = state as T
+  const [, forceUpdate] = useState({})
+
+  useEffect(() => {
+    return watchEffect(() => {
+      // 读取一次以建立依赖（简化版）
+      void proxy
+      forceUpdate({})
+    })
+  }, [])
+
+  return proxy
+}
+
+// 使用（类似 Valtio）
+function App() {
+  const state = useProxy<{ count: number }>()
+
+  return <button onClick={() => state.count++}>Count: {state.count}</button>
+}
+```
+
+## 与 Valtio 对比
+
+```typescript
+// Valtio
+import { proxy, useSnapshot } from 'valtio'
+
+const state = proxy({ count: 0 })
+state.count++ // 自动响应
+
+// 本方案
+import { getProxy } from './ProxyStoreSingleton'
+
+const state = getProxy()
+state.count++ // 自动响应
+```
+
+主要区别：
+
+- Valtio 支持深层响应式
+- Valtio 有专门的 React 集成
+- 本方案是简化版，适合理解原理
+
+## 深层响应式
+
+当前实现只支持一层代理。如需深层响应式：
+
+```typescript
+// 方案 1：整体替换（推荐）
+state.user = { ...state.user, name: 'John' }
+
+// 方案 2：使用 Valtio 等成熟库
+```
+
+## 浏览器兼容性
+
+| 浏览器  | 支持版本  |
+| ------- | --------- |
+| Chrome  | 49+       |
+| Firefox | 18+       |
+| Safari  | 10+       |
+| Edge    | 12+       |
+| IE      | ❌ 不支持 |
+
+## 适用场景
+
+- 需要透明操作状态的场景
+- 理解 Vue 3 / Valtio 响应式原理
+- 简单的全局状态管理
+- 需要监听所有状态变化的场景

@@ -1,0 +1,156 @@
+---
+title: "大疆售后 RMS 系统重构"
+---
+
+
+{/* AUTO-GENERATED:START */}
+
+## 摘要（Auto）
+
+- 生成时间：2025-12-20
+- 简历中出现的项目标题（提取）：大疆用户中心重构 / 大疆售后 RMS 系统重构 / 跨平台公告插件系统 / 大疆 DevOps 平台维护 / XDR 系统 - 魔方大屏 + 报表
+- 面试大纲关键词（提取 Top10）：1）大疆用户中心重构：性能优化 + HTTP 原理 + Webpack 架构 / 性能指标与方法论 / 简历可落地点（结合你的“优化四板斧”） / HTTP 常考点（从“为什么变快”倒推） / Webpack 架构（工程化面试常考） / 按优化顺序，把方案“串起来”（排查 → 定位 → 选择 → 验证） / 0. 排查与基线（先把问题“量化”） / 1. 先保“可见”——骨架屏预渲染（直接拉低 LCP） / 2. 再减“阻塞”——关键渲染路径（CRP）梳理：CSS/字体/首图优先级 / 3. 再降“下载与解析成本”——更小的包体与更少的无效代码
+
+## 建议追问（Auto）
+
+- 你为什么在该项目/场景里选择这个方案？替代方案为何不选？
+- 最大一次事故/踩坑是什么？如何定位与回滚？
+- 如果重做：架构/边界/工程化会怎么调整？
+
+{/* AUTO-GENERATED:END */}
+
+## 关联卡片
+
+- 技术：
+  - [`tech__react`](./tech__react.md#原理简述)
+  - [`tech__typescript`](./tech__typescript.md#原理简述)
+  - [`tech__webpack`](./tech__webpack.md#原理简述)
+  - [`tech__performance`](./tech__performance.md#原理简述)
+  - [`tech__eslint-engineering`](./tech__eslint-engineering.md#原理简述)
+- 对比：
+  - [`matrix__bundler-webpack-vite-rollup`](./matrix__bundler-webpack-vite-rollup.md#对比表格)
+
+## 在我项目中的角色与使用场景
+
+项目前端负责人。负责多团队协作规范、工程体系与关键模块交付，目标是提升交付质量、降低 bug 率与维护成本。
+
+## 原理简述
+
+我用“复杂系统重构”的叙事来讲清楚（面试建议用 CP-SO-L 结构）：
+
+- Context（背景）：
+  - 系统模块多、角色多（售后/工单/备件/权限/报表等），历史版本存在“权限散落、依赖耦合、发布风险高”的问题。
+- Problem（问题）：
+  - **边界不清**：跨模块直接互相 import，导致循环依赖/隐式耦合，需求一改全站受影响。
+  - **权限不一致**：页面/接口/按钮多个口径，容易漏控或误控。
+  - **工程质量不稳定**：缺少统一门禁与可观测性，线上问题回溯成本高。
+- Solution（方案）：
+  - **模块划分**：按“领域（domain）”拆分功能边界（路由、API、state、组件、权限）并约束依赖方向。
+  - **权限体系**：用 RBAC（角色-权限）为主，结合资源（resource）建模；把“菜单/路由/按钮”统一由权限生成。
+  - **工程门禁**：lint/typecheck/build 作为 CI 必选项；关键改动引入灰度与回滚开关。
+  - **稳定性**：错误边界 + 统一上报（错误、性能、关键交互）+ sourcemap 回溯链路。
+- Outcome（结果口径）：
+  - 以“可追溯、可回滚、可量化”为目标：发布风险下降、问题定位更快、跨团队协作摩擦减少。
+  - 面试不强行报数字：用“指标口径 + 验证方式”描述（例如构建时长、线上错误率、性能 vitals 分布）。
+- Learnings（复盘）：
+  - 重构不是“改代码”，核心是“**边界 + 规范 + 治理闭环**”，否则会回到旧路。
+
+## 对比表格
+
+| 决策点   | 方案 A              | 方案 B               | 我怎么选（口径）                                           |
+| -------- | ------------------- | -------------------- | ---------------------------------------------------------- |
+| 权限模型 | RBAC（角色-权限）   | ABAC（属性/策略）    | 角色相对稳定用 RBAC 更易落地；复杂策略用“策略引擎”局部补充 |
+| 前端权限 | 路由守卫 + 菜单生成 | 纯后端返回菜单       | 主控在前端但以“后端资源”为准；前端负责渲染与交互控制       |
+| 表单方案 | AntD Form/生态      | 自研表单引擎         | 中后台优先生态与效率；自研只在“强业务 DSL/高复用”才值得    |
+| 工程门禁 | 一步到位 strict     | 渐进式（warn→error） | 多团队协作优先渐进，给迁移窗口与修复清单                   |
+| 构建     | Webpack             | Vite                 | 大存量 + 强定制优先 Webpack；Vite 作为旁路验证/新模块试点  |
+
+## 模拟问答
+
+- [ ] 你是如何设计权限与模块边界的？如何避免跨域依赖与循环引用？
+  - 先定义边界：按 domain 分包（例如 `features/*`），只允许通过 `shared/*` 暴露公共能力。
+  - 再定规则：禁止跨层 import（用 eslint rule / dep-cruiser 之类工具约束）。
+  - 权限落点：路由层（页面级）+ 组件层（按钮/字段级）统一走同一份权限数据结构。
+- [ ] ESLint/Prettier/CI 门禁是如何让团队真的执行的？
+  - 先降低摩擦：`lint-staged` + `pre-commit` 自动修复；CI 再做强校验。
+  - 再渐进收敛：从 warning 列表开始，逐步清零后升级到 error。
+  - 关键是共识：把“常见坑/收益”写成短文档与例子，避免只靠强制。
+- [ ] 你做过哪些性能治理？如何建立预算与回归机制？
+  - 指标：LCP/INP/CLS + 包体积 + 关键接口耗时。
+  - 治理：拆包、缓存、减少无效渲染、长任务定位；把预算（bundle upper bound）写进 CI。
+  - 回归：上线后看趋势（p75/p95），异常触发告警与回滚开关。
+- [ ] 你怎么把 Prettier、ESLint、TypeScript 校验串成“真的执行”的闭环？
+  - 分工口径：Prettier 管格式；ESLint 管语义/质量/边界；TS 管类型正确性。
+  - 落地链路：IDE 保存自动修复 → `lint-staged` 只检查改动文件 → CI `--max-warnings=0` + typecheck → PR 门禁。
+  - 技术债策略：老代码目录/文件豁免 + 技术债清单 + 分阶段收敛（warning→error）。
+- [ ] 你在 Code Review 里最看重哪些“高收益规则”？
+  - Hooks 正确性：`rules-of-hooks`、`exhaustive-deps`（避免难复现线上问题）。
+  - import 边界：`no-restricted-imports`（禁止跨层/深层路径，必须从模块出口导入）。
+  - 循环依赖：`import/no-cycle`（避免运行时奇怪行为）。
+  - TS 边界：限制 `any`，必要豁免必须写理由注释，避免污染扩散。
+
+## 手写代码区
+
+权限守卫（最小可解释实现，页面级 + 按钮级共用同一份权限）：
+
+```ts
+type Perm = string
+type User = { perms: Set<Perm> }
+
+export function can(user: User, perm: Perm): boolean {
+  return user.perms.has(perm)
+}
+
+export function guardRoute(user: User, required: Perm[]) {
+  // 失败路径：无权限直接拒绝渲染，避免“先看到后消失”
+  return required.every((p) => can(user, p))
+}
+
+// 用法：route.meta.requiredPerms = ["rms.order.view"]
+// if (!guardRoute(user, route.meta.requiredPerms)) redirect("/403");
+```
+
+错误边界上报（思路示例）：
+
+```tsx
+import React from 'react'
+
+export class ErrorBoundary extends React.Component<
+  React.PropsWithChildren,
+  { hasError: boolean }
+> {
+  state = { hasError: false }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: unknown, info: unknown) {
+    navigator.sendBeacon?.(
+      '/log',
+      JSON.stringify({ type: 'react_error', error: String(error), info })
+    )
+  }
+
+  render() {
+    if (this.state.hasError) return <div>页面出现异常，请刷新或联系管理员</div>
+    return this.props.children
+  }
+}
+```
+
+## 我的补充（Manual）
+
+（不会被脚本覆盖）
+
+## 复盘与反思（Learnings）
+
+- 如果重做会怎么改？
+
+## 面试官追问（面试官视角）
+
+- [ ] 为什么选这个方案？替代方案为什么不选？
+- [!] 最大一次事故/踩坑是什么？如何定位与回滚？
+- [ ] 如果重做会怎么改？
+- [ ] 你如何保证“本地过/CI 不过”的问题不再发生？Node/TS 版本如何统一？
+- [ ] 你如何用规则把“模块化边界”写死？能否举一个禁止跨层引用的例子？

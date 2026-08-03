@@ -1,0 +1,221 @@
+---
+title: "Webpack、Vite、Rollup"
+---
+
+# Webpack、Vite、Rollup
+
+## 关联面试卡（快速跳转）
+
+- 构建工具选型矩阵：[`matrix__bundler-webpack-vite-rollup`](../interview-prep/matrix__bundler-webpack-vite-rollup.md#对比表格)
+- 技术卡：
+  - [`tech__webpack`](../interview-prep/tech__webpack.md#原理简述)
+  - [`tech__vite`](../interview-prep/tech__vite.md#原理简述)
+  - [`tech__rollup`](../interview-prep/tech__rollup.md#原理简述)
+
+当然可以。作为一位熟悉 Webpack、React、Ant Design、Rollup 和现代前端工程化的开发者，你正处于一个需要为不同项目选择合适构建工具的关键节点。以下是对 **Webpack、Vite、Rollup** 三者的**架构原理深度分析、优缺点对比**以及**各自最适合的应用场景**的系统性总结。
+
+---
+
+## 一、整体定位对比
+
+| 工具    | 定位                           | 核心目标                    |
+| ------- | ------------------------------ | --------------------------- |
+| Webpack | **通用模块打包器**             | 打包一切资源，支持复杂定制  |
+| Rollup  | **专注于 JavaScript 的打包器** | 输出更小、更干净的库代码    |
+| Vite    | **下一代前端开发与构建工具**   | 提供极致开发体验 + 生产优化 |
+
+> ✅ 简单理解：
+>
+> - **Webpack**：全能但重；
+> - **Rollup**：轻量但专注（适合库）；
+> - **Vite**：开发快 + 构建稳（适合现代应用）。
+
+---
+
+## 二、架构与核心原理详解
+
+### 1. Webpack
+
+#### 架构
+
+- **核心**：基于依赖图（Dependency Graph）的静态分析打包器。
+- **模块系统**：自定义模块系统（支持 CommonJS、AMD、ESM 等，但需转换为内部格式）。
+- **构建流程**：
+  1. 从入口文件开始，递归解析 `import/require`；
+  2. 构建完整的依赖图；
+  3. 应用 Loaders（转换资源） + Plugins（扩展功能）；
+  4. 生成 bundle（chunks）。
+
+#### 特性
+
+- **Code Splitting**（通过 `splitChunks`）
+- **HMR（Hot Module Replacement）**
+- **Tree Shaking**（仅对 ESM 有效）
+- **Asset Management**（图片、字体、CSS 等）
+
+#### 缺点
+
+- 启动慢（需构建整个依赖图）；
+- 配置复杂（loader/plugin 分离，概念多）；
+- HMR 更新慢（需重建 chunk）；
+- 输出代码有运行时（**webpack_require**）。
+
+---
+
+### 2. Rollup
+
+#### 架构
+
+- **核心**：基于 **ESM** 的打包器，**只处理 JavaScript**（或可编译为 JS 的语言）。
+- **构建流程**：
+  1. 构建 ESM 依赖图；
+  2. 执行 Tree Shaking（死代码消除）；
+  3. 输出为 IIFE、UMD、ESM、CJS 等格式。
+
+#### 特性
+
+- **Pure ESM First**：原生支持 ESM，Tree Shaking 更彻底；
+- **无运行时**：输出代码干净，无额外包装；
+- **插件系统简洁**：基于钩子（hooks）的统一接口；
+- **适合库开发**：如 React、Vue、Lodash、D3 等均用 Rollup 构建。
+
+#### 缺点
+
+- **不处理非 JS 资源**（如 CSS、图片需插件）；
+- **不支持 HMR**（开发体验弱）；
+- **不适合复杂应用**（缺乏代码分割、懒加载等高级功能）。
+
+> 📌 注意：Rollup 本身**不是开发服务器**，只用于构建。
+
+---
+
+### 3. Vite
+
+#### 架构（双模式）
+
+| 模式         | 技术栈              | 职责                      |
+| ------------ | ------------------- | ------------------------- |
+| **开发模式** | Koa + ESM + esbuild | 按需编译、HMR、依赖预构建 |
+| **生产模式** | Rollup              | 打包、优化、输出          |
+
+#### 核心原理
+
+- **开发阶段**：
+  - 利用浏览器原生 ESM，**不打包源码**；
+  - 使用 **esbuild** 预构建依赖（快 10–100 倍）；
+  - 实现毫秒级启动和 HMR。
+- **生产阶段**：
+  - 基于 Rollup 构建，继承其 Tree Shaking 和格式输出能力；
+  - 支持代码分割、压缩、资源哈希等。
+
+#### 插件系统
+
+- 兼容 **Rollup 插件**（大部分可直接用）；
+- 扩展 Dev Server 钩子（如 `configureServer`）。
+
+#### 优势
+
+- 开发体验极佳（启动快、HMR 快）；
+- 配置简洁（零配置即可开发 React/AntD/TS）；
+- 现代浏览器优先。
+
+#### 缺点
+
+- 不支持 IE11；
+- 对非 ESM 依赖需预构建（偶有兼容问题）；
+- 插件生态虽增长快，但不如 Webpack 成熟。
+
+---
+
+## 三、详细对比表
+
+| 维度               | Webpack                                    | Rollup                          | Vite                              |
+| ------------------ | ------------------------------------------ | ------------------------------- | --------------------------------- |
+| **核心目标**       | 应用打包                                   | 库打包                          | 现代应用开发 + 构建               |
+| **模块系统**       | 自定义（支持 CJS/AMD/ESM）                 | 原生 ESM（仅 ESM）              | 开发：原生 ESM；生产：Rollup ESM  |
+| **启动速度**       | 慢（全量构建）                             | 不适用（无 Dev Server）         | 极快（按需加载）                  |
+| **HMR**            | 支持，但较慢                               | ❌ 不支持                       | 支持，极快（模块级）              |
+| **Tree Shaking**   | 支持（仅 ESM）                             | **极佳**（原生 ESM + 无运行时） | 同 Rollup（生产阶段）             |
+| **输出运行时**     | 有（**webpack_require**）                  | **无**                          | 生产无（Rollup 输出）             |
+| **非 JS 资源处理** | 内置（loader）                             | 需插件                          | 内置（开箱即用）                  |
+| **配置复杂度**     | 高（概念多：entry/output/loaders/plugins） | 中（插件钩子清晰）              | 低（零配置起步）                  |
+| **插件生态**       | **最成熟**                                 | 丰富（侧重 JS）                 | 快速增长（兼容 Rollup）           |
+| **适用项目类型**   | 大型复杂应用、需深度定制                   | **JavaScript 库/组件库**        | 现代 Web 应用（React/Vue/Svelte） |
+| **浏览器兼容性**   | 支持 IE11+                                 | 无限制（由输出格式决定）        | **仅现代浏览器（ESM）**           |
+| **生产构建性能**   | 中等                                       | 快（但无高级优化）              | 快（Rollup + esbuild 压缩）       |
+
+---
+
+## 四、各自最擅长的场景
+
+### ✅ Webpack：适合 **大型企业级应用**
+
+- 需要支持 IE11；
+- 项目结构复杂（多入口、微前端、自定义 loader）；
+- 需要精细控制构建流程（如 DLL、持久缓存、自定义 runtime）；
+- 已有大量 Webpack 配置资产（迁移成本高）。
+
+> 📌 你的 Backstage 插件若需兼容旧环境或深度集成 Webpack 生态，仍可保留。
+
+---
+
+### ✅ Rollup：**JavaScript 库 / 组件库 首选**
+
+- 构建 React 组件库（如你用 TSDX 的场景）；
+- 输出干净、无运行时的代码（UMD + ESM 双格式）；
+- 需要极致 Tree Shaking（如工具函数库）；
+- 不涉及复杂资源（CSS/图片由使用者处理）。
+
+> 💡 你当前的 monorepo 中 “组件库” 部分，**Rollup（或 TSDX，本质是 Rollup 封装）仍是最佳选择**。
+
+---
+
+### ✅ Vite：**现代 Web 应用开发的首选**
+
+- 使用 React/Vue/Svelte 等现代框架；
+- 追求极致开发体验（启动快、HMR 快）；
+- 无需支持 IE11；
+- 项目为 SPA 或中后台系统（如你的工单系统 `my-ticket-agent`）；
+- 希望简化配置，快速集成 TS/JSX/CSS Modules/Ant Design。
+
+> 💡 **强烈建议你将 `my-ticket-agent` 的开发环境从 Webpack 迁移到 Vite**，可大幅提升 DX。
+
+---
+
+## 五、如何选择？—— 决策树
+
+```text
+你的项目是？
+│
+├── 是一个 **JavaScript/TypeScript 库**（如组件库、工具函数）？
+│    └── ✅ 用 **Rollup**（或 TSDX / tsup）
+│
+├── 是一个 **现代 Web 应用**（React + AntD + TS）？
+│    ├── 需要支持 IE11？
+│    │    └── 用 **Webpack**
+│    └── 仅支持现代浏览器？
+│         └── ✅ 用 **Vite**
+│
+└── 是一个 **超大型遗留系统**，已有复杂 Webpack 配置？
+     └── 保守起见，**继续用 Webpack**，或逐步引入 Vite（通过 `vite-plugin-react` 渐进迁移）
+```
+
+---
+
+## 六、总结
+
+| 工具    | 优势                                  | 劣势                       | 推荐场景                   |
+| ------- | ------------------------------------- | -------------------------- | -------------------------- |
+| Webpack | 全能、兼容性强、生态成熟              | 慢、配置复杂               | 企业级应用、IE11 项目      |
+| Rollup  | 输出干净、Tree Shaking 优秀、无运行时 | 不处理非 JS、无 Dev Server | 库/组件开发                |
+| Vite    | 开发极速、配置简单、现代标准          | 不支持 IE、插件生态较新    | 现代 Web 应用（React/Vue） |
+
+---
+
+## 附加建议（针对你的项目）
+
+1. **组件库（monorepo 中的 packages/components）** → **继续用 TSDX / Rollup**，输出 UMD + ESM；
+2. **调试 SPA（如 `my-ticket-agent`）** → **迁移到 Vite**，获得秒级启动和 Fast Refresh；
+3. **Backstage 插件** → 若为独立部署的前端，可用 Vite；若需深度集成 Backstage 的 Webpack 链，可保留 Webpack，或探索 [Vite + Remote Module](https://vitejs.dev/guide/micro-frontend.html) 方案。
+
+如需我为你生成 `vite.config.ts` 配置（含 Ant Design 按需加载、ESLint、别名等），或 Rollup 库构建配置，欢迎随时提出！

@@ -1,0 +1,325 @@
+---
+title: "这些跨组件通信模式，你可能在哪见过？（来源与类比）"
+---
+
+# 这些跨组件通信模式，你可能在哪见过？（来源与类比）
+
+这份文档专门回答一个常见直觉：**“这些写法我好像在别处见过”**。
+
+结论先说：这些模式并不是“某个框架专属写法”，而是软件工程里反复出现的**信息传播/状态共享**的几种经典形态。不同框架/库只是把它们包装成了不同的 API。
+
+> 本仓库的实现都在 `Pattern/` 目录下，每种模式都有对应的 `*Singleton.ts` 入口文件。
+
+---
+
+## 快速对照表：你见过的 API ≈ 这里的模式
+
+| 你熟悉的写法/概念                | 典型 API 长相                             | 更接近的模式                           | 你可能在哪见过                                       |
+| -------------------------------- | ----------------------------------------- | -------------------------------------- | ---------------------------------------------------- |
+| `on/off/emit`                    | `bus.on('x', fn)` / `bus.emit('x', data)` | 事件总线（EventBus）                   | Node.js `EventEmitter`、前端 `mitt`、Vue2 “事件总线” |
+| `subscribe(next)`                | `subscribe(() => \{})`                     | 发布订阅（Pub/Sub）/观察者（Observer） | RxJS（Observable/Subject）、DOM 事件系统（思想类似） |
+| `setState/getState`              | `store.setState(k, v)`                    | 状态容器（Store）                      | Redux/Zustand/MobX（不同复杂度）、Svelte store       |
+| `dispatchEvent/addEventListener` | DOM 原生事件                              | CustomEvent                            | 浏览器 DOM、微前端通信（host/app）                   |
+| `BroadcastChannel`               | 跨 tab 同步                               | BroadcastChannel                       | 多标签页登录态同步、同源 iframe 通信                 |
+| `proxy.xxx = 1` 自动更新         | “像改对象一样改状态”                      | ProxyStore                             | Vue3 响应式、Valtio、MobX（更强）                    |
+
+---
+
+## 1) 发布订阅（Pub/Sub）——“消息中心/调度中心”
+
+### Pub/Sub：核心思想
+
+发布者（Publisher）和订阅者（Subscriber）互相**完全不知道对方是谁**，他们只与一个“中间人”（Broker / EventCenter）打交道。
+
+- 发布：把消息投递到中心（按 key/topic）
+- 订阅：在中心登记对某个 key/topic 的回调
+- 优点：解耦强，适合模块/微前端/动态加载
+- 代价：调试时要追踪“消息流”，而不是调用栈
+
+### Pub/Sub：你可能在哪见过
+
+- 消息队列 / 事件总线（Kafka/RabbitMQ 的思想更宏观，但同一类）
+- 业务“埋点/事件上报”
+- 微前端主应用与子应用通信（用 topic 分发）
+- RxJS 的 `Subject`（既可 next，又可 subscribe）常被当作 Pub/Sub 使用
+
+### Pub/Sub：本仓库里的典型用法（ServiceRequest）
+
+```ts
+import {
+  publishSharedData,
+  subscribeSharedData
+} from './ServiceRequest/SharedStateBridgeSingleton'
+
+subscribeSharedData('user.profile', (profile) => {
+  console.log('profile updated:', profile)
+})
+
+publishSharedData('user.profile', { name: 'John' })
+```
+
+---
+
+## 2) 观察者（Observer）——“Subject 直接维护观察者列表”
+
+### Observer：核心思想
+
+Subject（被观察者）内部维护一组 Observer（观察者）。状态变化时，Subject **直接**遍历并通知。
+
+- 优点：模型简单、语义直观（“我盯着你，你变了我就知道”）
+- 代价：耦合比 Pub/Sub 略强——观察者要“找到那个 Subject”
+
+### Observer：你可能在哪见过
+
+- 经典设计模式书（GoF）
+- UI 数据绑定思想（数据变 → 视图更新）
+- RxJS 的 Observer 概念（`next/error/complete`）
+
+### Observer：本仓库里更自然的用法
+
+这里更推荐用 `subject(key)` 拿到 Subject 再 `attach/notify`。
+
+```ts
+import { subject } from './Observer/ObserverSingleton'
+
+const counter$ = subject<number>('counter')
+
+const onCounter = (v: number) => console.log('counter:', v)
+counter$.attach(onCounter)
+
+counter$.notify(1)
+counter$.notify(2)
+
+counter$.detach(onCounter)
+```
+
+---
+
+## 3) 事件总线（EventBus）——“事件驱动编程的标准长相”
+
+### EventBus：核心思想
+
+事件总线本质上也是一种发布/订阅，但它的 API 更偏“事件系统”：
+
+- 订阅：`on(event, handler)`
+- 触发：`emit(event, payload)`
+- 取消：`off(event, handler)`
+
+很多团队把它当作“全局广播”。
+
+### EventBus：你可能在哪见过
+
+- Node.js `events.EventEmitter`
+- 浏览器事件（思想相似，但 DOM 事件有捕获/冒泡）
+- `mitt`、`tiny-emitter`、Vue2 时代常用“event bus”
+
+### EventBus：本仓库里的更自然用法
+
+```ts
+import { on, off, emit, once, get } from './EventBus/EventBusSingleton'
+
+const handler = (v: number) => console.log('ready?', v)
+
+on('app:ready', handler)
+once('app:ready', () => console.log('first ready only'))
+
+emit('app:ready', 1)
+console.log(get<number>('app:ready'))
+
+off('app:ready', handler)
+```
+
+---
+
+## 4) 状态容器（Store）——“把共享数据当作状态，而不是事件”
+
+### Store：核心思想
+
+当你发现业务里大量通信其实是：
+
+- “我想拿到某个状态的当前值”
+- “我想在它变化时更新 UI”
+
+这时 Store 会更合适：状态是第一公民。
+
+### Store：你可能在哪见过
+
+- Redux：`dispatch(action)` → reducer → state
+- Zustand：`set/get/subscribe`
+- Svelte store：`set/update/subscribe`
+- MobX：observable + reaction（更强的响应式）
+
+### Store：本仓库里的更自然用法
+
+```ts
+import {
+  setState,
+  getState,
+  subscribe,
+  batchUpdate,
+  getSnapshot
+} from './Store/StoreSingleton'
+
+const unsub = subscribe('theme', (next, prev) => {
+  console.log('theme:', prev, '->', next)
+})
+
+setState('theme', 'dark')
+console.log(getState('theme'))
+
+batchUpdate({
+  theme: 'light',
+  user: { name: 'John' }
+})
+
+console.log(getSnapshot())
+
+unsub()
+```
+
+---
+
+## 5) BroadcastChannel ——“跨标签页/iframe 的同源通信”
+
+### BroadcastChannel：核心思想
+
+这是浏览器提供的能力：同源的多个 browsing context（tab/iframe/worker）可以互相发消息。
+
+- 优点：天然跨 tab
+- 代价：受同源限制、兼容性（Safari 版本要求）、数据必须可结构化克隆（不能传函数）
+
+### BroadcastChannel：你可能在哪见过
+
+- 多标签页登录态同步
+- 多窗口协作（轻量）
+- 以前也有人用 `localStorage` 的 `storage` 事件做类似事情（但语义不同、限制更多）
+
+### BroadcastChannel：本仓库里的更自然用法
+
+```ts
+import {
+  publish,
+  subscribe,
+  clear
+} from './BroadcastChannel/BroadcastSingleton'
+
+subscribe('session', (s) => console.log('session:', s))
+
+publish('session', { token: 'xxx' })
+clear('session')
+```
+
+---
+
+## 6) CustomEvent ——“把跨组件通信伪装成 DOM 事件”
+
+### CustomEvent：核心思想
+
+利用 DOM 原生事件系统：
+
+- 发布：`dispatchEvent(new CustomEvent(name, \{ detail }))`
+- 订阅：`addEventListener(name, handler)`
+
+好处是：**跨框架**（React/Vue/Angular/原生）都能接。
+
+### CustomEvent：你可能在哪见过
+
+- 微前端主子应用通信（尤其不同技术栈）
+- 插件系统/SDK 对宿主暴露事件
+- 传统“埋点/通知”也可能用事件模型
+
+### CustomEvent：本仓库里的更自然用法
+
+```ts
+import { on, off, dispatch } from './CustomEvent/CustomEventSingleton'
+
+const handler = (data: any) => console.log('clicked:', data)
+
+on('button:clicked', handler)
+dispatch('button:clicked', { from: 'react' })
+
+off('button:clicked', handler)
+```
+
+---
+
+## 7) ProxyStore ——“像操作普通对象一样操作状态”
+
+### ProxyStore：核心思想
+
+使用 `Proxy` 拦截 `set/deleteProperty`，实现：
+
+- 你写：`state.count++`
+- 系统自动：通知订阅者
+
+这就是 Vue3 响应式、Valtio 等“响应式对象”的核心体验。
+
+### ProxyStore：你可能在哪见过
+
+- Vue3 `reactive()` / `ref()`（内部基于 Proxy）
+- Valtio：`const state = proxy(\{ ... })` + React snapshot
+- MobX：更复杂（可深层追踪、依赖收集）
+
+### ProxyStore：本仓库里的更自然用法
+
+```ts
+import { state, watch, watchEffect } from './ProxyStore/ProxyStoreSingleton'
+
+const stop = watch(
+  () => state.count,
+  (value) => console.log('count:', value),
+  { immediate: true }
+)
+const stopAll = watchEffect(() => {
+  // 读取即追踪（简化版）
+  console.log('any read:', state.count)
+})
+
+state.count = 1
+state.count++
+
+stop()
+stopAll()
+```
+
+---
+
+## 怎么判断“我以前见过”的是哪一种？
+
+你可以用下面的“快速判断题”：
+
+1. **你写的是 `emit/on` 还是 `setState/getState`？**
+
+   - `emit/on`：更像事件（EventBus / PubSub）
+   - `setState/getState`：更像状态（Store）
+
+2. **你是“拿着一个对象改它”，还是“调用函数发布”？**
+
+   - 改对象：ProxyStore
+   - 调函数：其他大多数
+
+3. **需要跨 tab 吗？**
+
+   - 是：BroadcastChannel（或其他跨 tab 方案）
+
+4. **需要跨框架/微前端吗？**
+   - 是：CustomEvent 往往是成本最低的一种
+
+---
+
+## 常见坑（你可能也在哪见过）
+
+- 订阅忘记取消：React 组件卸载后仍收到通知 → 内存泄漏
+- key/event 命名混乱：建议 `模块:动作` 或 `领域.子域`（例如 `cart.items`）
+- “立即触发”语义不一致：有的实现会在订阅时立刻推送当前值（Store/部分 EventBus），有的不会
+- 跨 tab 传输限制：BroadcastChannel 不能传函数、DOM 节点等
+
+---
+
+## 下一步建议
+
+如果你希望这份文档更“贴近你的项目经历”，你可以告诉我：
+
+- 你说的“在其他地方见过”，更像是在哪个框架/库/业务场景（例如 Redux、Vue3、RxJS、qiankun、Chrome extension）
+
+我可以再加一节：**“从你熟悉的写法迁移到这里的写法”**（给出一一对应的迁移示例）。

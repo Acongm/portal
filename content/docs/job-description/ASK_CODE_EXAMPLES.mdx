@@ -1,0 +1,239 @@
+---
+title: "可展示代码示例（用于面试展示/复盘）"
+---
+
+# 可展示代码示例（用于面试展示/复盘）
+
+> 说明：这里收纳“适合贴代码”的部分，避免把逐字稿写成代码仓库。
+> 建议面试现场做法：先讲思路与取舍 → 再打开本文件挑 1-2 段关键代码讲。
+
+---
+
+## 1）Webpack：拆包、长缓存、产物分析
+
+### 1.1 `splitChunks` / `runtimeChunk`
+
+```js
+// webpack.prod.js（片段示例）
+module.exports = {
+  optimization: {
+    runtimeChunk: 'single',
+    splitChunks: {
+      chunks: 'all',
+      cacheGroups: {
+        vendors: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          priority: 10
+        },
+        common: {
+          minChunks: 2,
+          name: 'common',
+          priority: 0,
+          reuseExistingChunk: true
+        }
+      }
+    }
+  }
+}
+```
+
+### 1.2 `contenthash` + 静态资源缓存策略（要点）
+
+- JS/CSS 文件名用 `contenthash`，避免“小改动导致全量缓存失效”。
+- CDN 强缓存 + 可回滚发布策略配套（缓存不是越长越好，关键是可控）。
+
+### 1.3 `sideEffects` 的正确打开方式
+
+```json
+// package.json（示例）
+{
+  "sideEffects": ["*.css", "*.scss"]
+}
+```
+
+要点：不要把 `sideEffects` 一刀切设为 `false`，否则可能误伤样式导入。
+
+---
+
+## 2）性能：RUM（Web-Vitals）上报闭环
+
+```ts
+// rum.ts（示例）
+import { onLCP, onCLS, onINP, onFCP, onTTFB } from 'web-vitals'
+
+function report(metric: { name: string; value: number; id: string }) {
+  navigator.sendBeacon?.(
+    '/rum',
+    JSON.stringify({
+      name: metric.name,
+      value: metric.value,
+      id: metric.id,
+      url: location.href,
+      ua: navigator.userAgent,
+      ts: Date.now()
+    })
+  )
+}
+
+export function initRum() {
+  onLCP(report)
+  onCLS(report)
+  onINP(report)
+  onFCP(report)
+  onTTFB(report)
+}
+```
+
+讲解要点：
+
+- 口径要说清楚：线上采样、P75/P95、按路由/按地域/按网络类型拆维度。
+- 目标不是“跑分”，而是“可定位、可回归、可持续”。
+
+---
+
+## 3）资源优先级：`preconnect` / `preload`
+
+```html
+{/* index.html（示例） */}
+<link rel="preconnect" href="https://cdn.example.com" crossorigin />
+<link
+  rel="preload"
+  href="/assets/critical-font.woff2"
+  as="font"
+  type="font/woff2"
+  crossorigin
+/>
+```
+
+讲解要点：
+
+- `preconnect` 解决的是“连接建立”成本。
+- `preload` 解决的是“关键资源优先级”，只给确定影响首屏的资源。
+
+---
+
+## 4）脚本加载：`defer` / `async` 的取舍
+
+```html
+<script src="/assets/app.js" defer></script>
+<script src="https://third-party.example.com/sdk.js" async></script>
+```
+
+讲解要点：
+
+- `defer`：不阻塞解析，且按顺序执行（适合业务主包）。
+- `async`：下载完成就执行，顺序不保证（适合独立第三方脚本）。
+
+---
+
+## 5）图片 WebP 兜底：`&lt;picture>`
+
+```html
+<picture>
+  <source srcset="/img/banner.webp" type="image/webp" />
+  <img src="/img/banner.jpg" alt="banner" loading="lazy" />
+</picture>
+```
+
+讲解要点：
+
+- 前端兜底最稳定；特殊 WebView 可加能力探测（缓存结果）。
+- 升级必须配监控：图片失败率、LCP 波动、错误日志。
+
+---
+
+## 6）ESLint：从 0-1 的落地方式（示例骨架）
+
+```js
+// .eslintrc.cjs（示例）
+module.exports = {
+  root: true,
+  parser: '@typescript-eslint/parser',
+  plugins: ['@typescript-eslint', 'import', 'promise', 'react-hooks'],
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:promise/recommended',
+    'plugin:import/recommended',
+    'plugin:import/typescript',
+    'prettier'
+  ],
+  rules: {
+    // 质量类：尽量 error
+    '@typescript-eslint/no-floating-promises': 'error',
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+
+    // 可读性：可 warn → 渐进收紧
+    'import/order': ['warn', { 'newlines-between': 'always' }],
+
+    // Hooks：必须 error
+    'react-hooks/rules-of-hooks': 'error',
+    'react-hooks/exhaustive-deps': 'warn'
+  }
+}
+```
+
+讲解要点：
+
+- Prettier 管格式、ESLint 管质量，避免两者打架。
+- 策略：新增必过、存量渐进；提交前自动修、CI 卡点。
+
+---
+
+## 7）React：错误边界（Error Boundary）
+
+```tsx
+import React from 'react'
+
+export class ErrorBoundary extends React.Component<
+  { fallback?: React.ReactNode; children: React.ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: unknown) {
+    // 上报错误（示例）
+    // reportError(error)
+  }
+
+  render() {
+    if (this.state.hasError) return this.props.fallback ?? null
+    return this.props.children
+  }
+}
+```
+
+讲解要点：
+
+- 目的：把“局部崩溃”隔离掉，不影响主流程。
+- 配套：错误上报 + 降级 UI + 可回滚。
+
+---
+
+## 8）NestJS：Cron 定时 + 幂等（示意）
+
+```ts
+import { Injectable } from '@nestjs/common'
+import { Cron } from '@nestjs/schedule'
+
+@Injectable()
+export class ReportJobService {
+  @Cron('0 */5 * * * *')
+  async generateReports() {
+    // 关键点：
+    // 1) 使用幂等键/分布式锁，避免多实例重复执行
+    // 2) 任务实例入库，记录状态与产物
+    // 3) 生成逻辑最好放到 worker/队列
+  }
+}
+```
+
+讲解要点：
+
+- cron 只负责触发；执行要有幂等/锁。
+- 导出是重活：队列化、并发控制、超时与告警。

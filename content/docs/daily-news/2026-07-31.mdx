@@ -1,0 +1,40 @@
+---
+title: "每日科技动态 - 2026年7月31日"
+---
+
+
+# 每日科技动态
+
+今天这组更新的主线，是"把重型协作真正变成内置能力"。前端侧，Chrome 151 把媒体权限、Shadow DOM 和 SPA 性能追踪这三件事从"开发者自己想办法"推到了"平台原生支持"；DevOps 侧，GitHub 在同一天放出了三项会直接改变日常 PR 和 code review 工作流的能力，从堆叠 PR 到自引用 Actions 再到 code review 的 agent 技能与 MCP 正式上线；AI 侧，OpenAI 则在降低使用成本的同时，揭示了"正确的 API 设置"本身就能让 benchmark 成绩翻几倍——这对实际工程选型有直接参考价值。
+
+## 今日概览
+
+### 前端
+
+**Chrome 151 带来了三个会直接影响日常开发工作流的平台能力：浏览器原生管理媒体权限、声明式 Shadow DOM 手动 slot 分配、以及 SPA 内的交互性能追踪。** 7 月 28 日，Chrome 151 开始向稳定通道推送。这一版本中，`&lt;usermedia>` capability 元素首次以 MVP 形态亮相：浏览器接管相机和麦克风的权限流程——捕获用户意图、管理浏览器级提示、将 `MediaStream` 对象直接交给应用——开发者不再需要单独调用 `getUserMedia()`。对前端团队来说，这不仅减少了样板代码，更关键的是浏览器能拿到用户真实点击信号作为权限触发点，解决"已拒绝权限后如何恢复"这个长期痛点。
+
+同版本还补齐了两个提升开发体验的平台细节：`&lt;template>` 元素的 `shadowrootslotassignment` 属性让手动 slot 分配可以直接写在声明式 Shadow DOM 里，不再必须走 imperative 路径；Firefox 和 Safari 27 beta 也已支持该属性，意味着它很快将进入 Baseline Newly available 状态。此外，Chrome 151 新增了 `soft-navigation` 和 `interaction-contentful-paint` 两种性能条目类型，专门解决 SPA 路由切换不触发传统页面加载的性能盲区——让开发者能像追踪 LCP 和 INP 一样追踪交互驱动的页面内容更新延迟。[来源](https://developer.chrome.com/blog/new-in-chrome-151)
+
+### DevOps
+
+**GitHub 在 7 月 30 日放出了"堆叠 PR"，把"大功能拆小审、一键合成"这一重度协作模式正式变成了平台原生能力。** 7 月 30 日，GitHub 发布 Stacked Pull Requests 的 public preview。堆叠 PR 允许开发者将大型变更拆分成有序的小型 PR 层级，每层独立 review 和检查，最后在 merge box 里一键合并整条链——或只合并底层，上层自动 rebase 和重定向目标分支。官方公告中直接引用了来自 Next.js（Vercel）、jQuery、TED 和 WHOOP 团队的使用反馈，其中 TED 的 CTO 指出"AI 让开发者更高效，反而让 PR 变得大到 review 困难——堆叠 PR 帮助打破了这个瓶颈"。[来源](https://github.blog/changelog/2026-07-30-stacked-pull-requests-are-now-in-public-preview)
+
+**同一天，GitHub Actions 也补上了一个会让团队工作流更干净的细节：自仓库引用语法。** 现在 `uses: $/path/to/action` 可以直接引用同一仓库中的 action 或 reusable workflow，无需 checkout，且自动锁定到当前运行的 commit SHA。这对采用"必须 pin 到完整 commit SHA"企业策略的团队尤为重要——自引用语法让内部 actions 组合不再和 SHA pinning 要求冲突。[来源](https://github.blog/changelog/2026-07-30-reference-same-repository-actions-with-self-repository-syntax)
+
+**Copilot code review 的 agent skills 与 MCP 能力也在前一日正式进入 GA 阶段，团队标准终于可以自动注入到每一次 code review 中。** 7 月 29 日，GitHub 宣布 Copilot code review 对 agent skills 和 MCP servers 的支持正式面向所有 Copilot Pro、Pro+、Business 和 Enterprise 用户开放。通过在 `.github/agents/` 下创建 skill 子目录和 `AGENTS.md` 文件，团队可以把内部工具、编码规范和外部平台上下文（issue tracker、文档系统、服务目录等）直接带进每一次 review。GA 版本还新增了 attribution 标注，当 review 评论使用了 agent skills 或 MCP 上下文时会有明确标记，方便团队追溯判断来源。[来源](https://github.blog/changelog/2026-07-29-copilot-code-review-agent-skills-and-mcp-now-generally-available)
+
+### AI
+
+**OpenAI 用 GPT-5.6 的价格调整把"前沿模型能不能常态化使用"这个问题直接推到了成本层面。** 7 月 30 日，OpenAI 发布《Advancing the price-performance frontier with GPT‑5.6》。官方公告显示，GPT‑5.6 Luna 价格下调了 80%，GPT‑5.6 Terra 价格下调了 20%。OpenAI 把这归因于研究、推理基础设施和 agentic harness 的效率叠加——包括 speculative decoding、retained reasoning 和 compaction 等机制——最终目标是让企业在规模化部署 AI 工作流时，不再被单次调用成本困住。[来源](https://openai.com/index/advancing-the-price-performance-frontier-with-gpt-5-6)
+
+**在模型能力评估方面，OpenAI 也揭示了一个对工程实践有直接启示的发现：benchmark 成绩不仅取决于模型本身，更取决于 API 设置。** 7 月 29 日，OpenAI 发表《How enabling two settings tripled our scores on the ARC‑AGI‑3 benchmark》。研究团队发现，开启 retained reasoning 和 compaction 这两个在 ChatGPT 和 Codex 中已使用的 API 设置后，GPT‑5.6 Sol 在 ARC‑AGI‑3 公开任务集上的分数提高了 3 倍，同时输出 token 量减少了 6 倍。对做模型接入的工程团队而言，这条信息的价值不在于"又刷新了一个 benchmark"，而在于它明确提示：同一模型在默认设置和优化设置之间的表现差异，可能比模型代际升级还要大——选型时不能只看模型名字，也要看 harness 和 API 参数配置。[来源](https://openai.com/index/how-two-settings-tripled-our-arc-agi-3-scores)
+
+## 今日观察
+
+今天的时间线上有一个明显的信号：重型协作工具正在从"社区最佳实践 + 第三方工具"加速变成平台内置能力。堆叠 PR 不再是 graphite / spr 等外部 CLI 的专属，code review 里的团队规范不再靠 reviewer 手动回忆，Actions 工作流也不再需要在仓库内自引用时绕圈子。当这些能力进入 GitHub 的原生菜单，它们会从"少数团队的高级玩法"变成"所有仓库的默认选项"——这对整个协作效率的提升，可能比任何一个单点 AI 功能发布都要深远。
+
+## 简讯
+
+- **前端**：Chrome 151 推送 `&lt;usermedia>` 能力元素、声明式 Shadow DOM `shadowrootslotassignment` 和 SPA 交互性能追踪，三个方向都在让平台替开发者接管更多底层复杂性。
+- **DevOps**：GitHub 同日发布堆叠 PR public preview、Actions 自仓库引用语法和 Copilot code review agent skills/MCP 正式 GA，从 PR 拆分到 review 自动化形成完整链条。
+- **AI**：OpenAI 将 GPT‑5.6 Luna 降价 80%、Terra 降价 20%，同时研究揭示 retained reasoning + compaction 两项 API 设置即可在 ARC‑AGI‑3 上实现分数翻 3 倍、token 消耗降至 1/6。

@@ -1,0 +1,38 @@
+---
+title: "每日科技动态 - 2026年6月16日"
+---
+
+
+# 每日科技动态
+
+今天这波官方更新有一个很清晰的共同点：平台方都在把“可控性”往前推。前端侧，不管是 Safari 27 的可定制 `&lt;select>`，还是 Chrome 为 agent 场景推进的 WebMCP，本质上都在让界面从“能用”走向“可声明、可解释、可渐进增强”；DevOps 侧，GitHub 一边补齐 Copilot 使用统计的可信度，一边继续把企业自建 GitHub 平台的治理颗粒度做细；AI 侧，厂商已经不只在发模型，而是在同步铺设培训体系和行业落地网络。由于最近 24 小时内三类官方高价值更新分布并不均衡，本文部分条目放宽到最近 72 小时，前端个别条目放宽到最近 7 天，以保持内容结构平衡。
+
+## 今日概览
+
+### 前端
+
+**Safari 27 将把可定制 `&lt;select>` 带入原生控件时代，但 WebKit 特别强调“别把文字拿掉”。** 6 月 15 日，WebKit 发布《The golden rule of Customizable Select》，确认可定制 `select` 正在进入 Safari 27。官方文章显示，这项能力允许开发者直接控制原生下拉控件的箭头、选项布局、颜色样式、图标等视觉表现，而不必再依赖一层层 JavaScript 组件去重造表单控件；同时由于它仍是浏览器内建控件，键盘导航和无障碍语义也能保留下来。WebKit 在文中反复强调的规则只有一条：**选项里必须保留文本标签**。原因也很直接——一旦只剩图标或色块，没有文字兜底，易读性、辅助技术可访问性，以及在尚未支持该特性的浏览器里的渐进增强都会同时失效。这个提醒很重要，因为它说明浏览器团队正在把“可完全自定义”与“原生语义不丢失”当作同一件事来推进，而不是让开发者在美观和可用性之间二选一。[来源](https://webkit.org/blog/18117/the-golden-rule-of-customizable-select/)
+
+**Chrome 把 WebMCP 推进到 origin trial，网站开始可以更明确地告诉 AI agent“该怎么操作我”。** 6 月 9 日，Chrome 官方发布《Join the WebMCP origin trial》。官方搜索摘要显示，WebMCP 的目标是让网站把可执行动作声明成结构化工具，从而帮助 agent 在网页中更高效、更准确地完成任务；在 Chrome 149 中，开发者已经可以报名参与这项 origin trial。摘要还特别提到，WebMCP 想解决的核心问题是：与其让 agent 猜一个按钮或输入框的用途，不如由页面直接声明控件目的并管理页面状态。对前端开发者来说，这条更新的意义不只是“浏览器又多了一个实验特性”，而是 Web 界面正在出现一层新的机器可读协议——以后一个页面可能不仅要服务人类点击，也要服务 agent 调用。[来源](https://developer.chrome.com/blog/ai-webmcp-origin-trial)
+
+### DevOps
+
+**Copilot 使用报表开始纳入服务端遥测，企业终于能看到更多“真实活跃用户”。** 6 月 15 日，GitHub Changelog 发布《Copilot usage metrics now include more of your active users》。官方文章显示，Copilot usage metrics API 现在会在原有客户端遥测之外，额外纳入服务端遥测信号，因此那些因为网络条件、代理配置或客户端设置而没有成功上报客户端数据的活跃用户，也能被计入企业单日与 28 日使用报告。GitHub 给出的示例是：如果原先报告里显示 1000 个 DAU，这次更新后可能会变成 1050，其中新增的 50 个来自服务端确认的活跃用户。需要注意的是，这部分用户虽然会进入总量统计，但因为服务端遥测暂时还没有完整的 IDE、功能、模型或代码行维度细节，所以 `totals_by_ide`、`totals_by_feature` 一类拆分报表可能暂时仍是空的。对 DevOps 和平台治理团队来说，这意味着 Copilot 的采用情况开始更接近账单和审计现实，而不是继续受制于终端上报是否完整。[来源](https://github.blog/changelog/2026-06-15-copilot-usage-metrics-now-include-more-of-your-active-users)
+
+**GitHub Enterprise Server 3.21 GA，继续把企业治理能力往“可标记、可分层、可扩容”方向推。** 6 月 11 日，GitHub Changelog 宣布 GHES 3.21 正式可用。官方条目给出的重点包括：组织自定义属性（organization custom properties）正式 GA，可让企业管理员为组织打上元数据标签，并自动定向应用 enterprise rulesets；新增 hierarchy view；带来 REST API version `2026-03-10`；改进 GitHub Actions workflows 页面性能；增强 secret scanning 的企业治理和策略管理；并支持配置多块数据盘。单看每一项都像“企业版常规更新”，但放在一起看，它们指向的是同一个趋势：本地化或专有环境里的 GitHub 正在不断向大型组织的治理需求靠拢，不只是托管代码，还要承接资产分层、规则投放、审计可见性和基础设施扩展。[来源](https://github.blog/changelog/2026-06-11-github-enterprise-server-3-21-is-now-generally-available)
+
+### AI
+
+**Anthropic 与 TCS 联手把 Claude 推向强监管行业，重点已经不是 demo，而是大规模落地。** 6 月 12 日，Anthropic 发布《TCS and Anthropic partner to bring Claude to regulated industries》。官方正文显示，Tata Consultancy Services 将把 Claude 提供给自身分布在 **56 个国家的 5 万名员工**，同时为金融服务、医疗、公部门等强监管行业客户构建 Claude 驱动的产品，并加入 Claude Partner Network。Anthropic 还给出了几组很具体的落地样本：TCS 的英国寿险与养老金业务 Diligenta 将用 Claude 改善其服务的 **2200 多万保单持有人**体验；TCS 的银行与金融产品团队将使用 **Claude Code** 提升软件工程和 IT 运维生产力；TCS iON 每年在印度 **1500 个城市完成超过 7500 万次考试评测**，也将承担 Claude 培训与认证。这类合作的信号很明确：AI 厂商现在越来越少单独谈模型能力，而是更愿意把“咨询、交付、培训、行业模板”一起打包卖给需要审计、合规和长周期集成的大客户。[来源](https://www.anthropic.com/news/tcs-anthropic-partnership)
+
+**OpenAI 把“会不会用 AI”正式产品化为课程体系，培训正在变成生态入口。** 6 月 12 日，OpenAI 发布《New OpenAI Academy courses for the next era of work》。官方 RSS 描述显示，这次新增的 Academy 课程旨在帮助用户建立实用 AI 技能、形成可复用工作流，并把 agents 用到日常工作里；官方页面搜索结果进一步显示，新课程包括 **AI Foundations、Applied AI Foundations、Agents and Workflows** 三门，并强调会提供结课证书以及面向组织引入课程的能力。和单纯的“教程更新”相比，这条新闻更值得注意的地方在于：OpenAI 已经开始把培训本身当成一条正式产品线来经营。对企业来说，接下来采购的不只是模型订阅，还可能包括一整套“如何把员工训练到能稳定使用 agent”的标准化课程。[来源](https://openai.com/index/academy-courses-applying-ai-at-work)
+
+## 今日观察
+
+今天三类消息都在指向“从功能供给转向使用约束与落地方法”。前端世界开始认真为 agent 和原生控件重写交互边界，DevOps 世界则继续把 AI 采用情况和企业治理能力做实，AI 厂商也在用合作伙伴与课程体系去解决最后一公里落地问题。对开发者和技术管理者来说，真正值得跟踪的已经不只是“新能力有没有发布”，而是“这项能力能否被可靠声明、可靠统计、可靠推广”。
+
+## 简讯
+
+- **前端**：Safari 27 推进可定制 `select`，但 WebKit 明确要求选项必须保留文本标签；Chrome 同时把 WebMCP 带入 origin trial，让网站能以结构化方式向 AI agent 暴露可执行动作。
+- **DevOps**：GitHub 让 Copilot 使用统计同时吸收客户端与服务端遥测，减少“活跃用户消失”问题；GHES 3.21 则继续增强企业规则投放、API、Actions 性能与 secret scanning 治理。
+- **AI**：Anthropic 借助 TCS 把 Claude 推进到金融、医疗、公部门等强监管场景；OpenAI 则把 AI Foundations、Applied AI Foundations、Agents and Workflows 三门课程打包成新的 Academy 训练入口。

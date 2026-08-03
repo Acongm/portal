@@ -1,0 +1,1535 @@
+---
+title: "frontend-hard-mode-interview 原题提取（基于简历）"
+---
+
+# frontend-hard-mode-interview 原题提取（基于简历）
+
+> 生成方式：以 `.tmp/frontend-hard-mode-interview/SUMMARY.md`（目录原题/标题）为数据源，再用你的简历题库文件中的关键词做匹配筛选。
+> 输出内容包含源文件完整原文。
+
+- 源仓库目录：.tmp/frontend-hard-mode-interview
+- 关键词来源：docs/job-description/高级前端面试题-基于简历.md
+- 命中条数：10
+
+## 网络与协议（HTTP/TLS/TCP）
+
+- 壹.5.2 了解 TCP、UDP、TLS
+  - 来源：[.tmp/frontend-hard-mode-interview/1/1.5.2.md](.tmp/frontend-hard-mode-interview/1/1.5.2.md)
+
+---
+
+# 壹.5.2 了解 TCP、UDP、TLS
+
+了解一点底层网络通信原理，对日常工作有很大的帮助，减少与后端工程师的“日常沟通摩擦”，增强共鸣和互信与理解。而在面试过程中，很多公司会考察前端工程师的知识广度，TCP/IP、TCP、UDP、TLS 是被高频问到的。
+
+TCP/IP 协议是一个协议集，里面包括很多协议的，TCP、UDP、TLS 等只是其中的协议。
+
+TCP/IP 协议集包括**应用层**，**传输层**，**网络层**，**网络访问层**。
+
+应用层包括：
+
+- 超文本传输协议\(HTTP\)：万维网的基本协议；
+- 文件传输\(TFTP 简单文件传输协议\)；
+- 远程登录\(Telnet\)，提供远程访问其它主机功能，它允许用户登录；
+- internet 主机，并在这台主机上执行命令；
+- 网络管理\(SNMP 简单网络管理协议\)，该协议提供了监控网络设备的方法，以及配置管理,统计信息收集，性能管理及安全管理等；
+- 域名系统\(DNS\)，该系统用于在 internet 中将域名及其公共广播的网络节点转换成 IP 地址。
+
+传输层包括：
+
+- TLS，也即 SSL\(Secure Sockets Layer，安全套接字层\)协议，后来 IETF 在标准化 SSL 协议时，将其改名为 Transport Layer Security（TLS，传输层安全）。
+
+网络层包括：
+
+- Internet 协议\(IP\)
+- Internet 控制信息协议\(ICMP\)
+- 地址解析协议\(ARP\)
+- 反向地址解析协议\(RARP\) \*\*\*\*
+
+网络访问层：
+
+- 网络访问层又称作主机到网络层\(host-to-network\)。网络访问层的功能包括 IP 地址与物理地址硬件的映射，以及将 IP 封装成帧。基于不同硬件类型的网络接口，网络访问层定义了和物理介质的连接。
+
+## 壹.5.2.1 TCP
+
+| 术语 | 含义                                                                         |
+| :--- | :--------------------------------------------------------------------------- |
+| SYN  | 请求建立连接，并在其序列号的字段进行序列号的初始值设定。建立连接，设置为 1。 |
+| ACK  | 确认号是否有效，一般置为 1。                                                 |
+| FIN  | 希望断开连接。                                                               |
+| URG  | 紧急指针是否有效。为 1，表示某一位需要被优先处理。                           |
+| PSH  | 提示接收端应用程序立即从 TCP 缓冲区把数据读走。                              |
+| RST  | 对方要求重新建立连接，复位。                                                 |
+
+### 三次握手
+
+![](./assets/1.5.2.1.jpg)
+
+如上图，三次握手分别是：
+
+1. **SYN** 客户端选择一个随机序列号 x，并发送一个 SYN 数据包，其中可能还包括其他 TCP 标志和选项。
+2. **SYN ACK** 服务器给 x 加 1，并选择自己的一个随机序列号 y，追加自己的标志和选项，然后返回响应。
+3. **ACK** 客户端给 x 和 y 加 1 并发送握手期间的最后一个 ACK 数据包。
+
+### 握手对延迟的影响
+
+三次握手完成后，客户端与服务器之间就可以通信了。客户端可以在发送 ACK 分组之后立即发送数据，而服务器必须等接收到 ACK 分组之后才能发送数据。这个启动通信的过程适用于所有 TCP 连接，因此对所有使用 TCP 的应用具有非常大的性能影响，因为每次传输应用数据之前，都必须经历一次完整的往返。
+
+举个例子，如果客户端在纽约，服务器在伦敦，要通过光纤启动一次新的 TCP 连接，光握手至少就要花 56 ms：向伦敦发送分组需要 28 ms，响应发回纽约又要 28 ms。在此，连接的带宽对时间没有影响，延迟完全取决于客户端和服务器之间的往返时间，这其中主要是纽约到伦敦之间的传输时间。 三次握手带来的延迟使得每创建一个新 TCP 连接都要付出很大代价。而这也决定了提高 TCP 应用性能的关键，在于想办法重用连接。
+
+重用 TCP 连接有一个方案叫“TCP Fast Open”（TFO），Linux 3.7 及之后的内核已经在客户端和服务器中支持 TFO，具体内容可以查阅[IETF 规范](https://tools.ietf.org/html/rfc7413)。
+
+### 四次挥手
+
+
+
+### 常见面试题
+
+#### 1.为什么连接的时候是三次握手，关闭的时候却是四次握手？
+
+答：因为当 Server 端收到 Client 端的 SYN 连接请求报文后，可以直接发送 SYN+ACK 报文。其中 ACK 报文是用来应答的，SYN 报文是用来同步的。但是关闭连接时，当 Server 端收到 FIN 报文时，很可能并不会立即关闭 SOCKET，所以只能先回复一个 ACK 报文，告诉 Client 端，"你发的 FIN 报文我收到了"。只有等到我 Server 端所有的报文都发送完了，我才能发送 FIN 报文，因此不能一起发送。故需要四步握手。
+
+#### 2.为什么 TIME_WAIT 状态需要经过 2MSL\(最大报文段生存时间\)才能返回到 CLOSE 状态？
+
+答：虽然按道理，四个报文都发送完毕，我们可以直接进入 CLOSE 状态了，但是我们必须假象网络是不可靠的，有可以最后一个 ACK 丢失。所以 TIME_WAIT 状态就是用来重发可能丢失的 ACK 报文。在 Client 发送出最后的 ACK 回复，但该 ACK 可能丢失。Server 如果没有收到 ACK，将不断重复发送 FIN 片段。所以 Client 不能立即关闭，它必须确认 Server 接收到了该 ACK。Client 会在发送出 ACK 之后进入到 TIME_WAIT 状态。Client 会设置一个计时器，等待 2MSL 的时间。如果在该时间内再次收到 FIN，那么 Client 会重发 ACK 并再次等待 2MSL。所谓的 2MSL 是两倍的 MSL\(Maximum Segment Lifetime\)。MSL 指一个片段在网络中最大的存活时间，2MSL 就是一个发送和一个回复所需的最大时间。如果直到 2MSL，Client 都没有再次收到 FIN，那么 Client 推断 ACK 已经被成功接收，则结束 TCP 连接。
+
+#### 3.为什么不能用两次握手进行连接？
+
+答：3 次握手完成两个重要的功能，既要双方做好发送数据的准备工作\(双方都知道彼此已准备好\)，也要允许双方就初始序列号进行协商，这个序列号在握手过程中被发送和确认。现在把三次握手改成仅需要两次握手，死锁是可能发生的。作为例子，考虑计算机 S 和 C 之间的通信，假定 C 给 S 发送一个连接请求分组，S 收到了这个分组，并发 送了确认应答分组。按照两次握手的协定，S 认为连接已经成功地建立了，可以开始发送数据分组。可是，C 在 S 的应答分组在传输中被丢失的情况下，将不知道 S 是否已准备好，不知道 S 建立什么样的序列号，C 甚至怀疑 S 是否收到自己的连接请求分组。在这种情况下，C 认为连接还未建立成功，将忽略 S 发来的任何数据分 组，只等待连接确认应答分组。而 S 在发出的分组超时后，重复发送同样的分组。这样就形成了死锁。
+
+#### 4.如果已经建立了连接，但是客户端突然出现故障了怎么办？
+
+TCP 还设有一个保活计时器，显然，客户端如果出现故障，服务器不能一直等下去，白白浪费资源。服务器每收到一次客户端的请求后都会重新复位这个计时器，时间通常是设置为 2 小时，若两小时还没有收到客户端的任何数据，服务器就会发送一个探测报文段，以后每隔 75 秒钟发送一次。若一连发送 10 个探测报文仍然没反应，服务器就认为客户端出了故障，接着就关闭连接。
+
+## 壹.5.2.2 UDP
+
+1980 年 8 月，**UDP（User Datagram Protocol，用户数据报协议）**被 John Postel 加入了核心网络协议套件。UDP 的主要功能和亮点并不在于它引入了什么特性，而在于它忽略的那些特性。UDP 经常被称为无（Null）协议，RFC 768 描述了其运作机制，全文完全可以写在一张餐巾纸上。
+
+### 数据报
+
+数据报（Datagram）为一个完整、独立的数据实体，携带着从源节点到目的地节点的足够信息，对这些节点间之前的数据交换和传输网络没有任何依赖。 数据报（datagram）和数据包（packet）是两个经常被人混用的词，实际上它们还是有区别的。数据包可以用来指代任何格式化的数据块，而数据报则通常只用来描述那些通过不可靠的服务传输的数据包，既不保证送达，也不发送失败通知。正因为如此，很多场合下人们都把 UDP 中 User（用户）的 U，改成 Unreliable（不可靠）的 U，于是 UDP 就成了“不可靠数据报协议”（Unreliable Datagram Protocol）。这也是为什么把 UDP 数据包称为数据报更为恰当的原因。
+
+### UDP 的“无协议”是怎么回事呢？
+
+要理解为什么 UDP 被人称作“无协议”，必须从作为 TCP 和 UDP 下一层的 IP 协议说起。
+
+IP 层的主要任务就是按照地址从源主机向目标主机发送数据报（Datagram）。为此，消息会被封装在一个 IP 分组内（如下图），其中载明了源地址和目标地址，以及其他一些路由参数。
+
+> 注意，数据报这个词暗示了一个重要的信息：IP 层不保证消息可靠的交付，也不发送失败通知，实际上是把底层网络的不可靠性直接暴露给了上一层。
+
+如果某个路由节点因为网络拥塞、负载过高或其他原因而删除了 IP 分组，那么在必要的情况下，IP 的上一层协议要负责检测、恢复和重发数据。
+
+![IPV4首部](./assets/1.5.2.3.1.jpg)
+
+而 UDP 协议会用自己的分组结构（如下图）封装用户消息，它只增加了 4 个字段：源端口、目标端口、分组长度和校验和。这样，当 IP 把分组送达目标主机时，该主机能够拆开 UDP 分组，根据目标端口找到目标应用程序，然后再把消息发送过去。
+
+![UDP首部](./assets/1.5.2.3.2.jpg)
+
+事实上，UDP 数据报中的源端口和校验和字段都是可选的。IP 分组的首部也有校验和，应用程序可以忽略 UDP 校验和。也就是说，所有错误检测和错误纠正工作都可以委托给上层的应用程序。说到底，UDP 仅仅是在 IP 层之上通过嵌入应用程序的源端口和目标端口，提供了一个“应用程序多路复用”机制。明白了这一点，就可以总结一下 UDP 的无服务是怎么回事了：
+
+1. **不保证消息交付** 不确认，不重传，无超时。 \_\_
+2. **不保证交付顺序** 不设置包序号，不重排，不会发生队首阻塞。
+3. **不跟踪连接状态** 不必建立连接或重启状态机。
+4. **不需要拥塞控制** 不内置客户端或网络反馈机制。
+
+### 应用场合
+
+TCP 是一个面向字节流的协议，能够以多个分组形式发送应用程序消息，且对分组中的消息范围没有任何明确限制。因此，TCP 连接的两端存在一个连接状态，每个分组都有序号，丢失还要重发，并且要按顺序交付。相对来说，UDP 数据报有明确的限制：数据报必须封装在 IP 分组中，应用程序必须读取完整的消息。换句话说，数据报不能分片。
+
+UDP 是一个简单、无状态的协议，适合作为其他上层应用协议的辅助。实际上，这个协议的所有决定都需要由上层的应用程序作出。
+
+有些应用程序可能并不需要可靠的交付或者不需要按顺序交付。比如，每个分组都是独立的消息，那么按顺序交付就没有任何必要。而且，如果每个消息都会覆盖之前的消息，那么可靠交付同样也没有必要了。可惜的是，TCP 不支持这种情况，所有分组必须按顺序交付。
+
+无需按序交付数据或能够处理分组丢失的应用程序，以及对延迟或抖动要求很高的应用程序，最好选择 UDP 等协议。
+
+## 壹.5.2.3 TLS 1.2
+
+Netscape（网景公司） 在 1994 年时提出了 SSL 协议的原始规范， TLS 协议也经过了很多次版本的更新。目前低版本的 TLS （例如：SSL 3.0/TLS 1.0 等）存在许多严重漏洞。另外根据 Nist（美国国家标准与技术研究院）所说，现在没有补丁或修复程序能够充分修复低版本 TLS 的漏洞，尽快升级到高版本的 TLS 是最好的方法。
+
+目前行业正处于 TLS 1.2 取代 TLS 1/1.1 的过渡时期，将来会有越来越多的互联网安全企业启用 TLS 1.2。它引入了 SHA-256 哈希算法，摒弃了 SHA-1，对增强数据完整性有着显著优势。
+
+### TLS 的四次握手
+
+客户端与服务器在通过 TLS 交换数据之前，必须协商建立加密信道。协商内容包括 TLS 版本、加密套件，必要时还会验证证书。然而，协商过程的每一步都需要一个分组在客户端和服务器之间往返一次（如下图，绿色部分代表 TLS 的四次握手），因而所有 TLS 连接启动时都要经历一定的延迟。
+
+![](./assets/1.5.2.4.1.jpg)
+
+### 详细解说如下
+
+#### 1.客户端发出请求（ClientHello）
+
+首先，客户端（通常是浏览器）先向服务器发出加密通信的请求，这被叫做 ClientHello 请求。在这一步，客户端主要向服务器提供以下信息：
+
+- 支持的协议版本，比如 TLS 1.0 版。
+- 一个客户端生成的随机数，稍后用于生成“对话密钥”。
+- 支持的加密方法，比如 RSA 公钥加密。
+- 支持的压缩方法。
+
+#### 2.服务器回应（SeverHello）
+
+- 确认使用的加密通信协议版本，比如 TLS 1.0 版本。如果浏览器与服务器支持的版本不一致，服务器关闭加密通信。
+- 确认使用的加密方法，比如 RSA 公钥加密，返回加密公钥。
+- 服务器证书。
+
+#### 3.客户端回应
+
+- 验证证书的合法性（颁发证书的机构是否合法，证书中包含的网站地址是否与正在访问的地址一致等），如果证书受信任，则浏览器栏里面会显示一个小锁头，否则会给出证书不受信的提示。
+- 如果证书受信任，或者是用户接受了不受信的证书，浏览器会生成一串随机数的密码，并用证书中提供的公钥加密。
+- 使用约定好的 HASH 计算握手消息，并使用生成的随机数对消息进行加密，最后将之前生成的所有信息发送给网站。
+
+#### 4.服务器
+
+- 使用自己的私钥将信息解密取出密码，使用密码解密浏览器发来的握手消息，并验证 HASH 是否与浏览器发来的一致。
+- 使用密码加密一段握手消息内容为"Finished"，发送给浏览器。
+
+## 壹.5.2.4 TLS 1.3
+
+2018 年 8 月份，IETF 正式宣布 TLS 1.3 规范真正落地了，标准规范（Standards Track）定义在 [rfc8446](https://tools.ietf.org/html/rfc8446)，这里概要性的了解下 TLS 1.3 协议的特性，并解释各个组织对于该版本的支持。
+
+TLS 1.3 版本从 2014 年开始开发，到 2018 年 8 月份历经了四年，可见是非常大的一个工程，一共有 28 个草案。
+
+作为 TLS1.3 协议最重要、最著名的实现，OpenSSL 也发布了 OpenSSL 1.1.1 版本，该版本全面支持 TLS 1.3，是一个长期支持版本（LTS），将会有 5 年的支持，该版本兼容 1.1.0 版本，OpenSSL 官方建议尽快从 1.1.0 版本升级到 1.1.1 版本。
+
+另外 Facebook 开源了一个 TLS 1.3 协议实现软件 Fizz，仅仅支持 TLS 1.3 版本，不用考虑老的 TLS 版本，会让代码简洁不少。
+
+另外一个比较流行的 TLS 协议实现就是 NSS，其 3.39 版本也全面支持 TLS 1.3（rfc8446）协议了。
+
+作为世界上最流行的 Web 服务器，Nginx 从 1.13.0 版本开始支持 TLS 1.3 协议，但真正支持还是依赖于其引用的协议实现（比如 OpenSSL、NSS）。
+
+说完服务器支持 TLS 1.3，接下去说下浏览器对于该版本的支持。不管是 Chrome 还是 Firefox 都可以手动配置支持 TLS 1.3（当然是 draf 草案）。目前两大浏览器厂商宣布：
+
+- chrome70（桌面版）开始，将默认开启支持 TLS 1.3（rfc8446），潜台词 70 以前的版本可以手动启用 TLS 1.3（draf）。
+- firefox63 版本（201810 月），将默认开启支持 TLS 1.3（rfc8446）。
+
+国外的一些云服务厂商也全面支持 TLS 1.3 协议了，比如 CloudFlare 从 2016 年就启用 TLS 1.3 支持了，KeyCDN 也已经全面支持了，国内在这方面还差了不少。
+
+解密 HTTPS 流量的 Wireshark，从 2.6.3 版本开始，Wireshark 也将支持 TLS 1.3（rfc8446）。
+
+另外一个著名的 HTTP 协议调试工具 Curl，从 7.52.0 版本开始也已经支持 TLS 1.3 协议，但真正支持还是依赖于其引用的协议实现（比如 OpenSSL、NSS）。
+
+### TLS 1.3 协议做了那些改变？
+
+- 性能提升，主要是减少了握手次数，甚至可以做到 0-RTT，了解 TLS 协议的同学都知道，TLS 握手延迟是 TLS 性能最大的杀手。
+- 安全性提升，比如说仅仅支持 AEAD 密码套件，废除了 AES-CBC 密码套件（使用不当会存在安全问题）；整个握手协议也使用签名保证握手消息的完整性（在 TLS 1.2 协议使用 MAC 算法验证握手消息），同时握手协议也是加密的（在 TLS 1.2 协议中，握手消息是明文的）。
+- 协议设计的全方位改革，和 TLS 1.2 协议完全是不兼容的，可以说是一次大手术，完全不同的设计理念，比如说仅仅只支持 5 种密码套件，进一步保障了安全性。
+
+如果你想详细了解 TLS 1.3 协议，[这篇文章](%20https://www.oschina.net/translate/rfc-8446-aka-tls-1-3)也被开源中国翻译了，有兴趣可以看看。
+
+### 我们是否可以全面拥抱 TLS 1.3？
+
+对于服务提供者来说，现在可以支持 TLS 1.3 了，但不能废弃其他的 TLS 版本（比如 TLS 1.2），原因在于：
+
+1）很多老的客户端（比如浏览器）版本可能比较低，根本不支持较新的一些密码套件，所以旧的 TLS 版本存活时间是比较长的，想想现在 TLS 1.1 版本还不能强制下线，TLS 1.2 从 2008 年开始启用，到现在已经 12 年了，某些网站还没有支持 TLS 1.2，可见从兼容性的角度看，TLS 老版本仍然会存在很长的生命周期。最近几年 HTTPS 应用越来越普及了，但并不是所有人（包括技术层面）对它还并不是特别了解，就我预估 TLS 1.2 协议至少还会存活十年以上。
+
+2）TLS1.3 是个新版本，认知度和可信任度还比较欠缺，CloudFlare 和 Firefox 在 2017 年统计过，仅有 5%的用户支持 TLS 1.3（当然是草案），所以各个服务全面支持 TLS 1.3 还有很大的时间，比如服务器可能不会轻易升级 OpenSSL，拿我们公司来说，很多服务器 OpenSSL 版本还是 OpenSSL 1.0.1e。另外很多服务都会使用 OpenSSL，轻易是不敢升级的。后续估计各个 Linux 发行版会发布 OpenSSL 1.1.1 的 APT 或 RPM 包。
+
+3）**TLS1.3 版本是完全不兼容老版本的**，HTTPS 协议是 TLS 协议最大的是使用者，其本质上还是 HTTP 协议，而 HTTP 应用非常的灵活，在互联网中，有很多的代理服务器或网关，他们为了各种各样的目的，都会透明解析 TLS 协议，CloudFlare 称之为 「middleboxes」，TLS 1.2 版本已经有 12 年历史了，这些代理服务器和网关也逐步能够解析 TLS 协议了，但 TLS1.3 版本的来临，其解析规则全部失效，那么对于用户来说，他们可能就无法使用 TLS1.3 协议了，这也是 TLS1.3 协议非常重要的一个问题。
+
+总结来说，TLS 1.3 的普及还需要很长时间。
+
+- 壹.5.3 HTTP 几个版本的区别
+  - 来源：[.tmp/frontend-hard-mode-interview/1/1.5.3.md](.tmp/frontend-hard-mode-interview/1/1.5.3.md)
+
+---
+
+# 壹.5.3 Http 几个版本的区别
+
+《[HTTP/2: the Future of the Internet](https://link.zhihu.com/?target=https://http2.akamai.com/demo)》 是 Akamai 公司建立的一个官方的演示，用以说明 HTTP/2 相比于之前的 HTTP/1.1 在性能上的大幅度提升。 同时请求 379 张图片，从 Load time 的对比可以看出 HTTP/2 在速度上的优势。
+
+## HTTP2.0 和 HTTP1.X 相比的新特性
+
+### 二进制分帧层
+
+HTTP2.0 性能增强的核心，全在于新增的二进制分帧层，它定义了如何封装 HTTP 消息并在客户端与服务器之间传输。这里所谓的“层”，指的是位于套接字接口与应用可见高层 HTTP API 之间的一个新机制：HTTP 语义，包括各种动词、方法、首部，都不受影响，不同的是传输期间对它们的编码方式变了。HTTP1.x 以换行符作为纯文本的分隔符，而 HTTP2.0 将所有传输的信息分割为更小的消息和帧，并对它们采用二进制格式的编码。
+
+这样一来，客户端和服务器为了相互理解，必须都使用新的二进制编码机制：HTTP1.x 客户端无法理解只支持 HTTP2.0 的服务器，反之亦然。不过不要紧，现有的应用不必担心这些变化，因为客户端和服务器会替它们完成必要的分帧工作。
+
+HTTPS 是二进制分帧的另一个典型示例：所有 HTTP 消息都以透明的方式为我们编码和解码，从而实现客户端与服务器安全通信，但不必对应用进行任何修改。HTTP2.0 的工作原理差不多也是这样。
+
+### 流、消息和帧
+
+新的二进制分帧机制改变了客户端与服务器之间交互数据的方式。为了说明这个过程，我们需要了解 HTTP2.0 的几个新概念：
+
+> **流** 已建立的连接上的双向字节流。  
+> **消息** 与逻辑消息对应的完整的一系列数据帧。  
+> **帧** HTTP2.0 通信的最小单位，每个帧包含帧首部，至少也会标识出当前帧所属的流。
+
+HTTP2.0 通信都在一个连接上完成，这个连接可以承载任意数据量的双向数据流。相应地，每个数据流以消息的形式发送，而消息由一或多个帧组成，这些帧可以乱序发送，然后再根据每个帧首部的流标识符重新组装。HTTP2.0 的所有帧都采用二进制编码，所有首部数据都会被压缩。
+
+这简简单单的几句话里浓缩了大量的信息：
+
+- 所有通信都在一个 TCP 连接上完成；
+- 流是连接中的一个虚拟信道，可以承载双向的消息。每个流都有一个唯一的整数标识符；
+- 消息是指逻辑上的 HTTP 消息，比如请求、相应等，由一或多个帧组成；
+- 帧是最小的通信单位，承载这特定类型的数据，如 HTTP 首部、负荷等；
+
+简言之，HTTP2.0 把 HTTP 协议通信的基本单位缩小为一个一个的帧，这些帧对应着逻辑流中的消息。相应地，很多流可以并行的在同一个 TCP 连接上交换消息。
+
+### 多路复用（MultiPlexing）
+
+在 HTTP1.x 中，如果客户端想发送多个并行的请求以及改进性能，那么必须使用多个 TCP 连接。这是 HTTP1.x 交付模型的直接结果，该模型会保证每个连接每次只交付一个响应（多个响应必须排队）。更糟糕的是，这种模型也会导致队首阻塞，从而造成底层 TCP 连接的效率低下。
+
+HTTP2.0 中新的**二进制分帧层**突破了这些限制，实现了多向请求和响应：客户端和服务器可以把 HTTP 消息分解为互不依赖的帧，然后乱序发送，最后再在另一端把它们重新组合起来。
+
+把 HTTP 消息分解为独立的帧，交错发送，然后在另一端重新组装是 HTTP2.0 最重要的一项增强。事实上，这个机制会在整个 Web 技术栈中引发一系列连锁反应，从而带来巨大的性能提升，因为：
+
+- 可以并行交错的发送请求，请求之间互不影响；
+- 可以并行交错的发送响应，响应之间互不干扰；
+- 只使用一个连接即可并行发送多个请求和响应；
+- 消除不必要的延迟，从而减少页面加载的时间；
+- 不必再为绕过 HTTP1.x 限制而多做很多工作。
+
+总之，HTTP2.0 的二进制分帧机制解决了 HTTP1.x 中存在的队首阻塞问题，也消除了并行处理和发送请求及响应时对多个连接的依赖。结果就是应用速度更快、开发更简单、部署成本更低。
+
+支持多向请求和响应，可以省掉对 HTTP1.x 限制所费的那些工作，比如拼接文件、图片精灵、域名分区。类似地，通过减少 TCP 连接的数量，HTTP2.0 也会减少客户端和服务器的 CPU 及内存占用。
+
+### 请求优先级
+
+把 HTTP 消息分解为很多独立的帧之后，就可以通过优化这些帧的交错和传输顺序，进一步提升性能。为了做到这一点，每个流都可以带有一个 31 比特的优先值：
+
+> 0 表示最高优先级； \(2^31\)-1 表示最低优先级。
+
+有了这个优先值，客户端和服务器就可以在处理不同的流时采用不同的策略，以最优的方式发送流、消息和帧。具体来讲，服务器可以根据流的优先级，控制资源分配（CPU、内存、带宽），而在响应数据准备好之后，优先将高优先级的帧发送给客户端。
+
+浏览器在渲染页面时，并非所有资源都具有相同的优先级：HTML 文档本身对构建 DOM 不可或缺，CSS 对构建 CSSOM 不可或缺，而 DOM 和 CSSOM 的构建都可能会受到 JavaScript 资源的阻塞，其他资源（如图片）的优先级都可以降低。为加快页面加载的速度，所有现代浏览器都会基于资源的类型以及它在页面中的位置排定请求的优先次序，甚至通过之前的访问来学习优先级模式–比如，之前的渲染如果被某些资源阻塞了，那么同样的资源在下一次访问时可能就会被赋予更高的优先级。
+
+### 每个来源一个连接
+
+有了新的分帧机制后，HTTP2.0 不再依赖多个 TCP 连接去实现多流并行了。现在，每个数据流都拆分成很多帧，而这些帧可以交错，还可以分别优先级。于是，所有 HTTP2.0 连接都是持久化的，而且客户端与服务器之间也只需要一个连接即可。
+
+每个来源一个连接显著减少了相关资源的占用：连接路径上的套接字管理工作量少了，内存占用少了，连接的吞吐量大了。此外，从上到下所有层面上也都获得了相应的好处：
+
+- 所有话剧流的优先次序始终如一；
+- 压缩上下文单一使得压缩效果更好；
+- 由于 TCP 连接减少而使网络拥塞状况得以改观；
+- 慢启动时间减少，拥塞和丢包回复速度更快。
+
+### 流量控制
+
+在同一个 TCP 上传输多个数据流，就意味着要共享带宽。标定数据流的优先级有助于按序交付，但只有优先级还不足以确定多个数据流或多个连接间的资源分配。为解决这个问题，HTTP2.0 为数据流和连接的流量控制提供了一个简单的机制：
+
+- 流量控制基于每一跳进行，而非端到端的控制；
+- 流量控制基于窗口更新帧进行，即接收方广播自己准备接收某个数据流的多少字节，以及整个连接要接收多少字节；
+- 流量控制窗口大小通过 WINDOW_UPDATE 帧更新，这个字段指定了流 ID 和窗口大小递增值；
+- 流量控制有方向性，即接收放可能根据自己的情况为每个流乃至整个连接设置任意窗口大小；
+- 流量控制可以由接收方禁用，包括针对个别的流和针对整个连接。
+
+HTTP2.0 建立连接之后，客户端与服务器交换 SETTINGS 帧，目的是设置双向的流量控制窗口大小。除此之外，任何一端都可以选择禁用个别流或整个连接的流量控制。
+
+### 服务端推送（server push）
+
+HTTP2.0 新增的一个强大的新功能，就是服务器可以对一个客户端请求发送多个响应。换句话说，除了对最初请求的响应外，服务器还可以额外想客户端推送资源，而无需客户端明确的请求。
+
+建立 HTTP2.0 连接后，客户端与服务器交换 SETTINGS 帧，借此可以限定双向并发的流的最大数量。因此，客户端可以限定推送流的数量，或者通过设置为 0 而完全禁用服务器推送。
+
+所有推送的资源都遵守同源策略。换句话说，服务器不能随便将第三方资源推送给客户端，而必须是经过双方确认才行。
+
+### 首部（header）压缩
+
+HTTP 的每次通信都会携带一组首部，用于描述传输的资源及其属性。在 HTTP1.x 中这些元数据都是以纯文本形式发送的，通常会给每个请求增加 500-800 字节的负担。如果算上 Cookie，增加的负担更重。为减少这些，HTTP2.0 会压缩首部元数据。 HTTP2.0 在客户端和服务器端使用“首部表”来跟踪和存储之前发送的键值对，对于相同的数据，不再通过每次请求和响应发送； 首部表在 HTTP2.0 的连接存续期内始终存在，有客户端和服务器共同更新； 每个新的首部键值对要么被追加到当前表的末尾，要么替换表中之前的值。
+
+于是，HTTP2.0 连接的两端都知道已经发送了哪些首部。请求与响应首部的定义在 HTTP2.0 中基本没有改变，只是所有的首部健必须全部小写。
+
+## HTTP2.0 的升级改造
+
+HTTP2.0 其实可以支持非 HTTPS 的，但是现在主流的浏览器像 chrome，firefox 表示还是只支持基于 TLS 部署的 HTTP2.0 协议，所以要想升级成 HTTP2.0 还是先升级 HTTPS 为好。
+
+当你的网站已经升级 HTTPS 之后，那么升级 HTTP2.0 就简单很多，如果你使用 NGINX，只要在配置文件中启动相应的协议就可以了，可以参考 NGINX 白皮书，NGINX 配置 HTTP2.0 官方指南 [https://www.nginx.com/blog/nginx-1-9-5/。](https://www.nginx.com/blog/nginx-1-9-5/。)
+
+使用了 HTTP2.0 那么，原本的 HTTP1.x 怎么办，这个问题其实不用担心，HTTP2.0 完全兼容 HTTP1.x 的语义，对于不支持 HTTP2.0 的浏览器，NGINX 会自动向下兼容的。
+
+## HTTP2.0 的多路复用和 HTTP1.X 中的长连接复用有什么区别？
+
+HTTP/1.\* 一次请求-响应，建立一个连接，用完关闭；每一个请求都要建立一个连接；
+
+HTTP/1.1 Pipeling 解决方式为，若干个请求排队串行化单线程处理，后面的请求等待前面请求的返回才能获得执行机会，一旦有某请求超时等，后续请求只能被阻塞，毫无办法，也就是人们常说的线头阻塞；
+
+HTTP/2 多个请求可同时在一个连接上并行执行。某个请求任务耗时严重，不会影响到其它连接的正常执行。
+
+- 壹.5.4 HTTP 和 HTTPS 的区别在哪里
+  - 来源：[.tmp/frontend-hard-mode-interview/1/1.5.4.md](.tmp/frontend-hard-mode-interview/1/1.5.4.md)
+
+---
+
+# 壹.5.4 HTTP 和 HTTPS 的区别在哪里
+
+## HTTP 和 HTTPS 的基本概念
+
+**HTTP**：是互联网上应用最为广泛的一种网络协议，是一个客户端和服务器端请求和应答的标准（TCP），用于从 WWW 服务器传输超文本到本地浏览器的传输协议，它可以使浏览器更加高效，使网络传输减少。
+
+**HTTPS**：是以安全为目标的 HTTP 通道，简单讲是 HTTP 的安全版，即 HTTP 下加入[SSL](https://link.juejin.cn?target=https%3A%2F%2Fso.csdn.net%2Fso%2Fsearch%3Fq%3DSSL%26spm%3D1001.2101.3001.7020)层，HTTPS 的安全基础是 SSL，因此加密的详细内容就需要 SSL。
+
+HTTPS 协议的主要作用可以分为两种：
+
+1. 一种是建立一个信息安全通道，来保证数据传输的安全
+2. 另一种就是确认网站的真实性
+
+## 二者的区别
+
+HTTP 协议传输的数据都是未加密的，也就是明文的，因此使用 HTTP 协议传输隐私信息非常不安全。为了保证这些隐私数据能加密传输，于是网景公司设计了 SSL（Secure Sockets Layer）协议用于对 HTTP 协议传输的数据进行加密，从而就诞生了 HTTPS。
+
+简单来说，HTTPS 协议是由 SSL+HTTP 协议构建的可进行加密传输、身份认证的网络协议，要比 HTTP 协议安全。
+
+HTTPS 和 HTTP 的区别主要如下：
+
+1. **HTTPS 协议需要到 CA 申请证书**，一般免费证书较少，因而需要一定费用
+2. **HTTP 是超文本传输协议**，信息是明文传输，HTTPS 则是具有安全性的 SSL 加密传输协议
+3. **HTTP 和 HTTPS 使用的是完全不同的连接方式**，用的端口也不一样，前者是 80，后者是 443
+4. **HTTP 的连接很简单，是无状态的**；HTTPS 协议是由 SSL+HTTP 协议构建的可进行加密传输、身份认证的网络协议，比 HTTP 协议安全
+
+## HTTPS 的特点
+
+### 优点
+
+1. **使用 HTTPS 协议可认证用户和服务器**，确保数据发送到正确的客户机和服务器
+2. **HTTPS 协议是由 SSL+HTTP 协议构建的可进行加密传输、身份认证的网络协议**，要比 HTTP 协议安全，可防止数据在传输过程中不被窃取、改变，确保数据的完整性
+3. **HTTPS 是现行架构下最安全的解决方案**，虽然不是绝对安全，但它大幅增加了中间人攻击的成本
+4. **谷歌曾在 2014 年 8 月份调整搜索引擎算法**，并称"比起同等 HTTP 网站，采用 HTTPS 加密的网站在搜索结果中的排名将会更高"
+
+### 缺点
+
+1. **HTTPS 协议握手阶段比较费时**，会使页面的加载时间延长近 50%，增加 10%到 20%的耗电
+2. **HTTPS 连接缓存不如 HTTP 高效**，会增加数据开销和功耗，甚至已有的安全措施也会因此而受到影响
+3. **SSL 证书需要钱**，功能越强大的证书费用越高，个人网站、小网站没有必要一般不会用
+4. **SSL 证书通常需要绑定 IP**，不能在同一 IP 上绑定多个域名，IPv4 资源不可能支撑这个消耗
+5. **HTTPS 协议的加密范围也比较有限**，在黑客攻击、拒绝服务攻击、服务器劫持等方面几乎起不到什么作用。最关键的，SSL 证书的信用链体系并不安全，特别是在某些国家可以控制 CA 根证书的情况下，中间人攻击一样可行
+
+## 实际应用建议
+
+### 何时使用 HTTP
+
+- 内部网络环境
+- 不涉及敏感信息的网站
+- 对性能要求极高的场景
+
+### 何时使用 HTTPS
+
+- 涉及用户隐私的网站（如电商、银行）
+- 需要用户登录的网站
+- 对安全性要求较高的应用
+- 希望获得更好的搜索引擎排名
+
+## 结语
+
+虽然 HTTPS 相比 HTTP 有一些性能上的损失，但在当今网络安全日益重要的环境下，使用 HTTPS 已经成为最佳实践。对于大多数网站来说，安全性的提升远大于性能的轻微损失。随着技术的不断发展，HTTPS 的性能开销也在逐渐减小。
+
+## 构建与工具（Webpack/工程化）
+
+- 肆.1.1 深入理解 Webpack 打包
+  - 来源：[.tmp/frontend-hard-mode-interview/4/si-.1.1-shen-ru-li-jie-webpack-da-bao.md](.tmp/frontend-hard-mode-interview/4/si-.1.1-shen-ru-li-jie-webpack-da-bao.md)
+
+---
+
+# 肆.1.1 深入理解 Webpack 打包
+
+## 参考文献
+
+
+
+
+
+
+
+## 框架（React/Vue）
+
+- 叁.1.2 React、Vue 和 Angular 对比
+  - 来源：[.tmp/frontend-hard-mode-interview/3/3.1.2.md](.tmp/frontend-hard-mode-interview/3/3.1.2.md)
+
+---
+
+# 叁.1.2 React、Vue 和 Angular 对比
+
+## 1. React VS Vue
+
+> React 的哲学是：**如无必要，勿增实体**。
+>
+> Vue 的哲学是：什么好用，给你什么。  
+> Vue 会自动帮你绑定 this，React 不会，因为 JS 能做；  
+> Vue 会自动帮你合并 class 和 style，React 不会，因为 JS 能做；  
+> Vue 会给你的 data 创建 getter/setter，React 不会，因为 JS 能做；  
+> Vue 会给你提供 v-if / v-for / v-show，React 不会，因为 JS 能做；  
+> Vue 会给你提供 computed / watch / methods，React 不会，因为 JS 能做。
+>
+> 那么 React 到底提供了什么？  
+> **只提供了一条让你用原生 JS 解决所有 UI 问题的途径。**
+>
+> 很多新人反馈：  
+> Vue 用久了，好像不会写高级的 JS 了，只会一些简单的，居然就能完成工作。  
+> 而 React 用久了，就发现 JS 的语法特性真多啊，学都学不过来。
+
+by [方应杭](https://www.zhihu.com/question/314428335/answer/644922545)
+
+## 2. React VS Angluar
+
+> 你会发现 Angular 在逐渐的弥补自身框架的不足，其他框架也在弥补他们自身的不足，他们都在互相吸取，互相学习，大家最终会越来越趋同。
+>
+> 喜欢装饰器，Class Component，Service Class 风格的，可以选择 Angular。
+>
+> 喜欢纯函数，Function Component，Hooks 的，可以选择 React。
+>
+> 没有啥偏好的使用 Vue，想用啥用啥。
+
+by [徐海峰](%20https://www.zhihu.com/question/355760849/answer/938934606)
+
+> Angular 的初始曲线对于搞 java 的人来说确实不高，因为那一套概念都是 java 里面有的，而且搞 java 的都已经习惯繁琐了。但是对于不搞 java 的人来说，就很烦了，更关键的是在我看来前端根本就不应该学 java 那一套。
+>
+> Angular 的后续曲线也不低，因为它的可优化性比较糟糕，以至于你不理解它的内部运作原理就很难避免各种性能坑。
+
+> React 上手的曲线也看人。对于习惯了服务端模板的人来说，要接受 JSX 是一个挑战；但是对于搞函数式的人来说，简直就是太自然了，因为 JSX 能让你把模板看做一个纯函数。过了这个坎后上手写两个例子，React 还是相对简单的。但是这也是个假象。接下来要搞『正经』的 React 应用了，突然出现了 Node，CommonJS, Webpack 一堆东西。写过 Node 的人会觉得哦哦，太自然了。没接触过 Node 的人就像没接触过 java 的人初学 Angular 一样：这些都是什么鬼。再往下，终于把构建环境搭好了，这时候你会发现 React 文档里的东西你已经也基本看完了，你以为你这就叫『学会 React』了？其实这时候你还是不知道怎么用 React 写一个应用，因为 React 本身不管这些事情，所以你要开始跳入 React 社区的大坑，开始学习 react-router, react-hot-reload, Flux 及其 N 种实现 \([voronianski/flux-comparison · GitHub](https://link.zhihu.com/?target=https%3A//github.com/voronianski/flux-comparison)\) , CSS in JS 及其 N 种实现 \([https://github.com/MicheleBertoli/css-in-js](https://link.zhihu.com/?target=https%3A//github.com/MicheleBertoli/css-in-js)\)，Immutable-js, GraphQL, Relay... 还有 context 这种大家都在用但是没有官方文档的功能...（现在终于有文档了）用 Redux 又开始一堆概念了，actions, action creators, reducers, containers, higher order components... 然后现在又开始配着 generator 搞 redux-saga，搞着搞着你可能还会被 Clojure/Elm 吸引过去，跳入函数式的大坑... 这个曲线比起 Angular，只能说有过之而无不及... 当然，因为学习过程中多了很多可以用来装逼的资本，还是有一定的激励效果的，不像 Angular 学了半天也没什么能吹的。
+
+by [尤雨溪](%20https://www.zhihu.com/question/35767399/answer/64496760)
+
+- 叁.1.1 jQuery 过时了吗？
+  - 来源：[.tmp/frontend-hard-mode-interview/3/3.1.1.md](.tmp/frontend-hard-mode-interview/3/3.1.1.md)
+
+---
+
+# 叁.1.1 jQuery 过时了吗？
+
+## 叁.1.1.1 jQuery 带来的好处
+
+![jQuery之父 John Resig](./assets/john-resig.jpg)
+
+John Resig 在 2006 年发布了 jQuery 第一版，十几年过去了，截止 2019 年 6 月的统计，jQuery 仍然被全球最活跃的前 1000 万个网站中的 73%所使用，其影响力之大可见一斑。jQuery 作为最流行的 JavaScript 库，其诞生之初便为前端开发带来了以下好处：
+
+### **1. 解决了当时浏览器兼容问题**
+
+jQuery 诞生时的 2006 年，微软 IE6 在浏览器市场里所占份额最大。这个“傲慢”的浏览器自成一套，很多 API 没有遵从 W3C 标准，因此造成各种兼容问题（出于浏览器大战时的竞争策略的考虑，微软没有把遵从 W3C 标准放在重要的位置）。调用某些相同功能的 DOM API，IE6 与其他浏览器比如 Firefox、Opera、Safari 在语法上有差异。这让前端工程师经常要写两份甚至多份代码，不胜其苦。最烦恼的还不止于此，微软自己的浏览器，若版本不一样居然也有兼容性问题，比如 IE6 的代码居然也不兼容 IE7、IE8！此时 jQuery 出现了，它及时、有效地解决了这些问题，让前端工程师只需要写一份代码，无须担心兼容性。这也是 jQuery 大受欢迎的最重要的原因。
+
+```javascript
+// 过去如果不用jQuery，监听事件（兼容IE6）要这么写
+if (button.addEventListener) button.addEventListener('click', fn)
+else if (button.attachEvent) {
+  button.attachEvent('onclick', fn)
+} else {
+  button.onclick = fn
+}
+
+// 但是如果用jQuery只需要这么写
+$(button).on('click', fn)
+```
+
+### **2. 发明了一种便捷的 DOM 操作方式**
+
+jQuery 极大地简化了对元素选择：
+
+```javascript
+// 如果你想获取 .nav > .navItem 对应的所有元素，用 jQuery 是这样写的
+$('.nav > .navItem')
+
+// 在 IE 6 上，你得这么写
+var navItems = document.getElementsByClassName('navItem')
+var result = []
+for(var i = 0; i < navItems.length; i++){
+  if(navItems[i].parentNode.className.match(/\bnav\b/){
+    result.push(navItems[i])
+  }
+}
+```
+
+例如，原来你要修改样式，原生 JavaScript 是这么写的：
+
+```javascript
+var dom = document.getElementById('coffe1891')
+dom.style.color = 'blue'
+```
+
+用上 jQuery 后，一行搞定：
+
+```javascript
+$('#coffe1891').css('color', 'blue')
+```
+
+### **3. 轻松实现动画效果**
+
+例如，我们需要把 一个`&lt;div>`元素移动到左边，直到 left 属性等于 1891 像素为止。 使用 jQuery，我们可以这么写：
+
+```javascript
+$('div').animate({ left: '1891px' })
+```
+
+### **4. 封装了极易使用的 Ajax**
+
+本书[壹.2.13 已有一段用原生的 JavaScript 实现 ajax 请求的代码](../1/1.2.13.md#ajax)，相当的复杂。而 用上了 jQuery 后，简洁了不少！如下所示：
+
+```javascript
+$.ajax({
+  url: 'www.xxx.com/coffe1891',
+  success: function (result) {
+    //dosomething
+  }
+})
+```
+
+总而言之，jQuery 作为一个 JavaScript 库**，**这个库里有很多函数可以简化你的 DOM 操作，提供一些特效功能等等。它帮我们封装好了各种不会写、不想写、没时间写的代码，以极其人性化/易懂的 API 的方式提供出来，让我们通过简单的调用就能直接实现丰富的功能。
+
+## 叁.1.1.2 现在已经有了比 jQuery 更好的方案
+
+随着时代的发展，毕竟也有十几年过去了，前端开发有了很大的变化。针对前面提到的 jQuery 的 4 点好处，现在也已经有更好的替代方案。
+
+### 1. 针对兼容性
+
+现在主流浏览器拥抱 W3C 标准，因此浏览器之间的兼容性做得越来越好。兼容性做得极差的浏览器 IE6 已经成为历史，甚至在绝大多数生产环境中连 IE8 都可以不用考虑，况且还有 Babel.js 这样更轻量级的库存在。
+
+### 2. 针对 DOM 操作
+
+jQuery 能够快速选取 DOM 结点，这个无疑是 jQuery 受欢迎的一个重要的原因。但是就目前情况来说，这个优势已经没有了，为什么呢？有两个已经成为 W3C 标准的 API：`document.querySelector`和`document.querySelectorAll`，这两个 API 可以通过传入 css 选择器形式的字符串，以匹配到预期的 DOM 节点，而且基于浏览器的实现其执行效率更好。
+
+而 MVVM 一类的框架比如 React/Vue/Angular 的流行，其双向绑定的特性已经让 DOM 的更新变成由框架自行处理，让前端工程师可以不需要操作 DOM（改为让框架自行去操作[Virtual DOM](../1/1.4.3.md)），只需要专注数据和业务逻辑。而且 React/Vue/Angular 这些主流框架针对 DOM 的操作时做了大量的[Repaint 和 Reflow](../1/1.4.2.md)有关的优化，比如基于 Virtual DOM 进行计算，将多次对真实 DOM 的操作精简为最小变动然后操作真实 DOM、在同一个 Event Loop 循环内将多次 DOM 操作事件合并……这些优化措施都能有能更好的表现，而这些优化 jQuery 并没有做。
+
+### 3. 动画领域的替代方案
+
+现在 CSS3 动画技术已经非常的成熟，已经完全可以取代 jQuery 做的动画。css3 能比 jQuery 的 animate 方法实现更复杂的动画，兼容性好，性能消耗小。举个例子，比方说如果实现背景颜色过度，CSS3 可以完美的实现，但是 jQuery 就不方便。现在已经出现了很多优秀的 css3 动画库，比如 Animate.css、Velocity.js。
+
+### 4. Ajax 也有了更好的替代
+
+Fetch 已经完美地取代 Ajax 成为实现异步任务的标准。jQuery 的 ajax 操作，为我们省去了兼容浏览器方面的问题，并且也提供了简明的 API 去调用 get 和 post，让开发者从繁琐的兼容性与使用原生 API 上解脱出来。但是现在，这个优势也已经非常微小了。不管是原生 JavaScript 的 Fetch API 还是第三方库 axios，都为我们提供了强大的 ajax 使用能力，并且 axios 还有拦截器这个优势。这时相较而言，jQuery 的 ajax 确实已经无法相比了。
+
+当然，Fetch 在 IE 浏览器里需要有 Fetch 的 Polyfill 方案：[github/fetch](https://link.zhihu.com/?target=https%3A//github.com/github/fetch)，这样只需要引用这一个小小的 JS，就可以使用方便的 ajax 了，相较于 jQuery 小巧很多。
+
+## 叁.1.1.3 jQuery 留给我们的财富
+
+### 1. 大量功能强大方便使用的插件
+
+jQuery 发展这么多年，它最大的价值之一在于社区积攒的各种插件。无论是做日期选择器还是轮播图，甚至搞个播放器，都可以分分钟找到一个对应的插件。 比如 [CSS transitions and transformations for jQuery](http://ricostacruz.com/jquery.transit/) 这个动画插件，我到现在也还在用，完全没问题。
+
+更多宝矿可以自行浏览 jQuery 插件网站：[https://plugins.jquery.com/](https://plugins.jquery.com/) 这个网站虽然不再接纳新的插件，但可以作为一份地图，可以方便找到 jQuery 流行插件的 Github 主页，然后你会发现，很多插件都还非常活跃而且更新非常频繁。
+
+![plugins.jquery.com](./assets/3.1.1.3.1.jpg)
+
+### 2.简洁易懂的 API 设计
+
+jQuery 的 API 风格依然在流行。我们把 jQuery 和 [Axios ](https://github.com/axios/axios)做一下对比：
+
+```javascript
+$.ajax({ url: '/api', method: 'get' })
+$.get('/api').then(fn1, fn2)
+
+axios({ url: '/api', method: 'get' })
+axios.get('/api').then(fn1, fn2)
+```
+
+为什么 2018 年开始流行的 axios 跟 jQuery.ajax 这么相像呢？因为 jQuery 的 API 实在太好用了！搞得新库根本没法超越它，没有办法设计出更简洁的 API 了。
+
+### 3.一些鬼斧神工似的编程套路
+
+为什么有些人代码水平老是提不高了？就是因为不会造轮子，不会设计优雅的 API，更不会实现优雅的 API，只会调用其他库或框架提供的功能（中枪的举手）。而 jQuery 则提供了简单而又经典的范例供大家学习。不信的话我们就来看看 jQuery 用到了哪些所谓的设计模式（其实就是编程套路）吧。
+
+#### 函数重载
+
+在[壹.2.1 函数](../1/1.2.1.md) 里面最末尾有 John Resig 的一段有关“用原生 JavaScript 实现函数重载”的代码，已经见识到 jQuery 之父的 coding 能力。jQuery 里的函数重载是这样的：
+
+```javascript
+$(fn)
+$('div')
+$(div)
+$($(div))
+$('span', '#scope1')
+```
+
+你会发现 $ 这个函数的参数可以是函数、字符串、元素和 jQuery 对象，甚至还能接受多个参数，这种重载是怎么做到的？读者可以自己去看看源码一探究竟。
+
+#### 发布订阅者模式
+
+```javascript
+var eventHub = $({})
+eventHub.on('xxx', function () {
+  console.log('收到')
+})
+eventHub.trigger('xxx')
+```
+
+#### 用原型继承实现插件系统
+
+```javascript
+$.fn.modal = function(){ ... }
+$('#div1').modal();
+```
+
+Vue 2 的插件也是类似的思路。
+
+#### 事件委托
+
+```javascript
+$('div').on('click', 'span', function(){...});
+```
+
+说实话若在 2018 年找前端让他写一个事件委托，我保证 90% 写出来的代码都是有「明显」bug 的。
+
+#### 链式调用
+
+```javascript
+$('div').text('hi').addClass('red').animate({ left: 100 })
+```
+
+#### 命名空间
+
+```javascript
+// 你的插件在一个 button 上绑定了很多事件
+$button.on('click.plugin', function(){...})
+$button.on('mouseenter.plugin', function(){...})
+// 然后你想在某个时刻移除以上所有事件,如果不用 jQuery 就很麻烦
+$button.off('.plugin');
+```
+
+#### 高阶函数
+
+```javascript
+var fn2 = $.proxy(fn1, asThis, param1)
+```
+
+$.proxy 接受一个函数，返回一个新的函数。
+
+还有许多其他“套路”，限于篇幅就不一一列举了，读者可以自行探索。
+
+## 结语
+
+jQuery 虽然完成了它的历史使命，并且在逐渐被新的库/框架所替代，但它给我们留下了很多宝贵的财富，仍然活跃在舞台上。
+
+其实，阅读 jQuery 的源码和学习它的编程思想，对写代码和封装库很有帮助。现在的前端工程师新人依然可以学习 jQuery 的思想，因为新人直接理解 Vue/React/Angular 的底层思想难度较大，而 jQuery 是一个很不错的中间过渡。
+
+同时，jQuery 也蕴含了非常多的编程套路。如果你不想学 jQuery，直接去学 React/Vue /Angular 会难一点，当然硬要学也能学会，但也仅此而已，反正回头还是要研究更深层次的 JavaScript 套路，这些在 jQuery 里都有。
+
+最后，jQuery 能支持 IE8 以下版本。由于 Vue 之类的框架只能支持 IE8 以上的版本，而实际情况是现在很多那种事业单位里的古董电脑很多都还是 IE7，那么这种情况下，用 vue 之类的 MVVM 框架显然不适合。
+
+如果你读到这里，想必也不会再问 jQuery 是否过时了。
+
+## 参考文献
+
+
+
+- 叁.2.1 React Hooks 究竟是什么？
+  - 来源：[.tmp/frontend-hard-mode-interview/3/3.2.1.md](.tmp/frontend-hard-mode-interview/3/3.2.1.md)
+
+---
+
+# 叁.2.1 React Hooks 究竟是什么？
+
+## 参考文献
+
+
+
+## 浏览器与渲染（DOM/V8/重排重绘）
+
+- 壹.4.2 页面重排（Reflow）与重绘（Repaint\)
+  - 来源：[.tmp/frontend-hard-mode-interview/1/1.4.2.md](.tmp/frontend-hard-mode-interview/1/1.4.2.md)
+
+---
+
+# 壹.4.2 页面重排（Reflow）与重绘（Repaint\)
+
+## 重排(reflow)：
+
+### 概念：
+
+​ 当 DOM 的变化影响了元素的几何信息(元素的的位置和尺寸大小)，浏览器需要重新计算元素的几何属性，将其安放在界面中的正确位置，这个过程叫做重排。
+
+重排也叫回流，简单的说就是重新生成布局，重新排列元素。
+
+### 哪些情况会发生重排：
+
+​ 1. 页面初始渲染，这是开销最大的一次重排
+
+​ 2. 添加/删除可见的 DOM 元素
+
+​ 3. 改变元素位置
+
+​ 4. 改变元素尺寸，比如边距、填充、边框、宽度和高度等
+
+​ 5. 改变元素内容，比如文字数量，图片大小等
+
+​ 6. 改变元素字体大小
+
+​ 7. 改变浏览器窗口尺寸，比如 resize 事件发生时
+
+​ 8. 激活 CSS 伪类（例如：`:hover`）
+
+​ 9. 设置 style 属性的值，因为通过设置 style 属性改变结点样式的话，每一次设置都会触发一次 reflow
+
+10. 查询某些属性或调用某些计算方法：offsetWidth、offsetHeight 等，除此之外，当我们调用 `getComputedStyle`方法，或者 IE 里的 `currentStyle` 时，也会触发重排，原理是一样的，都为求一个“即时性”和“准确性”。
+
+| 常见引起重排属性和方法 |      --      |         --         |           --            |            --            |      --      |
+| :--------------------: | :----------: | :----------------: | :---------------------: | :----------------------: | :----------: |
+|         width          |    height    |       margin       |        overflow         |         padding          |   display    |
+|         border         | border-width |      position      |        font-size        |      vertical-align      |  min-height  |
+|      clientWidth       | clientHeight |     clientTop      |       clientLeft        |       offsetWidth        | offsetHeight |
+|       offsetTop        |  offsetLeft  |    scrollWidth     |      scrollHeight       |        scrollTop         |  scrollLeft  |
+|    scrollIntoView()    |  scrollTo()  | getComputedStyle() | getBoundingClientRect() | scrollIntoViewIfNeeded() |              |
+
+### 重排影响的范围：
+
+由于浏览器渲染界面是基于流式布局模型的，所以触发重排时会对周围 DOM 重新排列，影响的范围有两种：
+
+- 全局范围：从根节点 html 开始对整个渲染树进行重新布局。
+- 局部范围：对渲染树的某部分或某一个渲染对象进行重新布局
+
+#### 全局范围重排：
+
+```html
+<body>
+  <div class="hello">
+    <h4>hello</h4>
+    <p><strong>Name:</strong>ZhangSan</p>
+    <h5>hi</h5>
+    <ol>
+      <li>coding</li>
+      <li>loving</li>
+    </ol>
+  </div>
+</body>
+```
+
+当 p 节点上发生 reflow 时，hello 和 body 也会重新渲染，甚至 h5 和 ol 都会收到影响。
+
+#### 局部范围重排：
+
+用局部布局来解释这种现象：把一个 dom 的宽高之类的几何信息定死，然后在 dom 内部触发重排，就只会重新渲染该 dom 内部的元素，而不会影响到外界。
+
+## 重绘(Repaints):
+
+### 概念：
+
+​ 当一个元素的外观发生改变，但没有改变布局,重新把元素外观绘制出来的过程，叫做重绘。
+
+### 常见的引起重绘的属性：
+
+| 属性：          | --               | --                  | --                |
+| --------------- | ---------------- | ------------------- | ----------------- |
+| color           | border-style     | visibility          | background        |
+| text-decoration | background-image | background-position | background-repeat |
+| outline-color   | outline          | outline-style       | border-radius     |
+| outline-width   | box-shadow       | background-size     |                   |
+
+### 重排优化建议：
+
+​ 重排的代价是高昂的，会破坏用户体验，并且让 UI 展示非常迟缓。通过减少重排的负面影响来提高用户体验的最简单方式就是尽可能的减少重排次数，重排范围。下面是一些行之有效的建议，大家可以用来参考。
+
+### 减少重排范围
+
+我们应该尽量以局部布局的形式组织 html 结构，尽可能小的影响重排的范围。
+
+- 尽可能在低层级的 DOM 节点上，而不是像上述全局范围的示例代码一样，如果你要改变 p 的样式，class 就不要加在 div 上，通过父元素去影响子元素不好。
+- 不要使用 table 布局，可能很小的一个小改动会造成整个 table 的重新布局。那么在不得已使用 table 的场合，可以设置 table-layout:auto;或者是 table-layout:fixed 这样可以让 table 一行一行的渲染，这种做法也是为了限制 reflow 的影响范围。
+
+### 减少重排次数
+
+#### 1.样式集中改变
+
+​ 不要频繁的操作样式，对于一个静态页面来说，明智且可维护的做法是更改类名而不是修改样式，对于动态改变的样式来说，相较每次微小修改都直接触及元素，更好的办法是统一在 `cssText` 变量中编辑。虽然现在大部分现代浏览器都会有 `Flush` 队列进行渲染队列优化，但是有些老版本的浏览器比如 IE6 的效率依然低下。
+
+```js
+// bad
+var left = 10
+var top = 10
+el.style.left = left + 'px'
+el.style.top = top + 'px'
+
+// 当top和left的值是动态计算而成时...
+// better
+el.style.cssText += '; left: ' + left + 'px; top: ' + top + 'px;'
+
+// better
+el.className += ' className'
+```
+
+#### 2.分离读写操作
+
+​ DOM 的多个读操作（或多个写操作），应该放在一起。不要两个读操作之间，加入一个写操作。
+
+```js
+// bad 强制刷新 触发四次重排+重绘
+div.style.left = div.offsetLeft + 1 + 'px'
+div.style.top = div.offsetTop + 1 + 'px'
+div.style.right = div.offsetRight + 1 + 'px'
+div.style.bottom = div.offsetBottom + 1 + 'px'
+
+// good 缓存布局信息 相当于读写分离 触发一次重排+重绘
+var curLeft = div.offsetLeft
+var curTop = div.offsetTop
+var curRight = div.offsetRight
+var curBottom = div.offsetBottom
+
+div.style.left = curLeft + 1 + 'px'
+div.style.top = curTop + 1 + 'px'
+div.style.right = curRight + 1 + 'px'
+div.style.bottom = curBottom + 1 + 'px'
+```
+
+原来的操作会导致四次重排，读写分离之后实际上只触发了一次重排，这都得益于浏览器的渲染队列机制：
+
+> 当我们修改了元素的几何属性，导致浏览器触发重排或重绘时。它会把该操作放进渲染队列，等到队列中的操作到了一定的数量或者到了一定的时间间隔时，浏览器就会批量执行这些操作。
+
+#### 3.将 DOM 离线
+
+“离线”意味着不在当前的 DOM 树中做修改，我们可以这样做：
+
+- 使用 display:none
+
+  一旦我们给元素设置 `display:none` 时（只有一次重排重绘），元素便不会再存在在渲染树中，相当于将其从页面上“拿掉”，我们之后的操作将不会触发重排和重绘，添加足够多的变更后，通过 `display`属性显示（另一次重排重绘）。通过这种方式即使大量变更也只触发两次重排。另外，`visibility : hidden` 的元素只对重绘有影响，不影响重排。
+
+- 通过 [documentFragment](https://link.juejin.cn?target=https%3A%2F%2Fdeveloper.mozilla.org%2Fzh-CN%2Fdocs%2FWeb%2FAPI%2FDocumentFragment) 创建一个 `dom` 碎片,在它上面批量操作 `dom`，操作完成之后，再添加到文档中，这样只会触发一次重排。
+
+- 复制节点，在副本上工作，然后替换它！
+
+#### 4.使用 absolute 或 fixed 脱离文档流
+
+使用绝对定位会使的该元素单独成为渲染树中 `body` 的一个子元素，重排开销比较小，不会对其它节点造成太多影响。当你在这些节点上放置这个元素时，一些其它在这个区域内的节点可能需要重绘，但是不需要重排。
+
+#### 5.优化动画
+
+- 可以把动画效果应用到 `position`属性为 `absolute` 或 `fixed` 的元素上，这样对其他元素影响较小。
+
+  动画效果还应牺牲一些平滑，来换取速度，这中间的度自己衡量： 比如实现一个动画，以 1 个像素为单位移动这样最平滑，但是 Layout 就会过于频繁，大量消耗 CPU 资源，如果以 3 个像素为单位移动则会好很多
+
+- 启用 GPU 加速 `GPU` 硬件加速是指应用 `GPU` 的图形性能对浏览器中的一些图形操作交给 `GPU` 来完成，因为 `GPU` 是专门为处理图形而设计，所以它在速度和能耗上更有效率。
+
+  `GPU` 加速通常包括以下几个部分：Canvas2D，布局合成, CSS3 转换（transitions），CSS3 3D 变换（transforms），WebGL 和视频(video)。
+
+```css
+/*
+  * 根据上面的结论
+  * 将 2d transform 换成 3d
+  * 就可以强制开启 GPU 加速
+  * 提高动画性能
+  */
+div {
+  transform: translate3d(10px, 10px, 0);
+}
+```
+
+### 小结：
+
+- 渲染的三个阶段 Layout，Paint，Composite Layers。 Layout：重排，又叫回流。 Paint:重绘，重排重绘这些步骤都是在 CPU 中发生的。 Compostite Layers：CPU 把生成的 BitMap（位图）传输到 GPU，渲染到屏幕。
+- CSS3 就是在 GPU 发生的：Transform Opacity。在 GPU 发生的属性比较高效。所以 CSS3 性能比较高。
+
+## 参考文献
+
+
+
+- 壹.4.3 DOM、Shadow DOM、Virtual DOM
+  - 来源：[.tmp/frontend-hard-mode-interview/1/1.4.3.md](.tmp/frontend-hard-mode-interview/1/1.4.3.md)
+
+---
+
+# 壹.4.3 DOM、Shadow DOM、Virtual DOM
+
+在前端开发中，DOM（Document Object Model）是一个核心概念，而 Shadow DOM 和 Virtual DOM 则是现代前端框架中的重要技术。本文将详细介绍这三者的概念、区别和应用场景。
+
+## 壹.4.3.1 DOM（Document Object Model）
+
+### 什么是 DOM
+
+DOM 是 HTML 文档的编程接口，它将 HTML 文档表示为一个树形结构，每个 HTML 元素都是树中的一个节点。DOM 提供了操作 HTML 元素的方法和属性，让 JavaScript 能够动态地修改网页内容。
+
+### DOM 树结构
+
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>页面标题</title>
+  </head>
+  <body>
+    <div id="container">
+      <h1>标题</h1>
+      <p>段落内容</p>
+    </div>
+  </body>
+</html>
+```
+
+对应的 DOM 树结构：
+
+```
+document
+├── html
+    ├── head
+    │   └── title
+    └── body
+        └── div#container
+            ├── h1
+            └── p
+```
+
+### DOM 操作示例
+
+```javascript
+// 获取元素
+const container = document.getElementById('container')
+const title = document.querySelector('h1')
+
+// 修改内容
+title.textContent = '新标题'
+
+// 创建新元素
+const newParagraph = document.createElement('p')
+newParagraph.textContent = '新段落'
+container.appendChild(newParagraph)
+
+// 删除元素
+const oldParagraph = document.querySelector('p')
+container.removeChild(oldParagraph)
+```
+
+### DOM 的优缺点
+
+**优点：**
+
+- 标准化的 API，浏览器原生支持
+- 直接操作真实 DOM，响应及时
+- 丰富的操作方法和属性
+
+**缺点：**
+
+- 操作频繁时性能较差
+- 容易产生内存泄漏
+- 跨浏览器兼容性问题
+
+## 壹.4.3.2 Shadow DOM
+
+### 什么是 Shadow DOM
+
+Shadow DOM 是 Web Components 标准的一部分，它允许开发者创建封装的 DOM 树，这些 DOM 树与主文档的 DOM 树分离，具有自己的作用域。Shadow DOM 主要用于创建可重用的 Web 组件。
+
+### Shadow DOM 的基本概念
+
+```javascript
+// 创建Shadow DOM
+const host = document.getElementById('host')
+const shadow = host.attachShadow({ mode: 'open' })
+
+// 在Shadow DOM中添加内容
+shadow.innerHTML = `
+  <style>
+    .shadow-text {
+      color: red;
+      font-size: 18px;
+    }
+  </style>
+  <div class="shadow-text">这是Shadow DOM中的内容</div>
+`
+```
+
+### Shadow DOM 的特点
+
+1. **封装性**：Shadow DOM 中的样式和脚本不会影响外部文档
+2. **作用域隔离**：CSS 选择器无法穿透 Shadow DOM 边界
+3. **可重用性**：可以创建完全独立的组件
+
+### 实际应用示例
+
+```javascript
+class CustomButton extends HTMLElement {
+  constructor() {
+    super()
+
+    // 创建Shadow DOM
+    const shadow = this.attachShadow({ mode: 'open' })
+
+    // 添加样式和内容
+    shadow.innerHTML = `
+      <style>
+        button {
+          background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+          border: none;
+          border-radius: 25px;
+          color: white;
+          cursor: pointer;
+          font-size: 16px;
+          padding: 12px 24px;
+          transition: transform 0.2s;
+        }
+        
+        button:hover {
+          transform: scale(1.05);
+        }
+      </style>
+      <button>
+        <slot></slot>
+      </button>
+    `
+  }
+}
+
+// 注册自定义元素
+customElements.define('custom-button', CustomButton)
+```
+
+使用方式：
+
+```html
+<custom-button>点击我</custom-button>
+```
+
+## 壹.4.3.3 Virtual DOM
+
+### 什么是 Virtual DOM
+
+Virtual DOM 是一个轻量级的 JavaScript 对象，它是对真实 DOM 的抽象表示。Virtual DOM 的主要目的是提高 DOM 操作的性能，通过比较虚拟 DOM 的差异，批量更新真实 DOM。
+
+### Virtual DOM 的工作原理
+
+1. **创建虚拟 DOM**：将真实 DOM 转换为 JavaScript 对象
+2. **状态变化**：当数据发生变化时，创建新的虚拟 DOM
+3. **差异比较**：比较新旧虚拟 DOM 的差异
+4. **批量更新**：将差异应用到真实 DOM
+
+### 简单的 Virtual DOM 实现
+
+```javascript
+// 创建虚拟DOM元素
+function createElement(type, props, ...children) {
+  return {
+    type,
+    props: {
+      ...props,
+      children: children.map((child) =>
+        typeof child === 'string' ? createTextElement(child) : child
+      )
+    }
+  }
+}
+
+function createTextElement(text) {
+  return {
+    type: 'TEXT_ELEMENT',
+    props: {
+      nodeValue: text,
+      children: []
+    }
+  }
+}
+
+// 渲染虚拟DOM到真实DOM
+function render(element, container) {
+  const dom =
+    element.type === 'TEXT_ELEMENT'
+      ? document.createTextNode('')
+      : document.createElement(element.type)
+
+  // 设置属性
+  Object.keys(element.props)
+    .filter((key) => key !== 'children')
+    .forEach((name) => {
+      dom[name] = element.props[name]
+    })
+
+  // 递归渲染子元素
+  element.props.children.forEach((child) => render(child, dom))
+
+  container.appendChild(dom)
+}
+
+// 使用示例
+const element = createElement(
+  'div',
+  { id: 'app' },
+  createElement('h1', null, 'Hello Virtual DOM'),
+  createElement('p', null, '这是一个简单的实现')
+)
+
+render(element, document.getElementById('root'))
+```
+
+### Virtual DOM 的优势
+
+1. **性能提升**：批量更新 DOM，减少重排重绘
+2. **跨平台**：虚拟 DOM 可以渲染到不同平台
+3. **开发体验**：声明式编程，关注数据而非 DOM 操作
+4. **状态管理**：更容易管理应用状态
+
+### Virtual DOM 的缺点
+
+1. **内存占用**：需要额外的内存存储虚拟 DOM
+2. **首次渲染**：需要先创建虚拟 DOM，再渲染到真实 DOM
+3. **学习成本**：需要理解虚拟 DOM 的概念和工作原理
+
+## 壹.4.3.4 三者的关系与区别
+
+### 关系图
+
+```
+真实DOM ←→ Virtual DOM ←→ 应用状态
+    ↑
+Shadow DOM (封装组件)
+```
+
+### 主要区别
+
+| 特性     | DOM                  | Shadow DOM         | Virtual DOM        |
+| -------- | -------------------- | ------------------ | ------------------ |
+| 作用     | 操作真实 DOM         | 创建封装组件       | 提高渲染性能       |
+| 性能     | 直接操作，性能较低   | 封装隔离，性能较好 | 批量更新，性能最佳 |
+| 使用场景 | 原生 JavaScript 开发 | Web Components     | 现代前端框架       |
+| 复杂度   | 简单直接             | 中等               | 复杂               |
+
+## 壹.4.3.5 实际应用建议
+
+### 何时使用 DOM
+
+- 简单的页面交互
+- 原生 JavaScript 项目
+- 需要直接控制 DOM 的场景
+
+### 何时使用 Shadow DOM
+
+- 创建可重用组件
+- 需要样式封装
+- 构建 Web Components
+
+### 何时使用 Virtual DOM
+
+- 复杂的前端应用
+- 需要频繁更新 DOM
+- 使用现代前端框架
+
+## 壹.4.3.6 结语
+
+DOM、Shadow DOM 和 Virtual DOM 各有其适用场景。理解它们的特点和区别，能够帮助我们在不同的项目中选择合适的技术方案。在实际开发中，这些技术往往是结合使用的，而不是相互排斥的。
+
+### 推荐阅读
+
+
+
+
+
+
+
+## 安全（XSS/CSRF）
+
+- 壹.5.5 XSS 与 CSRF 攻击
+  - 来源：[.tmp/frontend-hard-mode-interview/1/1.5.5.md](.tmp/frontend-hard-mode-interview/1/1.5.5.md)
+
+---
+
+# 壹.5.5 XSS 与 CSRF 攻击
+
+## 壹.5.5.1 XSS
+
+Cross Site Script,跨站脚本攻击。是指攻击者在网站上注入恶意客户端代码，通过恶意脚本对客户端网页进行篡改，从而在用户浏览网页时，对用户浏览器进行控制或者获取用户隐私数据的一种攻击方式。
+
+### 1.容易发生的场景
+
+\(1\)数据从一个不可靠的链接进入到一个 web 应用程序。
+
+\(2\)没有过滤掉恶意代码的动态内容被发送给 web 用户。
+
+### 2.XSS 攻击的共同点
+
+将一些隐私数据如 cookie、session 发送给攻击者，将受害者重定向到一个由攻击者控制的网站，在受害者机器上进行恶意操作。
+
+### 3.XSS 攻击的类型
+
+分为存储性（持久型）、反射型（非持久型）、基于 DOM
+
+#### **1）反射型**
+
+反射型 XSS 攻击把用户输入的数据"反射"给浏览器。该攻击方式通常诱使用户 **点击一个恶意链接**，或者 **提交一个表单**, 在用户点击链接或提交表单的同时向用户访问的网站注入脚本。
+
+**实践：模拟反射型 XSS 攻击**
+
+在正常页面上添加一个恶意链接。恶意链接的地址指向 localhost:3000。
+
+然后攻击者有一个 node 服务来处理对 localhost:3000 的请求:
+
+```javascript
+const Koa = require('koa')
+const Router = require('koa-router')
+const app = new Koa()
+const router = new Router()
+
+router.get('/', async (ctx) => {
+  ctx.body = '<script>alert("XSS攻击")</script>'
+})
+
+app.use(router.routes())
+app.listen('3000', () => {
+  console.log('Listening 3000')
+})
+```
+
+当用户点击恶意链接时，页面跳转到攻击者预先准备的页面，会发现在攻击者的页面执行了 js 脚本。这样就产生了反射型 XSS 攻击。攻击者可以注入任意的恶意脚本进行攻击，可能注入恶作剧脚本或注入能获取用户隐私数据\(如 cookie\)的脚本。
+
+#### **2）存储型**
+
+存储型 XSS 把用户输入的带有恶意脚本的数据存储在服务器端。当浏览器请求数据时，服务器返回脚本并执行。
+
+常见的场景是攻击者在社区或论坛上写下一篇包含恶意 JavaScript 代码的文章或评论，文章或评论发表后，所有访问该文章或评论的用户，都会在他们的浏览器中执行这段恶意的 JavaScript 代码。
+
+**实践：模拟存储型 XSS 攻击**
+
+例如在一个论坛评论输入框内写下:
+
+```text
+<script>alert("XSS攻击")</script>
+```
+
+该内容提交后会保存至该论坛数据库。而该论坛显示评论的页面则会把各用户提交的评论内容输出。例如显示评论页面可能是这样的:
+
+```text
+<div>
+  <p>用户1</p>
+  <div>哈哈哈说得真好</div>
+</div>
+<div>
+  <p>用户2</p>
+  <div>赞同</div>
+</div>
+<div>
+  <p>XSS攻击者</p>
+  <div><script>alert("XSS攻击")</script>
+</div>
+</div>
+```
+
+其他用户访问该评论显示页面时，恶意脚本就会在浏览器端执行。
+
+**3） 基于 DOM**
+
+基于 DOM 的 XSS 是指通过恶意脚本修改页面的 DOM 结构。是纯粹发生在 **客户端**的攻击。
+
+**实践：模拟基于 DOM 的 XSS 攻击**
+
+某正常网站的内容会显示 url 地址的中的参数。例如 url 为：
+
+```text
+http://xxx.com?name=abc
+```
+
+其页面 smarty 模板为:
+
+```text
+<div><%$smarty.get.name%></div>
+```
+
+得到页面为:
+
+```text
+<div>abc</div>
+```
+
+那么 XSS 攻击者可以制作出这样的链接；
+
+```text
+http://xxx.com?name=<script>alert("XSS攻击")</script>
+```
+
+那么其页面最终得到的是:
+
+```text
+<div>
+  <script>alert("XSS攻击")</script>
+</div>
+```
+
+如果其他用户点击了 XSS 攻击者构造的链接，那么页面中就多了一段可执行脚本。这种攻击也可以说是反射型的。
+
+### 4.XSS 攻击的防范
+
+#### **1） 现代主流浏览器内置 CSP**
+
+内容安全策略（CSP）用于检测和减轻用于 Web 站点的特定类型的攻击，例如 XSS 和数据注入等。
+
+CSP 本质上是建立白名单，规定了浏览器只能执行特定来源的代码。
+
+通过 **Content-Security-Policy**HTTP 头来开启 CSP:
+
+- 只允许加载本站资源 Content-Security-Policy: default-src 'self'
+- 只允许加载 HTTPS 协议图片 Content-Security-Policy: img-src https://\*
+- 允许加载任何来源框架 Content-Security-Policy: child-src 'none'
+
+#### **2） HttpOnly 阻止 Cookie 劫持攻击**
+
+为避免跨域脚本 \(XSS\) 攻击，通过 JavaScript 的 Document.cookie API 无法访问带有 HttpOnly 标记的 Cookie，它们只应该发送给服务端。如果 Cookie 不想被客户端 JavaScript 脚本调用，那么就应该为其设置 HttpOnly 标记。
+
+如上所述，发起 XSS 的攻击者既然可以通过注入恶意脚本获取用户的 Cookie 信息。所以，严格来说，HttpOnly 并非阻止 XSS 攻击，而是能阻止 XSS 攻击后的 Cookie 劫持攻击。
+
+含有 HttpOnly 标志的 Cookie 在 HTTP 响应头 Set-Cookie：
+
+```text
+Set-Cookie: id=a3fWa; Expires=Wed, 21 Oct 2015 07:28:00 GMT; Secure; HttpOnly
+```
+
+**实践**
+
+设置含有 HttpOnly 标志的 Cookie:
+
+```text
+document.cookie = encodeURIComponent('name')+ '=' + encodeURIComponent('BnnieWang') + ';secure;HttpOnly'
+//"name=BnnieWang;secure;HttpOnly"
+```
+
+验证：执行上述代码后输入 document.cookie，可以看到得到的 cookie 中没有刚刚设置的这个 cookie。
+
+> Tips: Koa 的 ctx.cookies.set\(\)方法是默认 httpOnly 为 true
+
+**对比 cookie 的 secure 标记**
+
+标记为 Secure 的 Cookie 只能通过被 HTTPS 协议加密过的请求发送给服务端。
+
+但即便设置了 Secure 标记，敏感信息也不应该通过 Cookie 传输，因为 Cookie 有其固有的不安全性，Secure 标记也无法提供确实的安全保障。**也就是说，即使设置了 Secure 标志，还是可以从前端通过 document.cookie 获取该 cookie**。从 Chrome 52 和 Firefox 52 开始，不安全的站点（http:）无法使用 Cookie 的 Secure 标记。
+
+#### **3） 输入检查/XSS Filter**
+
+对于用户的任何输入要进行检查、过滤和转义。一般是检查用户输入的数据中是否包含 &lt;，&gt;,script 等特殊字符，如果存在，则对特殊字符进行过滤或编码。
+
+**前端框架中自带的 decodingMap**
+
+一些前端框架中，都有一份 decodingMap,会对用户输入所包含的特殊字符或标签进行编码或过滤，以防止 XSS 攻击。例如 vue 中的 decodingMap:
+
+```text
+// 在 vuejs 中，如果输入带 script 标签的内容，会直接过滤掉
+
+const decodingMap = {
+
+  '&lt;': '<',
+
+  '&gt;': '>',
+
+  '&quot;': '"',
+
+  '&amp;': '&',
+
+  '
+
+  ': '\n'
+}
+
+
+```
+
+**手动对输入内容进行转义:**
+
+```text
+function escape(str) {
+  str = str.replace(/&/g, '&amp;');
+  str = str.replace(/</g, '&lt;');
+  str = str.replace(/>/g, '&gt;');
+  str = str.replace(/"/g, '&quto;');
+  str = str.replace(/'/g, '&##39;');
+  str = str.replace(/\//g, '&##x2F;')
+}
+```
+
+通过转义攻击脚本:
+
+```text
+<script>alert("XSS攻击")</script>
+```
+
+可转变为字符串:
+
+```text
+&lt;script&gt;alert(&quto;XSS攻击;&quto;)&lt;&##x2F;script&gt;
+```
+
+**注意：富文本显示的转义**
+
+对于显示富文本来说，不能用上述方法转义所有字符，因为这样会把需要的格式也去掉。例如会把&lt; h1&gt;标题 &lt; /h1&gt;也转义掉。这种方法通常采用白名单过滤的办法，把需要的标签\(如&lt; h1&gt;\)保留。
+
+例如使用'xss'库:
+
+```text
+const xss = require('xss');
+const html = xss('<h1>XSS Demo</h1><script>alert("xss");</script>');
+console.log(html)// <h1>XSS Demo</h1>&lt;script&gt;alert("xss");&lt;/script&gt;
+```
+
+这样就在过滤了 script 标签的同时保留了 h1 标签。
+
+**4）输出检查**
+
+在变量输出到 HTML 页面时，也可以使用上述\(3\)类似的编码或转义的方式来防御 XSS 攻击。
+
+## 壹.5.5.2 CSRF
+
+Cross Site Request Forgery,跨站请求伪造。是劫持受信任用户向服务器发送非预期请求的攻击方式。例如，这些非预期请求可能在 url 后加入一些恶意的参数，从而达到攻击者的目的。
+
+通常情况下，CSRF 攻击是攻击者借助受害者的 Cookie 骗取服务器的信任，可以在受害者毫不知情的情况下以受害者名义伪造请求发送给受攻击服务器，从而在并未授权的情况下执行在权限保护之下的操作。
+
+简单来说，**CSRF 就是利用用户的登录态发起恶意请求**。
+
+### 1. 场景举例：通过 Cookie 进行 CSRF 攻击
+
+假设有一个 bbs 站点：_http://www.c.com_，当登录后的用户发起如下 GET 请求时，会删除 ID 指定的帖子：
+
+```text
+http://www.c.com:8002/content/delete/:id
+```
+
+如发起 _http://www.c.com:8002/content/delete/87343_ 请求时，会删除 id 为 87343 的帖子。当用户登录之后，服务器会设置如下 cookie 并发送到浏览器:
+
+```text
+  res.setHeader('Set-Cookie', ['user=22333; expires=Sat, 21 Jul 2018 00:00:00 GMT;']);
+```
+
+然后 CSRF 攻击者准备了一个页面 \*\*\*\*_http://www.a.com_：
+
+```text
+<p>CSRF 攻击者准备的网站：</p>
+
+<img src="http://www.c.com:8002/content/delete/87343">
+
+```
+
+该页面使用了一个 img 标签，其地址指向了删除用户帖子的链接：_http://www.c.com:8002/content/delete/87343_
+
+可以看到，当登录用户访问攻击者的网站时，会向 www.c.com 发起一个删除用户帖子的请求。**由于用户已经登录，则www.c.com下已经存在了该user=22333的cookie，那么删除请求就会顺利进行。**此时若用户在切换到 www.c.com 的帖子页面刷新，会发现 ID 为 87343 的帖子已经被删除。
+
+这个攻击过程中，攻击者借助受害者的 Cookie 骗取服务器的信任，但并不能拿到 Cookie，也看不到 Cookie 的内容。而对于服务器返回的结果，由于浏览器同源策略的限制，攻击者也无法进行解析。因此，攻击者无法从返回的结果中得到任何东西，他所能做的就是给服务器发送请求，以执行请求中所描述的命令，在服务器端直接改变数据的值，而非窃取服务器中的数据。
+
+若 CSRF 攻击的目标并不需要使用 Cookie，则也不必顾虑浏览器的 Cookie 策略了。
+
+### 2. CSRF 的防范
+
+防范 CSRF 可遵循以下几种规则:
+
+- Get 请求不对数据进行修改
+- 不让第三方网站访问到用户 Cookie
+- 阻止第三方网站请求接口
+- 请求时附带验证信息，如验证码或 Token
+
+**1）验证码**
+
+CSRF 攻击往往是在用户不知情的情况下发起了网络请求。而验证码会保证用户必须与应用进行交互，才能完成请求。
+
+**2）Referer Check**
+
+在 HTTP 头中有一个字段叫做 Referer,它记录了该 HTTP 请求的来源地址。通过 Referer Check,可以检查是否来自合法的"源".
+
+**实践**
+
+以上例来说，如果是从www.c.com发起的删帖请求，那么Referer值是http://www.c.com, 删帖请求应该被允许；而如果是从 CSRF 攻击者构造的页面www.a.com发起删帖请求， 那么 Referer 值是http://www.a.com, 删帖请求应该被阻止。故只需要对每一个删帖请求验证其 Referer 即可防止 CSRF 攻击。
+
+服务端验证 Referer 的代码：
+
+```text
+const app = new Koa();
+const router = new Router();
+
+router.get('/', async ctx => {
+  if (ctx.headers.referer !== 'http://www.c.com:8002/') {
+    ctx.body = 'csrf攻击'
+  }
+});
+
+```
+
+**3）请求地址添加 token 验证**
+
+可以在 HTTP 请求中以参数的形式加入一个随机产生的 token，并在服务器端建立一个拦截器来验证这个 token，如果请求中没有 token 或者 token 内容不正确，则认为可能是 CSRF 攻击而拒绝该请求。
+
+CSRF 攻击之所以能够成功，是因为攻击者可以完全伪造用户的请求，该请求中所有的用户验证信息都是存在于 Cookie 中，因此攻击者可以在不知道这些验证信息的情况下直接利用用户自己的 Cookie 来通过安全验证。要抵御 CSRF，关键在于在请求中放入攻击者所不能伪造的信息，并且该信息不存在于 Cookie 之中。为请求添加 token 验证可以很好地做到这一点。
+
+**4\) SameSite Cookie**
+
+给 Cookie 设置 SameSite 属性。这样服务器可以要求某个 cookie 在跨站请求时不会被发送，从而可以阻止跨站请求伪造攻击（CSRF）。但目前 SameSite Cookie 还处于实验阶段，并不是所有浏览器都支持。
+
+## 壹.5.5.3 XSS 与 CSRF 的对比总结
+
+- XSS 是利用用户对指定网站的信任；
+- CSRF 是利用网站对用户的信任。
+
+## 参考文献
+
+

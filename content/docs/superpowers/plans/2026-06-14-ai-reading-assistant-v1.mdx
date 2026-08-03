@@ -1,0 +1,580 @@
+---
+title: "AI Reading Assistant v1 Implementation Plan"
+---
+
+# AI Reading Assistant v1 Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Ship a versioned AI build/chat pipeline that analyzes only new or changed Markdown, performs no runtime AI work until a user sends a message, preserves the desktop embedded reading layout, and works cleanly across phone, tablet, GitHub Pages, and Vercel.
+
+**Architecture:** VuePress builds one self-describing `summaries-v1.json` snapshot whose file entries contain both summaries and analysis hashes, so GitHub Actions and Vercel can restore and reuse it without a separate manifest. NestJS exposes a frozen `/api/ai/v1` JSON and SSE contract with server-owned context budgets. The UI reads only static build artifacts until send, then uses v1 streaming chat; desktop embeds beside the article, tablet overlays from the right, and mobile rises from the bottom.
+
+**Tech Stack:** VuePress 2 beta, Vue 3 Options API, Node 24, Node `node:test`, NestJS 10, Jest/Supertest, OpenAI-compatible SSE, GitHub Actions, GitHub Pages, Vercel.
+
+---
+
+## Repository Boundaries
+
+### VuePress: `/Users/acongm/code/github/vuepress`
+
+- Owns build-time Markdown extraction, the self-contained summary snapshot, CI/CD, static summary resolution, Chat UI and responsive layout.
+- Must not call a runtime AI summary endpoint on page load or assistant open.
+
+### Backend: `/Users/acongm/code/github/node-vercel-starter`
+
+- Owns `/api/ai/v1/chat`, `/api/ai/v1/chat/stream`, provider streaming and token/context budgets.
+- Existing `/api/ai/chat` remains unchanged.
+
+## Task 1: Create the Self-Contained v1 Summary Snapshot
+
+**Files:**
+
+- Create: `tools/ai-summary-v1.mjs`
+- Create: `tools/test-ai-summary-v1.mjs`
+- Modify: `package.json`
+
+- [ ] **Step 1: Write failing snapshot tests**
+
+Create temporary docs/cache directories and test these exact cases:
+
+```js
+assert.equal(first.plan.aiCalls, 2)
+assert.equal(second.plan.aiCalls, 0)
+assert.equal(changed.plan.aiCalls, 1)
+assert.equal(modelChanged.plan.aiCalls, 2)
+assert.equal(failed.files['/a.md'].status, 'error')
+assert.equal(retry.plan.aiCalls, 1)
+```
+
+Also assert deleted files disappear, README and short files cause zero AI calls, and a cache entry contains `sourceHash`, `analysisHash`, `status`, `summary`, and `processedAt`.
+
+- [ ] **Step 2: Run the test and verify red state**
+
+Run with Node 24:
+
+```bash
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+nvm install 24
+nvm use 24
+node --test tools/test-ai-summary-v1.mjs
+```
+
+Expected: FAIL because `ai-summary-v1.mjs` does not exist.
+
+- [ ] **Step 3: Implement snapshot planning**
+
+Export:
+
+```js
+export const SNAPSHOT_VERSION = 1
+export const PROMPT_VERSION = 'summary-v1'
+export const EXTRACT_VERSION = 'markdown-v1'
+export function createAnalysisHash({ sourceHash, model }) {}
+export function buildAnalysisPlan({ docsDir, snapshot, model }) {}
+export async function generateSnapshot(options) {}
+```
+
+Normalize frontmatter, fenced code and whitespace consistently. `analysisHash` must cover source, model, prompt and extract versions. Reuse only matching `status: 'success'` entries. Keep one JSON shape for cache and deployed static output.
+
+- [ ] **Step 4: Run focused tests**
+
+Run: `node --test tools/test-ai-summary-v1.mjs`
+
+Expected: all snapshot tests PASS.
+
+- [ ] **Step 5: Add scripts and commit**
+
+Add:
+
+```json
+"test:ai-v1": "node --test tools/test-ai-summary-v1.mjs",
+"build:ai:v1": "node tools/generate-summaries-v1.mjs"
+```
+
+Commit:
+
+```bash
+git add tools/ai-summary-v1.mjs tools/test-ai-summary-v1.mjs package.json package-lock.json
+git commit -m "perf(ai): add content-addressed summary snapshot"
+```
+
+## Task 2: Generate, Restore and Report v1 Summaries
+
+**Files:**
+
+- Create: `tools/generate-summaries-v1.mjs`
+- Create: `tools/restore-summaries-v1.mjs`
+- Modify: `tools/test-ai-summary-v1.mjs`
+- Modify: `tools/generate-module-index.mjs`
+
+- [ ] **Step 1: Add failing restore and CLI tests**
+
+Test that a remote `summaries-v1.json` is written to cache and public output, no-key mode preserves restored success entries, `--dry-run` invokes no provider, and stats include:
+
+```js
+{
+  totalFiles,
+    reusedFiles,
+    pendingFiles,
+    skippedFiles,
+    failedFiles,
+    aiCalls,
+    hitRate,
+    durationMs
+}
+```
+
+- [ ] **Step 2: Verify failures**
+
+Run: `npm run test:ai-v1`
+
+Expected: FAIL because restore/CLI behavior is absent.
+
+- [ ] **Step 3: Implement restore and CLI**
+
+Use paths:
+
+```text
+.cache/ai-summaries-v1.json
+docs/.vuepress/public/summaries-v1.json
+```
+
+Restore local cache first, then `$\{SUMMARIES_FALLBACK_URL}/summaries-v1.json`. Write a single snapshot to both destinations after successful generation. On missing key, preserve restored output and fail only when no usable snapshot exists and strict mode is enabled. Print machine-readable `[ai-v1-stats] \{json}`.
+
+Make module index consume v1 success summaries and omit failed entries from derived suggestions.
+
+- [ ] **Step 4: Prove required call counts**
+
+Run fixture builds three times: initial `N`, identical `0`, one modified file `1`. Expected assertions PASS and stats match.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add tools/generate-summaries-v1.mjs tools/restore-summaries-v1.mjs tools/test-ai-summary-v1.mjs tools/generate-module-index.mjs
+git commit -m "perf(ai): restore and report incremental analysis"
+```
+
+## Task 3: Fix GitHub Pages and Vercel Build Pipelines
+
+**Files:**
+
+- Modify: `.github/workflows/blank.yml`
+- Modify: `vercel.json`
+- Modify: `package.json`
+- Test: `tools/test-ai-summary-v1.mjs`
+
+- [ ] **Step 1: Add workflow contract tests**
+
+Read workflow and Vercel JSON as data/text. Assert Node `24`, `npm ci`, v1 restore/build commands, stable `ai-summaries-v1-` cache prefix, no `hashFiles('docs/**/*.md')`, no `|| echo`, and output directory `vuepress`.
+
+- [ ] **Step 2: Verify red state**
+
+Run: `npm run test:ai-v1`
+
+Expected: FAIL on Node 20, unstable cache key and old generator.
+
+- [ ] **Step 3: Update CI/CD**
+
+GitHub steps:
+
+1. Checkout full history.
+2. Setup Node 24 with npm cache.
+3. Restore `.cache/ai-summaries-v1.json` using a stable branch/run key and broad restore prefixes.
+4. `npm ci`.
+5. Restore deployed snapshot.
+6. Run `npm run build:ai:v1`.
+7. Run module index, VuePress build and smoke checks.
+8. Deploy `vuepress/` to gh-pages.
+
+Vercel uses the same commands and Node 24 project setting/documentation. Remove old summary generation from `buildCommand`.
+
+- [ ] **Step 4: Verify lockfile and local production build**
+
+Run:
+
+```bash
+npm ci
+npm run test:ai-v1
+AI_SUMMARY_DRY_RUN=1 npm run build:ai:v1
+npm run build
+npm run smoke:ai
+```
+
+Expected: all commands exit 0.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add .github/workflows/blank.yml vercel.json package.json package-lock.json tools/test-ai-summary-v1.mjs
+git commit -m "fix(ci): make ai analysis incremental on deploy"
+```
+
+## Task 4: Add Backend v1 Message Policy
+
+**Files:**
+
+- Create: `src/modules/ai/v1/chat-v1.dto.ts`
+- Create: `src/modules/ai/v1/chat-v1.policy.ts`
+- Create: `test/chat-v1-policy.spec.ts`
+- Modify: `src/modules/ai/ai.module.ts`
+
+- [ ] **Step 1: Write failing policy tests**
+
+Assert v1 removes client system messages, keeps exactly the newest 12 conversational messages, converts prompt-only input to a user message, preserves the latest user text, uses Unicode-safe truncation, and creates one system prompt with article/module/web instructions within explicit character budgets.
+
+- [ ] **Step 2: Verify red state**
+
+Run: `npm test -- --runTestsByPath test/chat-v1-policy.spec.ts`
+
+Expected: FAIL because v1 policy is absent.
+
+- [ ] **Step 3: Implement frozen v1 DTO and policy**
+
+DTO fields:
+
+```ts
+messages?: Array<{ role: 'user' | 'assistant'; content: string }>
+prompt?: string
+context?: {
+  scope?: 'article' | 'module'
+  pagePath?: string
+  moduleKey?: string
+  title?: string
+  tags?: string[]
+  content?: string
+  contentHash?: string
+}
+enableWebSearch?: boolean
+```
+
+Never accept client system messages in v1. Export stable budget constants and `prepareChatV1Messages`.
+
+- [ ] **Step 4: Run focused tests and typecheck**
+
+Run: `npm test -- --runTestsByPath test/chat-v1-policy.spec.ts && npm run typecheck`
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/modules/ai/v1 src/modules/ai/ai.module.ts test/chat-v1-policy.spec.ts
+git commit -m "feat(ai-v1): add bounded chat policy"
+```
+
+## Task 5: Implement Provider Streaming and v1 Endpoints
+
+**Files:**
+
+- Modify: `src/adapters/ai/ai-client.interface.ts`
+- Modify: `src/adapters/ai/openai-compatible.client.ts`
+- Modify: `src/adapters/ai/mock-ai.client.ts`
+- Create: `src/modules/ai/v1/ai-v1.service.ts`
+- Create: `src/modules/ai/v1/ai-v1.controller.ts`
+- Modify: `src/modules/ai/ai.module.ts`
+- Modify: `test/openai-compatible-client.spec.ts`
+- Modify: `test/app.e2e-spec.ts`
+
+- [ ] **Step 1: Add failing stream tests**
+
+Test arbitrary SSE byte boundaries, CRLF/LF, multiple frames, comments, usage, provider errors, EOF without `[DONE]`, exactly one done event, request `stream_options.include_usage`, and bounded `max_tokens`.
+
+E2E must assert `/api/ai/v1/chat` JSON and `/api/ai/v1/chat/stream` event order while existing `/api/ai/chat` tests remain unchanged.
+
+- [ ] **Step 2: Verify red state**
+
+Run focused adapter and E2E tests; expected failures are absent v1 endpoints and `streamChat`.
+
+- [ ] **Step 3: Implement provider-neutral events and v1 service**
+
+Events:
+
+```ts
+type AiStreamEvent =
+  | { type: 'meta'; provider: string; model: string }
+  | { type: 'delta'; content: string }
+  | { type: 'sources'; sources: ChatSource[] }
+  | {
+      type: 'usage'
+      promptTokens: number
+      completionTokens: number
+      totalTokens: number
+    }
+  | { type: 'done' }
+  | { type: 'error'; message: string }
+```
+
+The controller writes standards-compliant SSE and closes on abort/finally. Run web search only when `enableWebSearch` is true.
+
+- [ ] **Step 4: Verify backend**
+
+Run:
+
+```bash
+npm test
+npm run typecheck
+npm run build
+```
+
+Expected: all pass and legacy endpoint behavior remains green.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/adapters/ai src/modules/ai test
+git commit -m "feat(ai-v1): add streaming chat endpoints"
+```
+
+## Task 6: Add Static-Only Summary Resolution
+
+**Files:**
+
+- Create: `docs/.vuepress/utils/summary-v1-service.js`
+- Create: `tools/test-summary-v1-client.mjs`
+- Modify: `docs/.vuepress/utils/summary-prefetch.js`
+- Modify: `docs/.vuepress/components/ai/AIChatPanel.vue`
+- Modify: `package.json`
+
+- [ ] **Step 1: Write failing client tests**
+
+Assert `.html`, directory index and `.md` paths resolve to the same snapshot key. Assert opening/bootstrap code contains no `/api/ai/summary`, `/api/ai/chat`, or fetch to the backend host. Test success summary, excluded article and missing summary states.
+
+- [ ] **Step 2: Verify red state**
+
+Run: `node --test tools/test-summary-v1-client.mjs`
+
+Expected: FAIL because the v1 service is absent and old live fallback remains.
+
+- [ ] **Step 3: Implement static-only resolution**
+
+Load `/summaries-v1.json` once, normalize route keys, cache the promise, and return `\{ status, summary, reason }`. Remove runtime summary fallback from assistant bootstrap. A missing summary yields static copy and never calls the backend.
+
+- [ ] **Step 4: Verify zero-call contract**
+
+Run client tests and a browser network assertion that page load + assistant open produce zero requests matching `/api/ai/`.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add docs/.vuepress/utils/summary-v1-service.js docs/.vuepress/utils/summary-prefetch.js docs/.vuepress/components/ai/AIChatPanel.vue tools/test-summary-v1-client.mjs package.json package-lock.json
+git commit -m "feat(ai-v1): load summaries without runtime ai calls"
+```
+
+## Task 7: Add v1 Streaming Client, History and Quick Tags
+
+**Files:**
+
+- Create: `docs/.vuepress/utils/chat-v1-stream.js`
+- Create: `docs/.vuepress/utils/chat-v1-history.js`
+- Create: `docs/.vuepress/utils/chat-v1-tags.js`
+- Create: `tools/test-chat-v1-client.mjs`
+- Modify: `package.json`
+
+- [ ] **Step 1: Write failing utility tests**
+
+Test arbitrary SSE chunks, abort behavior, newest 12 model messages, bounded local persistence, and exact Tag insertion:
+
+```js
+insertTag('', 'article') === '结合当前文章，'
+insertTag('请解释 Fiber', 'web') === '联网检索最新资料后，请解释 Fiber'
+```
+
+Test combined tags produce one editable prompt and request flags derive from active tags.
+
+- [ ] **Step 2: Verify red state**
+
+Run: `node --test tools/test-chat-v1-client.mjs`
+
+Expected: FAIL because utilities are absent.
+
+- [ ] **Step 3: Implement focused utilities**
+
+`chat-v1-stream.js` owns SSE fetch/parsing only. `chat-v1-history.js` owns local storage/model history only. `chat-v1-tags.js` owns labels, inserted natural-language prefixes and request option derivation only.
+
+- [ ] **Step 4: Run tests**
+
+Run: `node --test tools/test-chat-v1-client.mjs`
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add docs/.vuepress/utils/chat-v1-*.js tools/test-chat-v1-client.mjs package.json package-lock.json
+git commit -m "feat(ai-v1): add streaming chat utilities and tags"
+```
+
+## Task 8: Rebuild Chat Messages and Composer
+
+**Files:**
+
+- Modify: `docs/.vuepress/components/ai/AIChatPanel.vue`
+- Modify: `docs/.vuepress/utils/ai-context.js`
+- Modify: `specs/ai-chat-api.md`
+- Modify: `tools/smoke-ai-bundle.mjs`
+
+- [ ] **Step 1: Add failing smoke assertions**
+
+Require v1 stream URL, quick Tag labels, stop, regenerate, retry, copy, clear, local history, and no fake answer typewriter timer.
+
+- [ ] **Step 2: Build and verify smoke failure**
+
+Run: `npm run build && npm run smoke:ai`
+
+Expected: FAIL on missing v1 interaction markers.
+
+- [ ] **Step 3: Implement Chat interaction**
+
+Render the build summary as a summary card. Put horizontally scrollable quick Tags above the textarea. Clicking inserts editable text but does not send. Send uses `/api/ai/v1/chat/stream`; append delta chunks; stop via AbortController; support retry/regenerate/copy/clear. Persist UI history locally and send only six recent turns.
+
+- [ ] **Step 4: Document and verify**
+
+Update API spec with frozen v1 request/SSE events and zero-call-on-open behavior. Run all v1 client tests, build and smoke.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add docs/.vuepress/components/ai/AIChatPanel.vue docs/.vuepress/utils/ai-context.js specs/ai-chat-api.md tools/smoke-ai-bundle.mjs
+git commit -m "feat(ai-v1): align chat with natural prompt tags"
+```
+
+## Task 9: Implement Three Responsive Layout Modes and Motion
+
+**Files:**
+
+- Modify: `docs/.vuepress/components/ai/AIAssistLayout.vue`
+- Modify: `docs/.vuepress/composables/useAiPanelState.js`
+- Modify: `docs/.vuepress/styles/ai-assist.scss`
+- Modify: `docs/.vuepress/components/ai/AIChatPanel.vue`
+- Modify: `tools/smoke-ai-bundle.mjs`
+
+- [ ] **Step 1: Add layout contract assertions**
+
+Require breakpoints for 768 and 1180, embedded `.page` grid mode, tablet backdrop/right overlay, mobile bottom sheet, safe-area inset, 320px Tag overflow, and reduced-motion rules.
+
+- [ ] **Step 2: Verify failure**
+
+Run build and smoke; expected missing new layout contracts.
+
+- [ ] **Step 3: Implement approved layout**
+
+- Desktop ≥1180: embedded `.page.ai-split-active`, article min width, assistant 400–520px, smooth grid/opacity/translate animation.
+- Tablet 768–1179: fixed right overlay `min(520px, 88vw)` with backdrop.
+- Mobile &lt;768: bottom sheet 76vh with full-screen expansion, sticky safe-area composer, scrollable Tags.
+- Restore focus on close, Escape support, body scroll locking only for overlay modes.
+- Use `cubic-bezier(.22,1,.36,1)` and reduced-motion overrides.
+
+- [ ] **Step 4: Browser matrix verification**
+
+Use in-app Browser at 320×568, 375×812, 390×844, 768×1024, 1024×768, 1440×900 and 1920×1080. Assert no horizontal overflow, controls remain visible, desktop article remains readable, and console has no errors.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add docs/.vuepress/components/ai docs/.vuepress/composables/useAiPanelState.js docs/.vuepress/styles/ai-assist.scss tools/smoke-ai-bundle.mjs
+git commit -m "feat(ai-v1): add responsive embedded chat layouts"
+```
+
+## Task 10: Enforce Summary Coverage
+
+**Files:**
+
+- Create: `tools/check-ai-summary-v1-coverage.mjs`
+- Modify: `tools/test-ai-summary-v1.mjs`
+- Modify: `package.json`
+- Modify: `.github/workflows/blank.yml`
+- Modify: `vercel.json`
+
+- [ ] **Step 1: Write failing coverage tests**
+
+Given three analyzable files with one missing and one error, assert the checker lists exact paths and exits nonzero in strict CI mode. Excluded/short files must not fail coverage.
+
+- [ ] **Step 2: Verify red state**
+
+Run: `npm run test:ai-v1`
+
+Expected: FAIL because checker is absent.
+
+- [ ] **Step 3: Implement and wire coverage**
+
+Print grouped `missing`, `error`, `excluded`, `short` paths and coverage percentage. Add `check:ai-v1` after generation in GitHub/Vercel builds. Failed entries remain retryable on future builds.
+
+- [ ] **Step 4: Verify complete frontend pipeline**
+
+Run:
+
+```bash
+npm run test:ai-v1
+node --test tools/test-summary-v1-client.mjs tools/test-chat-v1-client.mjs
+npm run build:ai:v1 -- --dry-run
+npm run check:ai-v1
+npm run build
+npm run smoke:ai
+```
+
+Expected: all pass with the real snapshot or an explicit fixture configuration.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add tools/check-ai-summary-v1-coverage.mjs tools/test-ai-summary-v1.mjs package.json package-lock.json .github/workflows/blank.yml vercel.json
+git commit -m "test(ai-v1): enforce summary coverage"
+```
+
+## Task 11: Local Cross-Repository Verification
+
+**Files:**
+
+- Modify only files required by a reproduced failing test.
+
+- [ ] **Step 1: Verify backend on Node 24**
+
+Run `npm ci`, `npm test`, `npm run typecheck`, `npm run build`.
+
+- [ ] **Step 2: Verify frontend on Node 24**
+
+Run all v1 tests, coverage, VuePress build and smoke.
+
+- [ ] **Step 3: Prove zero-call page open**
+
+Start both apps. Load an article and open/close the assistant at least twice. Browser network log must contain zero `/api/ai/` requests until send.
+
+- [ ] **Step 4: Prove incremental build**
+
+Using a counting fake provider: initial `N`, identical `0`, one edited Markdown `1`. Record stats output.
+
+- [ ] **Step 5: Prove chat**
+
+Send article, module and web-assisted questions through Tags. Verify stream, stop, regenerate, usage and bounded second-turn payload.
+
+## Task 12: GitHub Pages and Vercel Test Acceptance
+
+**Files:**
+
+- No source changes unless a Preview failure is reproduced locally first.
+
+- [ ] **Step 1: Push test branches**
+
+Push both `codex/` branches and create test deployments without promoting production.
+
+- [ ] **Step 2: Verify GitHub Actions**
+
+Inspect run jobs/logs. Require Node 24, successful AI v1 stats, Pages deployment success and no deprecated Node runtime warning.
+
+- [ ] **Step 3: Verify Vercel Preview**
+
+Inspect deployment/build logs. Record duration and `[ai-v1-stats]` values. Repeat unchanged deployment and require `aiCalls: 0`.
+
+- [ ] **Step 4: One-file invalidation acceptance**
+
+Modify one designated test Markdown, deploy Preview, require `aiCalls: 1`, then revert only that test edit.
+
+- [ ] **Step 5: Browser acceptance matrix**
+
+Run every required viewport against the deployed frontend and v1 backend. Capture evidence for layout, animation, zero-call open, summary display and Chat controls.
+
+- [ ] **Step 6: Completion audit**
+
+Map every success standard from the v1 design to automated output, workflow logs, Preview URLs, network logs and viewport evidence. Do not mark complete while any item lacks direct evidence.

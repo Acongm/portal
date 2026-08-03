@@ -1,0 +1,292 @@
+---
+title: "2025-04-28-面试题演练"
+---
+
+# 2025-04-28-面试题演练
+
+## 一、笔试重点预测（需 60 分钟内完成）
+
+### 1. 框架原理题（30 分）
+
+```js
+/**
+ * 实现要点​：
+ * 使用 Proxy 拦截 get/set 操作，通过 WeakMap 实现依赖收集
+ * 嵌套对象递归代理，解决深层响应问题
+ * track 收集副作用函数，trigger 触发更新
+ */
+// Proxy深度代理 + 依赖自动回收 + 变更检测优化
+
+const targetMap = new WeakMap()
+let activeEffect = null
+// 实现Vue3响应式核心逻辑（需手写代码）
+function reactive(target) {
+  // 你的实现（需包含依赖收集和触发逻辑）
+  // 提示：使用Proxy + WeakMap结构
+  return new Proxy(obj, {
+    get(target, key, receiver) {
+      track(target, key)
+      const res = Reflect.get(...arguments)
+      return typeof res === 'object' ? reactive(res) : res
+    },
+    set(target, key, value, receiver) {
+      const oldVal = target[key]
+      const success = Reflect.set(...arguments)
+      if (success && oldVal !== value) {
+        trigger(target, key)
+      }
+      return success
+    }
+  })
+}
+
+function track(target, key) {
+  if (!activeEffect) return
+  let depsMap = targetMap.get(target) || new Map()
+  let dep = depsMap.get(key) || new Set()
+  dep.add(activeEffect)
+  targetMap.set(target, depsMap)
+}
+
+function trigger(target, key) {
+  const depsMap = targetMap.get(target)
+  depsMap?.get(key)?.forEach((effect) => effect())
+}
+```
+
+```js
+// 实现简易版Quasar的QBtn组件（需写出组件props定义和模板逻辑）
+const QBtn = {
+  props: {
+    color: { type: String, default: 'primary' },
+    loading: Boolean
+  },
+  // 补充render函数（使用JSX语法）
+  render() {
+    return (
+      <button class={`q-btn q-btn-${this.color}`} disabled={this.loading}>
+        {this.loading ? 'loading...' : this.$slots.default()}
+      </button>
+    )
+  }
+}
+```
+
+### 2. 工程化实战题（25 分）
+
+```js
+// Webpack配置题：为微前端架构优化构建配置
+module.exports = {
+  // 要求：实现代码分割、CSS作用域隔离、共享依赖处理
+  // 提示：使用Module Federation + CSS Modules
+  output: {
+    publicPath: 'auto',
+    chunkFilename: '[name].[contenthash].js'
+  },
+  optimization: {
+    // 代码分割
+    splitChunks: {
+      chunks: 'all',
+      maxSize: 200000 // 200KB分割阈值
+    }
+  },
+  plugins: [
+    // 共享依赖处理 ??? 难
+    new ModuleFederationPlugin({
+      name: 'userCenter',
+      filename: 'remoteEntry.js',
+      exposes: { './UserTable': './src/components/UserTable.vue' },
+      shared: {
+        vue: { singleton: true },
+        quasar: { eager: true }
+      }
+    })
+  ],
+  module: {
+    rules: [
+      // CSS作用域隔离
+      {
+        test: /\.css$/,
+        use: [
+          'style-loader',
+          { loader: 'css-loader', options: { modules: true } }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### 3. 性能优化方案设计（25 分）
+
+给定场景：用户中心存在万级数据表格，需同时满足：
+
+- 首屏加载&lt;1s
+- 滚动流畅度>60fps
+- 内存占用&lt;50MB
+
+请列出至少 5 点优化方案，需包含：
+
+1. 数据加载策略（如分页+虚拟滚动实现要点）
+2. 渲染优化手段（对比 React/Vue 不同框架的实现差异）
+3. 内存管理技巧（需给出具体代码示例）
+   答：
+
+- 1、数据分片加载
+  - 分页 + 虚拟滚动
+  - 动态加载阈值
+- 渲染优化，使用 v-memo/ React.memo 优化组件渲染
+- 按需释放内存 ？？？
+- 数据压缩，接口/代码压缩
+- 开启 GPU 加速
+
+### 4. 算法题（20 分）
+
+```js
+// 实现树形结构数据转换（需处理10万级数据）
+const input = [
+  { id: 1, parentId: null },
+  { id: 2, parentId: 1 },
+  { id: 3, parentId: 2 }
+  // ...更多数据
+]
+
+function buildTree(data) {
+  // 要求：时间复杂度O(n)，支持快速查找父节点
+  const map = new Map()
+  const roots = []
+
+  data.forEach((item) => {
+    map.set(item.id, { ...item, children: [] })
+  })
+
+  data.forEach((item) => {
+    const node = map.get(item.id)
+    if (item.parentId === null) {
+      roots.push(node)
+    } else {
+      const parent = map.get(item.parentId)
+      parent?.children.push(node)
+    }
+  })
+
+  return roots
+}
+```
+
+---
+
+## 二、技术面试高频考点（需重点准备）
+
+### 1. 框架深度追问
+
+- ​Vue3 响应式原理 ​：重点准备 Proxy 实现细节，对比 Object.defineProperty 的优劣
+  - Proxy 对比 Object.defineProperty 优势：
+    - 支持动态属性增删
+    - 无需递归初始化嵌套对象
+    - 数组索引变化可直接监听
+- ​Quasar 定制能力 ​：准备组件主题定制案例（参考你简历中的骨架屏实现）
+  - 通过 quasar.conf.js 配置主题变量
+  - 动态切换主题示例：
+    ```js
+    import { useQuasar } from 'quasar'
+    const $q = useQuasar()
+    $q.dark.set(true) // 启用暗黑模式
+    ```
+- ​ 微前端沙箱机制 ​：需能解释 JS/CSS 隔离方案，如 Proxy 隔离+CSS Scoped
+  - js 隔离： Proxy 代理全局对象实现隔离
+  - css 隔离：使用虚拟 dom 或者 命名空间前缀
+
+### 2. 工程化实践
+
+- ​ 低代码平台设计 ​：重点说明 JSON Schema 驱动方案（参考简历中配置化表单）
+  - 基于 Formily 二开的低代码平台，借助可视化设计器 生成 JSON Schema，基于 antd 组件乔接实现内部组件渲染，通过 低代码 的入口组件渲染 JSON Schema，并绑定 action 事件
+  - 通过深度使用 低代码 ，完成一些 表单、表格组件，并总结各种场景，完成提效
+- ​ 构建优化指标 ​：需量化说明 Tree Shaking 效果（如简历中 Rollup 打包&lt;15KB 案例）
+  - 通过 webpack-bundle-analyzer 分析未使用代码（
+  - 使用体积更小的 preact 实现
+- ​CI/CD 全流程 ​：结合你分享的部署指南，说明如何保证构建质量
+  - 环境准备 -> 代码检查/单测 -> sonar 扫描 -> 项目打包 -> 更新日志/项目回退
+  - 在每次部署都进行一次代码扫描，并准确的标记好环境，保证每次 跑流水线都能 构建统一
+
+### 3. 性能优化体系
+
+- ​LCP 优化方案 ​：详细说明骨架屏+字体压缩+WebP 的综合方案（参考用户中心项目）
+  - 网络加载优化：升级 tls 1.3,开启 gzip 加速，dns-prefetch 和 preconnect 提速
+  - 浏览器渲染优化：font-display:swap 加快渲染、非关键脚本异步渲染
+  - 代码体积优化：精简 code-js、按需引入 babel-polyfill、压缩代码、splitChunks
+  - 用户感知优化：使用骨架屏，接口提前请求，优先使用 webP 格式图片，
+- ​ 内存泄漏排查 ​：准备 Chrome Memory 面板使用案例（如金融项目错误率优化）
+  - Chrome Memory 面板快照对比，定位未释放的 DOM 节点 ？？？？
+- ​ 编译时优化 ​：解释 Babel 插件开发经验（可结合 core-js 优化案例展开）
+  - Babel 插件开发的核心在于精准操作 AST 与高效代码转换。结合 core-js 的优化案例，开发者可通过按需加载、动态替换和性能调优，显著提升代码兼容性与运行效率。实际开发中需注重工具链整合（如@babel/preset-env）和调试手段（如 AST 可视化），以平衡功能实现与性能开销
+
+### 4. 架构设计能力
+
+- ​ 插件系统设计 ​：重点说明 Rollup+Preact 的架构选型对比（跨平台公告系统案例）
+  - Tree Shaking 极致优化 ​
+    - Rollup 通过静态分析实现更彻底的未使用代码剔除
+  - 更小的运行时开销 ​
+    - Rollup 生成代码无 Webpack 的模块加载器包装层
+  - ​ES 模块原生支持 ​
+    - 公告系统要求兼容 CDN 直接加载，Rollup 对 ES 模块的天然支持（输出格式选择 esm）完美契合需求
+  - ​ 插件系统简洁性 ​
+    - 公告系统仅需处理 JS/CSS 资源，Rollup 通过@rollup/plugin-node-resolve 等基础插件即可完成构建，相较 Webpack 减少 62%的配置文件代码量
+  - Preact 极简内核 ​、无痛兼容 React 生态 ​、信号机制高效更新 ​
+- ​ 状态管理方案 ​：对比 Vuex/Pinia 在大型项目中的实践差异
+  - 无
+- ​ 微前端通信 ​：准备主子应用通信方案（如公告系统的 Iframe/Web Component 实现）
+  - 主应用通过 postMessage 传递全局状态
+  - 子应用通过 CustomEvent 触发事件
+
+## 三、行为面试应答策略（使用 STAR 法则）
+
+### 1. 项目难点突破
+
+面试官可能问 ​："请描述你解决过最复杂的技术挑战"
+应答框架 ​：
+
+- ​​Situation​：用户中心日均 120W 请求下的性能瓶颈
+- ​Task​：需在 2 周内将 LCP 从 2.3s 优化到&lt;1.5s
+- ​Action​：采用四层优化体系（代码分割 → 资源预加载 → 渲染策略 → 兜底方案）
+- ​Result​：登录转化率提升 18%+客诉下降 12%（准备优化前后监控截图）
+
+### 2. 团队协作案例
+
+​ 高频问题 ​："如何推动 Code Review 机制落地？"
+​ 应答要点 ​：
+
+- ​ 制定 ESLint 可量化规则（如圈复杂度&lt;15）
+- ​ 建立评审 checklist（安全/性能/可维护性三个维度）
+- ​ 结果可视化（BUG 率下降 25%的折线图）
+
+### 3. 技术决策冲突
+
+​ 压力问题 ​："如果团队成员反对你的架构方案怎么办？"
+​ 应答策略 ​：
+
+- ​ 用数据说话：展示微前端方案在 5 个系统的接入成本对比
+- ​ 渐进式推进：先在公告系统试点，验证后再推广
+- ​ 建立反馈机制：收集各系统接入后的效能变化数据
+
+## 四、软实力展现技巧
+
+- ​ 用户体验敏感度 ​：
+  - 准备「企业大学移动端」接口聚合案例（强调用户等待感知优化）
+  - 展示登录页面 FCP 优化前后的用户调研数据
+- ​ 技术前瞻性 ​：
+  - 阐述对 Vue 3.4 新特性（defineModel、v-bind 同名缩写）的预研计划
+  - 讨论 WebAssembly 在前端性能敏感场景的应用可能
+- ​ 跨团队协作 ​：
+  - 准备与后端团队制定 RESTful 规范的案例（如用户中心接口设计）
+  - 说明在 DevOps 平台建设中与测试团队的协作流程
+
+## 五、模拟面试自测清单
+
+- 能否在 5 分钟内讲清用户中心重构的技术方案？
+- 是否能手写 Vue 响应式系统核心代码？
+- 是否能用英文描述 Rollup 的 Tree Shaking 原理？
+- 是否准备了三套不同时长的项目介绍（1/3/10 分钟版本）？
+- 是否梳理过近两年主流前端框架的演进路线？
+
+建议重点强化 Vue3 响应式原理的手写实现（参考 MDN Proxy 文档），并准备三个不同颗粒度的项目介绍版本。面试前可针对岗位 JD 中的"前端工程化优化"要求，重点展示简历中低代码平台和 ESLint 规范建设的量化成果。

@@ -1,0 +1,948 @@
+---
+title: "JS 为什么会设计 Promise & 如何手写实现一个 Promise"
+---
+
+# JS 为什么会设计 Promise & 如何手写实现一个 Promise
+
+## 笔试题（6 题）
+
+### 1. 为什么需要 Promise
+
+JS 为什么会设计 Promise？它解决了什么问题（回调地狱、错误处理、组合异步）？
+
+**【作答】：**
+
+```
+解决的问题:
+1. 回调地狱（Callback Hell）：多层嵌套回调导致代码难以阅读和维护
+2. 错误处理困难：回调函数中错误处理分散，难以统一捕获
+3. 异步流程控制：难以按顺序执行多个异步操作，难以并行处理
+4. 信任问题：回调可能被多次调用或不被调用，缺乏状态管理
+
+回调地狱示例及 Promise 改进:
+
+// 回调地狱
+getData(function(a) {
+  getMoreData(a, function(b) {
+    getMoreData(b, function(c) {
+      getMoreData(c, function(d) {
+        // 嵌套过深，难以维护
+      });
+    });
+  });
+});
+
+// Promise 改进
+getData()
+  .then(a => getMoreData(a))
+  .then(b => getMoreData(b))
+  .then(c => getMoreData(c))
+  .then(d => {
+    // 链式调用，清晰易读
+  })
+  .catch(error => {
+    // 统一错误处理
+  });
+
+错误处理优势:
+
+// 回调方式：错误处理分散
+function fetchData(callback) {
+  asyncOperation((err, data) => {
+    if (err) {
+      // 每个回调都要处理错误
+      callback(err);
+      return;
+    }
+    callback(null, data);
+  });
+}
+
+// Promise 方式：统一错误处理
+fetchData()
+  .then(data => {
+    // 处理数据
+  })
+  .catch(error => {
+    // 统一捕获所有错误
+  });
+
+异步组合能力:
+
+// 串行执行
+promise1()
+  .then(result1 => promise2(result1))
+  .then(result2 => promise3(result2));
+
+// 并行执行
+Promise.all([promise1(), promise2(), promise3()])
+  .then(([r1, r2, r3]) => {
+    // 所有结果都返回后处理
+  });
+
+// 竞态执行
+Promise.race([promise1(), promise2()])
+  .then(firstResult => {
+    // 第一个完成的结果
+  });
+```
+
+---
+
+### 2. Promise 状态机
+
+Promise 的三种状态是什么？状态转换规则？为什么状态不可逆？
+
+**【作答】：**
+
+```
+三种状态:
+1. pending（等待中）：初始状态，既不是成功也不是失败
+2. fulfilled（已成功）：操作成功完成
+3. rejected（已失败）：操作失败
+
+状态转换规则:
+- 只能从 pending → fulfilled 或 pending → rejected
+- 状态一旦改变，就不能再变回 pending
+- fulfilled 和 rejected 之间不能相互转换
+- 状态转换是单向的、不可逆的
+
+为什么不可逆:
+1. 保证一致性：一旦 Promise 有了确定的结果（成功或失败），这个结果就是最终的，不会改变
+2. 避免竞态条件：如果状态可以逆转，可能导致多个 then 回调看到不同的状态
+3. 简化逻辑：不可逆性使得 Promise 的行为可预测，便于理解和调试
+4. 符合现实语义：异步操作的结果一旦确定，在逻辑上就不应该改变
+```
+
+---
+
+### 3. Promise A+ 规范核心
+
+Promise A+ 规范的核心要点有哪些？then 方法的返回值处理、链式调用、值穿透？
+
+**【作答】：**
+
+```
+核心要点:
+1. Promise 必须提供 then 方法来访问当前或最终的值或原因
+2. then 方法必须返回一个新的 Promise
+3. onFulfilled 和 onRejected 都是可选的，如果不是函数则必须被忽略
+4. onFulfilled 和 onRejected 必须作为函数调用，且最多调用一次
+5. then 方法可以被同一个 Promise 调用多次
+6. 执行顺序：then 方法必须异步执行（微任务）
+
+then 返回值处理:
+1. 如果 onFulfilled 或 onRejected 返回一个值 x，则运行 Promise 解决过程 [[Resolve]](promise2, x)
+2. 如果返回一个 Promise，则采用该 Promise 的状态
+3. 如果抛出异常，则 promise2 必须被拒绝，并以该异常作为原因
+4. 如果 onFulfilled 不是函数且 promise1 已成功，promise2 必须成功并返回相同的值（值穿透）
+5. 如果 onRejected 不是函数且 promise1 已失败，promise2 必须失败并返回相同的原因（值穿透）
+
+链式调用:
+Promise 的 then 方法返回一个新的 Promise，因此可以链式调用：
+
+promise
+  .then(value => {
+    return value * 2;  // 返回普通值，下一个 then 接收该值
+  })
+  .then(value => {
+    return new Promise(resolve => resolve(value + 1));  // 返回 Promise，等待其解决
+  })
+  .then(value => {
+    console.log(value);  // 接收上一个 Promise 的结果
+  });
+
+值穿透:
+当 then 的参数不是函数时，值会"穿透"到下一个 then：
+
+Promise.resolve(1)
+  .then(2)  // 2 不是函数，被忽略
+  .then(3)  // 3 不是函数，被忽略
+  .then(value => console.log(value));  // 输出 1，值穿透了
+
+Promise.reject('error')
+  .then(null, null)  // 两个参数都不是函数
+  .catch(err => console.log(err));  // 错误也会穿透
+```
+
+---
+
+### 4. Promise 静态方法
+
+Promise.all / race / allSettled / any 的区别？各自的使用场景和返回值？
+
+**【作答】：**
+
+```
+Promise.all:
+- 功能：等待所有 Promise 成功，或第一个失败
+- 返回值：如果全部成功，返回所有结果的数组（按输入顺序）；如果有一个失败，立即返回该失败原因
+- 使用场景：需要等待多个异步操作全部完成，且它们相互依赖
+- 特点：短路特性，一旦有 Promise 失败，立即返回失败
+
+示例：
+Promise.all([promise1(), promise2(), promise3()])
+  .then(([r1, r2, r3]) => console.log('全部成功', r1, r2, r3))
+  .catch(err => console.log('有失败', err));
+
+Promise.race:
+- 功能：返回第一个完成（成功或失败）的 Promise 结果
+- 返回值：第一个完成的 Promise 的结果或原因
+- 使用场景：超时控制、竞态条件、获取最快响应
+- 特点：不等待其他 Promise，只要有一个完成就返回
+
+示例：
+Promise.race([fetchData(), timeout(5000)])
+  .then(data => console.log('数据获取成功'))
+  .catch(err => console.log('超时或失败'));
+
+Promise.allSettled:
+- 功能：等待所有 Promise 完成（无论成功或失败）
+- 返回值：包含所有结果的数组，每个元素是 {status: 'fulfilled'|'rejected', value|reason}
+- 使用场景：需要知道所有异步操作的结果，即使有失败也要继续
+- 特点：不会短路，等待所有 Promise 完成
+
+示例：
+Promise.allSettled([promise1(), promise2(), promise3()])
+  .then(results => {
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        console.log(`Promise ${index} 成功:`, result.value);
+      } else {
+        console.log(`Promise ${index} 失败:`, result.reason);
+      }
+    });
+  });
+
+Promise.any:
+- 功能：等待第一个成功的 Promise，或所有都失败
+- 返回值：第一个成功的 Promise 的结果；如果全部失败，返回 AggregateError
+- 使用场景：多个备用方案，只要有一个成功即可
+- 特点：忽略失败，只关注成功
+
+示例：
+Promise.any([fetchFromServer1(), fetchFromServer2(), fetchFromServer3()])
+  .then(data => console.log('任一服务器响应成功', data))
+  .catch(err => console.log('所有服务器都失败', err));
+```
+
+---
+
+### 5. 手写 Promise 核心逻辑
+
+手写一个简化版 Promise，实现构造函数、状态管理、then 方法。
+
+**【作答】：**
+
+```javascript
+class MyPromise {
+  constructor(executor) {
+    this.state = 'pending' // pending, fulfilled, rejected
+    this.value = undefined // 成功时的值
+    this.reason = undefined // 失败时的原因
+    this.onFulfilledCallbacks = [] // 成功回调队列
+    this.onRejectedCallbacks = [] // 失败回调队列
+
+    const resolve = (value) => {
+      if (this.state === 'pending') {
+        this.state = 'fulfilled'
+        this.value = value
+        // 异步执行所有成功回调
+        this.onFulfilledCallbacks.forEach((fn) => fn())
+      }
+    }
+
+    const reject = (reason) => {
+      if (this.state === 'pending') {
+        this.state = 'rejected'
+        this.reason = reason
+        // 异步执行所有失败回调
+        this.onRejectedCallbacks.forEach((fn) => fn())
+      }
+    }
+
+    try {
+      executor(resolve, reject)
+    } catch (error) {
+      reject(error)
+    }
+  }
+
+  then(onFulfilled, onRejected) {
+    // 值穿透：如果参数不是函数，则忽略
+    onFulfilled =
+      typeof onFulfilled === 'function' ? onFulfilled : (value) => value
+    onRejected =
+      typeof onRejected === 'function'
+        ? onRejected
+        : (reason) => {
+            throw reason
+          }
+
+    // 返回新的 Promise 以支持链式调用
+    const promise2 = new MyPromise((resolve, reject) => {
+      if (this.state === 'fulfilled') {
+        // 异步执行，使用 setTimeout 模拟微任务
+        setTimeout(() => {
+          try {
+            const x = onFulfilled(this.value)
+            this.resolvePromise(promise2, x, resolve, reject)
+          } catch (error) {
+            reject(error)
+          }
+        }, 0)
+      } else if (this.state === 'rejected') {
+        setTimeout(() => {
+          try {
+            const x = onRejected(this.reason)
+            this.resolvePromise(promise2, x, resolve, reject)
+          } catch (error) {
+            reject(error)
+          }
+        }, 0)
+      } else {
+        // pending 状态，将回调加入队列
+        this.onFulfilledCallbacks.push(() => {
+          setTimeout(() => {
+            try {
+              const x = onFulfilled(this.value)
+              this.resolvePromise(promise2, x, resolve, reject)
+            } catch (error) {
+              reject(error)
+            }
+          }, 0)
+        })
+
+        this.onRejectedCallbacks.push(() => {
+          setTimeout(() => {
+            try {
+              const x = onRejected(this.reason)
+              this.resolvePromise(promise2, x, resolve, reject)
+            } catch (error) {
+              reject(error)
+            }
+          }, 0)
+        })
+      }
+    })
+
+    return promise2
+  }
+
+  // Promise 解决过程
+  resolvePromise(promise2, x, resolve, reject) {
+    // 防止循环引用
+    if (promise2 === x) {
+      return reject(new TypeError('Chaining cycle detected'))
+    }
+
+    let called = false // 防止多次调用
+
+    if (x !== null && (typeof x === 'object' || typeof x === 'function')) {
+      try {
+        const then = x.then
+        if (typeof then === 'function') {
+          // x 是 thenable 对象
+          then.call(
+            x,
+            (y) => {
+              if (called) return
+              called = true
+              this.resolvePromise(promise2, y, resolve, reject)
+            },
+            (r) => {
+              if (called) return
+              called = true
+              reject(r)
+            }
+          )
+        } else {
+          // x 是普通对象
+          resolve(x)
+        }
+      } catch (error) {
+        if (called) return
+        called = true
+        reject(error)
+      }
+    } else {
+      // x 是普通值
+      resolve(x)
+    }
+  }
+
+  catch(onRejected) {
+    return this.then(null, onRejected)
+  }
+
+  static resolve(value) {
+    if (value instanceof MyPromise) {
+      return value
+    }
+    return new MyPromise((resolve) => resolve(value))
+  }
+
+  static reject(reason) {
+    return new MyPromise((resolve, reject) => reject(reason))
+  }
+}
+```
+
+---
+
+### 6. async/await 与 Promise
+
+async/await 是如何基于 Promise 实现的？它的优势是什么？错误处理如何做？
+
+**【作答】：**
+
+```
+实现原理:
+async/await 本质上是 Promise 的语法糖，基于 Generator 函数和自动执行器实现：
+
+1. async 函数总是返回一个 Promise
+2. await 会暂停函数执行，等待 Promise 解决
+3. 如果 await 的是 Promise，则等待其解决；如果是普通值，则直接返回
+4. 底层通过 Generator + 自动执行器实现暂停和恢复
+
+转换过程：
+async function foo() {
+  const result = await promise;
+  return result;
+}
+
+// 等价于
+function foo() {
+  return promise.then(result => {
+    return result;
+  });
+}
+
+优势:
+1. 代码更简洁：消除了 .then() 链，代码看起来像同步代码
+2. 错误处理更直观：可以使用 try/catch 处理异步错误
+3. 调试友好：调用栈更清晰，断点调试更方便
+4. 条件逻辑更简单：if/else、循环等控制流更自然
+5. 变量作用域更清晰：不需要在 then 回调中定义变量
+
+错误处理:
+1. try/catch 捕获：可以捕获 await 表达式中抛出的错误
+2. catch 方法：async 函数返回的 Promise 可以用 .catch() 捕获
+3. 错误传播：async 函数中抛出的错误会被转换为 rejected Promise
+
+// 方式1：try/catch
+async function fetchData() {
+  try {
+    const data = await api.getData();
+    return data;
+  } catch (error) {
+    console.error('获取数据失败', error);
+    throw error; // 重新抛出，让调用者处理
+  }
+}
+
+// 方式2：.catch()
+fetchData()
+  .then(data => console.log(data))
+  .catch(error => console.error(error));
+
+等价转换示例:
+
+// async/await 版本
+async function example() {
+  try {
+    const user = await fetchUser();
+    const posts = await fetchPosts(user.id);
+    const comments = await fetchComments(posts[0].id);
+    return { user, posts, comments };
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Promise 版本
+function example() {
+  return fetchUser()
+    .then(user => {
+      return fetchPosts(user.id).then(posts => {
+        return fetchComments(posts[0].id).then(comments => {
+          return { user, posts, comments };
+        });
+      });
+    })
+    .catch(error => {
+      console.error(error);
+    });
+}
+
+// 更清晰的 Promise 版本（使用链式调用）
+function example() {
+  return fetchUser()
+    .then(user => fetchPosts(user.id))
+    .then(posts => fetchComments(posts[0].id))
+    .then(comments => ({ user, posts, comments }))
+    .catch(error => console.error(error));
+}
+```
+
+---
+
+## 面试题（4 题）
+
+### 1. 手写 Promise.all
+
+手写实现 Promise.all，要求处理边界情况（空数组、非 Promise 值、reject 短路）。
+
+**【作答】：**
+
+```javascript
+Promise.myAll = function (promises) {
+  // 处理空数组
+  if (!Array.isArray(promises)) {
+    throw new TypeError('参数必须是数组')
+  }
+
+  if (promises.length === 0) {
+    return Promise.resolve([])
+  }
+
+  return new Promise((resolve, reject) => {
+    const results = []
+    let completedCount = 0
+    const total = promises.length
+
+    promises.forEach((promise, index) => {
+      // 处理非 Promise 值，使用 Promise.resolve 包装
+      Promise.resolve(promise)
+        .then((value) => {
+          results[index] = value
+          completedCount++
+
+          // 所有 Promise 都完成
+          if (completedCount === total) {
+            resolve(results)
+          }
+        })
+        .catch((error) => {
+          // 一旦有 Promise 失败，立即 reject（短路特性）
+          reject(error)
+        })
+    })
+  })
+}
+
+// 测试用例
+
+// 1. 基本功能：全部成功
+Promise.myAll([
+  Promise.resolve(1),
+  Promise.resolve(2),
+  Promise.resolve(3)
+]).then((results) => {
+  console.log('全部成功:', results) // [1, 2, 3]
+})
+
+// 2. 有失败的情况：短路
+Promise.myAll([
+  Promise.resolve(1),
+  Promise.reject('error'),
+  Promise.resolve(3)
+]).catch((error) => {
+  console.log('捕获错误:', error) // 'error'
+})
+
+// 3. 空数组
+Promise.myAll([]).then((results) => {
+  console.log('空数组:', results) // []
+})
+
+// 4. 非 Promise 值
+Promise.myAll([1, 2, Promise.resolve(3)]).then((results) => {
+  console.log('包含非Promise值:', results) // [1, 2, 3]
+})
+
+// 5. 异步操作
+Promise.myAll([
+  new Promise((resolve) => setTimeout(() => resolve('a'), 100)),
+  new Promise((resolve) => setTimeout(() => resolve('b'), 50)),
+  Promise.resolve('c')
+]).then((results) => {
+  console.log('异步操作:', results) // ['a', 'b', 'c'] (保持输入顺序)
+})
+```
+
+---
+
+### 2. Promise 链式调用原理
+
+详细解释 Promise 链式调用的原理，为什么 then 可以链式调用？返回值如何影响下一个 then？
+
+**【作答】：**
+
+```md
+Promise 链式调用的原理：
+
+1. then 方法返回新的 Promise
+
+   - 每次调用 then 都会创建一个新的 Promise 实例（promise2）
+   - 这个新的 Promise 的状态由回调函数的返回值决定
+   - 因此可以继续调用 then，形成链式调用
+
+2. 返回值如何影响下一个 then：
+   a) 返回普通值：下一个 then 的 onFulfilled 接收该值
+   promise.then(() => 1)
+   .then(value => console.log(value)); // 1
+
+   b) 返回 Promise：下一个 then 等待该 Promise 解决
+   promise.then(() => Promise.resolve(2))
+   .then(value => console.log(value)); // 2
+
+   c) 抛出异常：下一个 then 的 onRejected 或 catch 接收该异常
+   promise.then(() => { throw new Error('error'); })
+   .catch(err => console.log(err)); // Error: error
+
+   d) 不返回（undefined）：下一个 then 接收 undefined
+   promise.then(() => { /_ 没有 return _/ })
+   .then(value => console.log(value)); // undefined
+
+3. 链式调用的执行流程：
+   promise1
+   .then(onFulfilled1) // 返回 promise2
+   .then(onFulfilled2) // 返回 promise3
+   .then(onFulfilled3) // 返回 promise4
+   .catch(onRejected); // 捕获前面任意一个 Promise 的失败
+
+   执行顺序：
+
+   - promise1 解决 → 执行 onFulfilled1 → promise2 解决
+   - promise2 解决 → 执行 onFulfilled2 → promise3 解决
+   - promise3 解决 → 执行 onFulfilled3 → promise4 解决
+
+4. 为什么可以链式调用：
+
+   - JavaScript 中，如果方法返回对象，可以继续调用该对象的方法
+   - then 方法返回 Promise 实例，Promise 实例也有 then 方法
+   - 因此可以无限链式调用：promise.then().then().then()...
+
+5. 错误传播机制：
+   - 如果链中某个 Promise 被 reject，错误会向下传播
+   - 直到遇到 catch 或 onRejected 处理函数
+   - 一旦被处理，后续的 then 会继续执行（使用处理后的值）
+
+示例：
+Promise.resolve(1)
+.then(value => {
+console.log(value); // 1
+return value + 1;
+})
+.then(value => {
+console.log(value); // 2
+return Promise.resolve(value + 1);
+})
+.then(value => {
+console.log(value); // 3
+throw new Error('test');
+})
+.catch(error => {
+console.log(error.message); // 'test'
+return 100;
+})
+.then(value => {
+console.log(value); // 100，catch 处理后继续执行
+});
+```
+
+---
+
+### 3. Promise 实践问题
+
+在实际开发中，Promise 使用有哪些常见坑（未捕获错误、忘记 return、循环中的 Promise）？如何规避？
+
+**【作答】：**
+
+```
+常见坑及规避方法：
+
+1. 未捕获的错误
+   问题：Promise 中的错误如果没有被 catch，会导致未处理的 Promise rejection
+
+   // 错误示例
+   Promise.reject('error'); // 未捕获的错误
+
+   // 正确做法
+   Promise.reject('error').catch(err => console.error(err));
+
+   // 或者在 async 函数中使用 try/catch
+   async function test() {
+     try {
+       await Promise.reject('error');
+     } catch (err) {
+       console.error(err);
+     }
+   }
+
+2. 忘记 return
+   问题：在 then 回调中忘记 return，导致下一个 then 接收 undefined
+
+   // 错误示例
+   fetchData()
+     .then(data => {
+       processData(data); // 忘记 return
+     })
+     .then(result => {
+       console.log(result); // undefined
+     });
+
+   // 正确做法
+   fetchData()
+     .then(data => {
+       return processData(data); // 显式返回
+     })
+     .then(result => {
+       console.log(result); // 正确的结果
+     });
+
+   // 或者使用箭头函数简化
+   fetchData()
+     .then(data => processData(data))
+     .then(result => console.log(result));
+
+3. 循环中的 Promise
+   问题：在 for/forEach 循环中使用 Promise，可能导致并发问题或顺序问题
+
+   // 错误示例1：forEach 不会等待 Promise
+   array.forEach(async item => {
+     await processItem(item); // forEach 不会等待
+   });
+   console.log('完成'); // 可能在所有 Promise 完成前执行
+
+   // 错误示例2：顺序执行但效率低
+   for (const item of array) {
+     await processItem(item); // 串行执行，效率低
+   }
+
+   // 正确做法1：并行执行
+   await Promise.all(array.map(item => processItem(item)));
+
+   // 正确做法2：需要顺序执行时使用 for...of
+   for (const item of array) {
+     await processItem(item); // 明确需要顺序执行
+   }
+
+   // 正确做法3：限制并发数
+   async function processWithLimit(array, limit) {
+     for (let i = 0; i < array.length; i += limit) {
+       const batch = array.slice(i, i + limit);
+       await Promise.all(batch.map(item => processItem(item)));
+     }
+   }
+
+4. Promise 构造函数中的错误处理
+   问题：executor 中的同步错误会被自动捕获，但异步错误需要手动处理
+
+   // 正确示例
+   new Promise((resolve, reject) => {
+     try {
+       // 同步错误会被捕获
+       throw new Error('sync error');
+     } catch (error) {
+       reject(error);
+     }
+
+     // 异步错误需要手动处理
+     setTimeout(() => {
+       try {
+         throw new Error('async error');
+       } catch (error) {
+         reject(error);
+       }
+     }, 100);
+   });
+
+5. 同时使用 then 和 await
+   问题：混用可能导致执行顺序不符合预期
+
+   // 不推荐：混用
+   const promise = fetchData();
+   promise.then(data => console.log('then', data));
+   const data = await promise; // 可能先于 then 执行
+
+   // 推荐：统一使用一种方式
+   // 方式1：全部使用 await
+   const data = await fetchData();
+   console.log(data);
+
+   // 方式2：全部使用 then
+   fetchData().then(data => console.log(data));
+
+6. Promise.all 的短路特性
+   问题：Promise.all 中有一个失败，其他成功的 Promise 结果会丢失
+
+   // 如果需要所有结果（包括失败的），使用 Promise.allSettled
+   const results = await Promise.allSettled([
+     promise1(),
+     promise2(),
+     promise3()
+   ]);
+
+   results.forEach((result, index) => {
+     if (result.status === 'fulfilled') {
+       console.log(`Promise ${index} 成功:`, result.value);
+     } else {
+       console.log(`Promise ${index} 失败:`, result.reason);
+     }
+   });
+
+7. 内存泄漏
+   问题：长时间未解决的 Promise 可能导致内存泄漏
+
+   // 添加超时机制
+   function withTimeout(promise, timeout) {
+     return Promise.race([
+       promise,
+       new Promise((_, reject) =>
+         setTimeout(() => reject(new Error('超时')), timeout)
+       )
+     ]);
+   }
+
+   await withTimeout(fetchData(), 5000);
+```
+
+---
+
+### 4. Promise vs Callback vs async/await
+
+对比回调、Promise、async/await 三种异步方案的优缺点，什么场景下你会选择哪一种？
+
+**【作答】：**
+
+```
+三种异步方案对比：
+
+1. Callback（回调函数）
+   优点：
+   - 简单直接，无需额外语法
+   - 兼容性好，所有 JavaScript 环境都支持
+   - 性能开销小
+
+   缺点：
+   - 回调地狱，嵌套过深难以维护
+   - 错误处理分散，难以统一捕获
+   - 难以组合多个异步操作
+   - 控制流复杂（if/else、循环等）
+
+   使用场景：
+   - 简单的单次异步操作
+   - 需要兼容老旧环境
+   - 性能要求极高的场景
+   - Node.js 某些 API（如 fs.readFile）
+
+2. Promise
+   优点：
+   - 链式调用，代码更清晰
+   - 统一的错误处理（catch）
+   - 易于组合（all、race 等）
+   - 状态明确（pending、fulfilled、rejected）
+   - 解决回调地狱问题
+
+   缺点：
+   - 仍然需要 .then() 链，不够直观
+   - 无法使用 try/catch（需要用 .catch()）
+   - 调试时调用栈可能不够清晰
+
+   使用场景：
+   - 需要组合多个异步操作（all、race）
+   - 需要明确的错误处理流程
+   - 需要链式调用但不想用 async/await
+   - 库或框架的 API 设计
+
+3. async/await
+   优点：
+   - 代码最接近同步写法，易读易维护
+   - 可以使用 try/catch 处理错误
+   - 调试友好，调用栈清晰
+   - 控制流简单（if/else、循环等）
+   - 变量作用域清晰
+
+   缺点：
+   - 需要 Promise 支持（可 polyfill）
+   - 可能隐藏并发问题（忘记 await）
+   - 错误处理不当可能导致未捕获的 Promise rejection
+   - 在某些场景下性能略低于直接使用 Promise
+
+   使用场景：
+   - 大多数现代 JavaScript 开发
+   - 需要顺序执行的异步操作
+   - 复杂的异步控制流
+   - 需要清晰的错误处理
+
+选择建议：
+
+1. 简单的一次性异步操作：
+   - Callback 或 Promise 都可以
+   - 如果 API 提供 Promise 版本，优先使用
+
+2. 需要组合多个异步操作：
+   - 使用 Promise.all/race/allSettled/any
+   - 或使用 async/await + Promise 静态方法
+
+3. 复杂的异步流程控制：
+   - 优先使用 async/await
+   - 代码更清晰，易于维护
+
+4. 需要并行执行：
+   - Promise.all + async/await
+   - 或 Promise.all + .then()
+
+5. 需要顺序执行：
+   - async/await + for...of
+   - 或 Promise 链式调用
+
+6. 错误处理：
+   - async/await + try/catch（最直观）
+   - Promise + .catch()（也常用）
+
+实际开发建议：
+- 现代项目：优先使用 async/await
+- 库开发：提供 Promise 接口，内部可以使用 async/await
+- 性能敏感：根据具体情况选择，通常差异不大
+- 团队协作：统一代码风格，避免混用
+
+示例对比：
+
+// Callback
+getData(function(err, data) {
+  if (err) {
+    handleError(err);
+    return;
+  }
+  processData(data, function(err, result) {
+    if (err) {
+      handleError(err);
+      return;
+    }
+    saveResult(result, function(err) {
+      if (err) handleError(err);
+    });
+  });
+});
+
+// Promise
+getData()
+  .then(data => processData(data))
+  .then(result => saveResult(result))
+  .catch(err => handleError(err));
+
+// async/await
+try {
+  const data = await getData();
+  const result = await processData(data);
+  await saveResult(result);
+} catch (err) {
+  handleError(err);
+}
+
+```
+
+---

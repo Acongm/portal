@@ -1,0 +1,117 @@
+---
+title: "vite - 知识梳理"
+---
+
+# vite - 知识梳理
+
+作为前端开发者，你已经熟悉 React、Ant Design、Webpack 等工具，学习 Vite 会是一个高效且值得投入的方向。以下是围绕 **Vite** 的系统知识梳理，帮助你从零构建认知体系，快速掌握并应用于实际项目。
+
+---
+
+## 一、Vite 是什么？
+
+**Vite**（法语“快”）是由 Vue 作者尤雨溪（Evan You）主导开发的新一代前端构建工具。核心特点：
+
+- **开发阶段**：基于原生 ES 模块（ESM）提供**按需加载**，启动和热更新极快（毫秒级）。
+- **生产构建**：基于 **Rollup** 打包，输出高度优化的静态资源。
+- **框架无关**：原生支持 Vue、React、Svelte、Lit 等，对 React 支持非常好。
+- **开箱即用**：TypeScript、JSX、CSS 预处理器、JSON、WebAssembly 等无需配置。
+
+> ✅ 对你而言：Vite 替代 Webpack 开发环境，可保留 Rollup 用于生产构建（但 Vite 本身也用 Rollup 构建生产包）。
+
+---
+
+## 二、核心原理
+
+### 1. 开发服务器（Dev Server）
+
+- 利用现代浏览器原生支持 `&lt;script type="module">`。
+- 不打包源码，只做 **模块图解析 + 按需转换**（如 TS → JS、JSX → JS）。
+- 依赖预构建（`esbuild`）：将 CommonJS/UMD 依赖转为 ESM，提升加载性能。
+
+### 2. 生产构建（Build）
+
+- 使用 **Rollup** 进行 Tree-shaking、代码分割、压缩等。
+- 配置与开发一致（`vite.config.ts`），但插件行为可能不同。
+
+---
+
+## 三、核心概念 & 配置项（`vite.config.ts`）
+
+| 配置项          | 说明         | 常用值                                       |
+| --------------- | ------------ | -------------------------------------------- |
+| `root`          | 项目根目录   | 默认 `process.cwd()`                         |
+| `base`          | 部署基础路径 | `"/"` 或 `"/my-app/"`                        |
+| `resolve.alias` | 路径别名     | `\{ '@': path.resolve(__dirname, 'src') }`    |
+| `define`        | 全局常量替换 | `\{ 'process.env.NODE_ENV': '"production"' }` |
+| `css`           | CSS 相关配置 | `preprocessorOptions`, `modules`             |
+| `build`         | 生产构建选项 | `outDir`, `rollupOptions`, `minify`          |
+| `server`        | 开发服务器   | `port`, `host`, `proxy`                      |
+| `plugins`       | 插件系统     | 官方/社区插件（如 `@vitejs/plugin-react`）   |
+
+---
+
+## 四、常用插件（你作为 React + Ant Design 用户重点关注）
+
+| 插件                      | 用途                                         |
+| ------------------------- | -------------------------------------------- |
+| `@vitejs/plugin-react`    | 支持 React Fast Refresh、JSX、HMR            |
+| `vite-plugin-svgr`        | 导入 `.svg` 作为 React 组件                  |
+| `unplugin-auto-import`    | 自动导入 React、Ant Design 等 API（提升 DX） |
+| `vite-plugin-pages`       | 基于文件系统的路由（类似 Next.js）           |
+| `vite-plugin-eslint`      | 开发时 ESLint 报错                           |
+| `vite-plugin-compression` | 生产构建时生成 gzip/brotli 压缩文件          |
+
+> 💡 Ant Design 无需特殊配置，直接 `import \{ Button } from 'antd'` 即可，但建议配合 `unplugin-auto-import` + `unplugin-vue-components`（虽然名字带 Vue，但支持 React）按需引入。
+
+---
+
+## 五、与 Webpack 对比（针对你的背景）
+
+| 能力       | Webpack                    | Vite                     |
+| ---------- | -------------------------- | ------------------------ |
+| 启动速度   | 慢（全量打包）             | 极快（按需加载）         |
+| HMR 更新   | 慢（重构模块）             | 快（精准更新）           |
+| 配置复杂度 | 高（loader/plugin 体系）   | 低（开箱即用）           |
+| 生产构建   | 自身完成                   | 基于 Rollup              |
+| 依赖处理   | 全量打包依赖               | 预构建 + ESM             |
+| 适用场景   | 大型复杂项目（需深度定制） | 现代项目（追求开发体验） |
+
+> ✅ 你用 Webpack 主要为了开发调试 + 构建。Vite 可完美替代开发阶段，构建阶段也足够成熟。
+
+---
+
+## 六、学习路径建议
+
+### 第一阶段：基础掌握（1-2 天）
+
+1. 安装并创建一个 React 项目：
+   ```bash
+   npm create vite@latest my-react-app -- --template react-ts
+   ```
+2. 熟悉 `vite.config.ts` 基础配置。
+3. 体验开发服务器速度 vs Webpack。
+
+### 第二阶段：集成实际需求（2-3 天）
+
+- 配置 Ant Design 按需加载（通过 `unplugin-auto-import`）。
+- 设置别名、代理（`server.proxy`）、环境变量。
+- 集成 ESLint + Prettier + Husky（和你现有流程一致）。
+
+### 第三阶段：高级能力（可选）
+
+- 自定义插件（了解 `enforce`, `transform`, `configureServer`）。
+- 微前端场景下 Vite 的远程模块加载（与你 Backstage 插件方向相关）。
+- 与 TSDX / Rollup 库项目对比：Vite 侧重应用，TSDX 侧重组件库。
+
+---
+
+## 七、推荐资源
+
+- 官方文档（中文）：https://cn.vitejs.dev/
+- Vite + React 最佳实践：https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts
+- 视频教程（尤雨溪讲解原理）：[Vite 2.0 - The Problems We Faced Building a Next-Gen Frontend Tooling](https://www.youtube.com/watch?v=xXrhg26VCSc)
+
+---
+
+如果你有具体场景（比如“如何在 Vite 中集成 Ant Design 按需加载”或“如何替代 Webpack 构建 Backstage 插件”），我可以给出针对性配置示例。需要吗？

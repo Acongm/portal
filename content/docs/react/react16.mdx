@@ -1,0 +1,168 @@
+---
+title: "十五分钟读懂 React 16"
+---
+
+# 十五分钟读懂 React 16
+
+## 关联面试卡（快速跳转）
+
+- 技术卡：[`tech__react`](../interview-prep/tech__react.md#原理简述)
+- 性能方法论：[`tech__performance`](../interview-prep/tech__performance.md#原理简述)
+
+当然！虽然 React 16 发布于 2017 年（距今已有数年），但它引入了**革命性的架构变革**，是理解现代 React（包括 React 18+）的基础。用 **15 分钟**带你抓住 React 16 的**核心突破**，尤其适合你这样熟悉 React 但想系统梳理底层演进的前端开发者。
+
+---
+
+## 一、React 16 的三大里程碑式升级
+
+### ✅ 1. **Fiber 架构**（核心底层重构）
+
+- **问题**：React 15 及之前使用**递归调和（Reconciliation）**，一旦开始更新，必须**同步完成整个组件树的 diff 和 DOM 操作**，会阻塞主线程，导致卡顿（如输入卡、动画掉帧）。
+- **解决方案**：引入 **Fiber（Fiber Reconciler）**，将更新过程**拆分为可中断、可恢复的工作单元（fiber 节点）**。
+  - 利用 **requestIdleCallback**（或 polyfill）在浏览器空闲时执行；
+  - 支持**优先级调度**（高优先级任务如用户输入可打断低优先级如数据加载）；
+  - 为**异步渲染（Async Rendering）** 奠定基础（后续的 Suspense、Concurrent Mode 都依赖它）。
+
+> 🔍 本质：Fiber 是一种**带优先级的增量渲染机制**，让 React 从“一次性做完”变为“分片执行”。
+
+---
+
+### ✅ 2. **错误边界（Error Boundaries）**
+
+- **问题**：React 15 中，组件内任何 JS 错误会导致**整个应用崩溃（白屏）**，且错误难以捕获。
+- **解决方案**：引入生命周期 `componentDidCatch(error, info)`。
+
+  ```jsx
+  class ErrorBoundary extends React.Component {
+    state = { hasError: false }
+
+    componentDidCatch(error, info) {
+      this.setState({ hasError: true })
+      logErrorToService(error, info.componentStack)
+    }
+
+    render() {
+      return this.state.hasError ? <FallbackUI /> : this.props.children
+    }
+  }
+  ```
+
+- **限制**：不能捕获**事件处理函数**、**异步代码（setTimeout、Promise）**、**服务端渲染**中的错误。
+
+> 💡 这是你构建工单系统等企业应用时**必备的容错机制**。
+
+---
+
+### ✅ 3. **Portals（传送门）**
+
+- **问题**：Modal、Tooltip、Dropdown 等组件需要渲染到 `body` 下，但又想保留 React 组件的父子关系和事件冒泡。
+- **解决方案**：`ReactDOM.createPortal(child, container)`。
+  ```jsx
+  render() {
+    return ReactDOM.createPortal(
+      this.props.children,
+      document.body // 渲染到这里，但事件仍冒泡到父组件
+    );
+  }
+  ```
+- **典型用途**：弹窗、全屏加载、通知等。
+
+> 🛠️ 在 Ant Design 中，`Modal` 和 `Drawer` 内部就大量使用 Portals。
+
+---
+
+## 二、其他重要新特性
+
+### 🔸 Fragment（React.Fragment）
+
+- 解决“必须返回单个根元素”的限制：
+  ```jsx
+  // 以前：必须加 <div>
+  // 现在：
+  render() {
+    return (
+      <React.Fragment>
+        <ChildA />
+        <ChildB />
+      </React.Fragment>
+    );
+  }
+  // 或简写：
+  return (
+    <>
+      <ChildA />
+      <ChildB />
+    </>
+  );
+  ```
+
+---
+
+### 🔸 支持直接返回字符串/数组
+
+```jsx
+// React 16+
+render() {
+  return 'Hello'; // ✅ 合法
+}
+render() {
+  return [1, 2, 3].map(i => <li key={i}>{i}</li>); // ✅ 合法
+}
+```
+
+---
+
+### 🔸 生命周期函数变更（铺垫未来）
+
+- **废弃**：`componentWillMount`、`componentWillReceiveProps`、`componentWillUpdate`（因 Fiber 异步特性，这些钩子可能被多次调用，不安全）。
+- **新增**：`getDerivedStateFromProps`（静态方法，替代 `componentWillReceiveProps`）。
+
+> 📌 虽然当时用得少，但为 React 16.3+ 的“严格模式”和后续 Hooks 铺路。
+
+---
+
+### 🔸 更好的服务器端渲染（SSR）
+
+- 新增 `ReactDOM.hydrate()` 替代 `ReactDOM.render()` 用于注水（hydration）；
+- 支持 **Streaming SSR**（通过 `renderToNodeStream`），可边生成 HTML 边发送，提升首屏速度。
+
+---
+
+## 三、关键内部变化（开发者需知）
+
+| 特性     | React 15                     | React 16                                           |
+| -------- | ---------------------------- | -------------------------------------------------- |
+| 调和算法 | Stack Reconciler（同步递归） | **Fiber Reconciler（异步分片）**                   |
+| 错误处理 | 全局崩溃                     | **Error Boundaries**                               |
+| 渲染目标 | 仅 DOM                       | **支持自定义渲染器（如 React Native、React ART）** |
+| License  | BSD + Patents（争议）        | **MIT（2017 年 9 月后）**                          |
+
+> 💡 React 16 的 MIT 许可证使其在企业（如你的 Backstage 插件）中更安全地使用。
+
+---
+
+## 四、对现代 React 的影响
+
+React 16 是**承上启下的关键版本**：
+
+- **Fiber 架构** → 支撑了 React 18 的 **Concurrent Rendering**、**Automatic Batching**；
+- **Portals + Error Boundaries** → 成为企业级应用的标配；
+- **MIT 许可** → 促使 Facebook、Airbnb、微软等大规模采用。
+
+---
+
+## 五、15 分钟总结（速记版）
+
+| 核心突破             | 作用                     | 你的项目是否用到？                 |
+| -------------------- | ------------------------ | ---------------------------------- |
+| **Fiber**            | 异步可中断渲染，提升性能 | ✅ 所有现代 React 应用底层都依赖它 |
+| **Error Boundaries** | 捕获组件错误，防止白屏   | ✅ 工单系统建议包裹关键模块        |
+| **Portals**          | 渲染到任意 DOM 节点      | ✅ Ant Design Modal 依赖它         |
+| **Fragment**         | 无需额外 div 包裹        | ✅ 日常开发高频使用                |
+| **MIT License**      | 消除专利风险             | ✅ 企业项目合规性保障              |
+
+---
+
+> 🕒 你已经用不到 15 分钟掌握了 React 16 的精髓！
+
+如果你接下来想了解 **React 18 的并发特性**（如 `useTransition`、`Suspense for Data Fetching`）如何在你的 `my-ticket-agent` 中提升用户体验，也可以告诉我！
