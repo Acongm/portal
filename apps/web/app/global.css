@@ -2,6 +2,11 @@
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
 
+@theme {
+  --color-fd-primary: #3eaf7c;
+  --color-fd-ring: #3eaf7c;
+}
+
 html {
   scrollbar-gutter: stable;
 }

@@ -1,12 +1,32 @@
+import Image from 'next/image';
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
-import { appName, gitConfig } from './shared';
+import { appName } from './shared';
+import { vuepressNavbarLinks } from './navbar';
 
 export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
-      // JSX supported
-      title: appName,
+      title: (
+        <span className="inline-flex items-center gap-2 font-semibold">
+          <Image
+            src="/logo.jpg"
+            alt=""
+            width={28}
+            height={28}
+            className="rounded-sm"
+            priority
+          />
+          {appName}
+        </span>
+      ),
+      url: '/',
     },
-    githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
+    links: vuepressNavbarLinks,
+    searchToggle: {
+      enabled: true,
+    },
+    themeSwitch: {
+      enabled: false,
+    },
   };
 }
