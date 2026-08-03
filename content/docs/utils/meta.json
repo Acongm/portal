@@ -4,5 +4,6 @@
     "regexp",
     "function",
     "library"
-  ]
+  ],
+  "root": true
 }

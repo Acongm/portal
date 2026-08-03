@@ -3,5 +3,6 @@
   "pages": [
     "index",
     "bookmark-scripts"
-  ]
+  ],
+  "root": true
 }

@@ -16,5 +16,6 @@
     "11-HTTP与缓存",
     "React更新流程详解",
     "ai-doc-content-enhancement"
-  ]
+  ],
+  "root": true
 }

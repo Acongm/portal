@@ -1,16 +1,19 @@
 import { source } from '@/lib/source';
-import { DocsLayout } from 'fumadocs-ui/layouts/docs';
+import { DocsLayout } from 'fumadocs-ui/layouts/notebook';
 import { baseOptions } from '@/lib/layout.shared';
-import { SiteDocsContainer } from '@/components/site-docs-container';
 
 export default function Layout({ children }: LayoutProps<'/docs'>) {
+  const { nav, ...rest } = baseOptions();
+
   return (
     <DocsLayout
       tree={source.getPageTree()}
-      {...baseOptions()}
-      nav={{ enabled: false }}
-      slots={{
-        container: SiteDocsContainer,
+      {...rest}
+      nav={{ ...nav, mode: 'top' }}
+      tabMode="navbar"
+      sidebar={{
+        collapsible: true,
+        defaultOpenLevel: 1,
       }}
     >
       {children}

@@ -3,5 +3,6 @@
   "pages": [
     "npm",
     "toolkit"
-  ]
+  ],
+  "root": true
 }

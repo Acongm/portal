@@ -4,5 +4,6 @@
     "index",
     "command",
     "commit"
-  ]
+  ],
+  "root": true
 }

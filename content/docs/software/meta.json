@@ -9,5 +9,6 @@
     "webstorm",
     "zsh",
     "claude-skills-guide"
-  ]
+  ],
+  "root": true
 }

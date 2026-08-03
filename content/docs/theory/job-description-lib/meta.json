@@ -1,0 +1,18 @@
+{
+  "title": "题库大纲",
+  "pages": [
+    "01-大疆用户中心重构-面试技术大纲",
+    "02-大疆售后RMS系统重构-面试技术大纲",
+    "03-跨平台公告插件系统-面试技术大纲",
+    "04-大疆DevOps平台维护-面试技术大纲",
+    "05-XDR系统-魔方大屏+报表-面试技术大纲",
+    "06-大疆用户中心重构-hard-mode-面试题",
+    "07-大疆售后RMS系统重构-Hard-Mode-面试题",
+    "08-跨平台公告插件系统-Hard-Mode-面试题",
+    "09-DevOps平台-qiankun微前端-Hard-Mode-面试题",
+    "10-XDR系统-NestJS全栈-Hard-Mode-面试题",
+    "11-frontend-hard-mode-interview-原题提取-基于简历",
+    "Framework",
+    "Framework copy"
+  ]
+}

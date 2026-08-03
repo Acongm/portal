@@ -144,11 +144,12 @@ function sidebarChildrenToPages(children, folderPrefix) {
   return pages;
 }
 
-function writeMetaJson(folderPath, title, pages) {
+function writeMetaJson(folderPath, title, pages, options = {}) {
   const uniquePages = [...new Set(pages.filter(Boolean))];
   if (uniquePages.length === 0) return;
 
   const meta = { title, pages: uniquePages };
+  if (options.root) meta.root = true;
   const metaPath = join(folderPath, 'meta.json');
   writeFileSync(metaPath, JSON.stringify(meta, null, 2) + '\n', 'utf8');
 }
@@ -170,7 +171,7 @@ function generateMetaFromSidebar() {
       }
     }
 
-    writeMetaJson(folderPath, title, allPages);
+    writeMetaJson(folderPath, title, allPages, { root: true });
   }
 }
 

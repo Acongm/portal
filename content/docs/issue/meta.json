@@ -3,5 +3,6 @@
   "pages": [
     "h5",
     "pc"
-  ]
+  ],
+  "root": true
 }

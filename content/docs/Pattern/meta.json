@@ -27,5 +27,6 @@
     "ServiceRequest/ServiceRequestRegistry",
     "ServiceRequest/SharedStateBridge",
     "ServiceRequest/SharedStateBridgeSingleton"
-  ]
+  ],
+  "root": true
 }

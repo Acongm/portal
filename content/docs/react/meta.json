@@ -6,5 +6,6 @@
     "react17",
     "react18",
     "react-render"
-  ]
+  ],
+  "root": true
 }
