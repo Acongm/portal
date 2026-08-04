@@ -1,6 +1,9 @@
 export type { DocChatContext, ChatPanelProps } from './ChatPanel';
 export { ChatPanel } from './ChatPanel';
 
+export type { ChatMarkdownProps } from './ChatMarkdown';
+export { ChatMarkdown } from './ChatMarkdown';
+
 export type { ChatDrawerProps } from './ChatDrawer';
 export { ChatDrawer } from './ChatDrawer';
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChatPanel, type DocChatContext } from './ChatPanel';
 import { useChatUi } from './ChatUiProvider';
 
@@ -9,11 +10,56 @@ export type ChatDrawerProps = {
 
 /** 文档页嵌入抽屉：PC 分栏 / 平板侧栏 / 手机底栏 */
 export function ChatDrawer({ context }: ChatDrawerProps) {
-  const { open, closePanel, mode } = useChatUi();
-  if (!open || mode !== 'drawer') return null;
+  const { open, closePanel, mode, notifyClosed } = useChatUi();
+  const [rendered, setRendered] = useState(open);
+  const [closing, setClosing] = useState(false);
+  const closingRef = useRef(false);
+
+  const finishClose = useCallback(() => {
+    if (!closingRef.current) return;
+    closingRef.current = false;
+    setRendered(false);
+    setClosing(false);
+    notifyClosed();
+  }, [notifyClosed]);
+
+  useEffect(() => {
+    if (open) {
+      closingRef.current = false;
+      setRendered(true);
+      setClosing(false);
+      return;
+    }
+    if (rendered && !closingRef.current) {
+      closingRef.current = true;
+      setClosing(true);
+    }
+  }, [open, rendered]);
+
+  useEffect(() => {
+    if (!closing) return;
+    const reduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const timer = window.setTimeout(finishClose, reduced ? 20 : 420);
+    return () => window.clearTimeout(timer);
+  }, [closing, finishClose]);
+
+  if (!rendered || mode !== 'drawer') return null;
 
   return (
-    <div className="acongm-chat-drawer acongm-chat-root">
+    <div
+      className={[
+        'acongm-chat-drawer',
+        'acongm-chat-root',
+        closing ? 'is-closing' : 'is-open',
+      ].join(' ')}
+      data-state={closing ? 'closed' : 'open'}
+      onAnimationEnd={(event) => {
+        if (event.target !== event.currentTarget) return;
+        if (closing) finishClose();
+      }}
+    >
       <button
         className="acongm-chat-backdrop"
         type="button"
@@ -36,10 +82,9 @@ export function ChatDrawer({ context }: ChatDrawerProps) {
         </div>
         <ChatPanel
           className="acongm-chat-shell__body"
-          active={open}
+          active={rendered}
           context={context}
-        />
-      </aside>
+        />      </aside>
     </div>
   );
 }

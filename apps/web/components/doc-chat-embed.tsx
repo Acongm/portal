@@ -21,12 +21,36 @@ export function DocChatEmbed() {
   const [content, setContent] = useState('');
 
   useEffect(() => {
-    // 等正文 hydration 后再取 DOM
-    const frame = requestAnimationFrame(() => {
+    let cancelled = false;
+
+    const read = () => {
+      if (cancelled) return;
       setTitle(readDocPageTitle());
-      setContent(extractDocPageContent());
+      const next = extractDocPageContent();
+      if (next) setContent(next);
+    };
+
+    read();
+    const timers = [50, 200, 500].map((ms) => window.setTimeout(read, ms));
+
+    const root =
+      document.querySelector('#nd-page') ??
+      document.querySelector('main') ??
+      document.body;
+    const observer = new MutationObserver(() => read());
+    observer.observe(root, {
+      childList: true,
+      subtree: true,
+      characterData: true,
     });
-    return () => cancelAnimationFrame(frame);
+    const stop = window.setTimeout(() => observer.disconnect(), 2000);
+
+    return () => {
+      cancelled = true;
+      timers.forEach((id) => window.clearTimeout(id));
+      window.clearTimeout(stop);
+      observer.disconnect();
+    };
   }, [pathname]);
 
   const context = useMemo<DocChatContext>(

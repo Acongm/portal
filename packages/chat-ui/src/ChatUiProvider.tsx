@@ -19,6 +19,8 @@ type ChatUiContextValue = {
   closePanel: () => void;
   togglePanel: () => void;
   setMode: (mode: ChatLayoutMode) => void;
+  /** 抽屉退场动画结束后调用，用于移除 html 分栏 class */
+  notifyClosed: () => void;
 };
 
 const ChatUiContext = createContext<ChatUiContextValue | null>(null);
@@ -26,6 +28,14 @@ const ChatUiContext = createContext<ChatUiContextValue | null>(null);
 function syncOpenClass(open: boolean) {
   if (typeof document === 'undefined') return;
   document.documentElement.classList.toggle('acongm-chat-open', open);
+}
+
+function syncOverlayLock(open: boolean, mode: ChatLayoutMode) {
+  if (typeof document === 'undefined') return;
+  document.body.classList.toggle(
+    'acongm-chat-overlay-lock',
+    open && mode === 'drawer' && window.innerWidth < 1180,
+  );
 }
 
 export type ChatUiProviderProps = {
@@ -41,29 +51,44 @@ export function ChatUiProvider({
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<ChatLayoutMode>(defaultMode);
 
-  const openPanel = useCallback(() => setOpen(true), []);
-  const closePanel = useCallback(() => setOpen(false), []);
-  const togglePanel = useCallback(() => setOpen((v) => !v), []);
+  const openPanel = useCallback(() => {
+    setOpen(true);
+    syncOpenClass(true);
+  }, []);
+
+  const closePanel = useCallback(() => {
+    setOpen(false);
+  }, []);
+
+  const notifyClosed = useCallback(() => {
+    syncOpenClass(false);
+    syncOverlayLock(false, mode);
+  }, [mode]);
+
+  const togglePanel = useCallback(() => {
+    setOpen((prev) => {
+      const next = !prev;
+      if (next) syncOpenClass(true);
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
-    syncOpenClass(open);
+    if (open) {
+      syncOpenClass(true);
+      syncOverlayLock(true, mode);
+    }
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && open && mode === 'drawer') {
         setOpen(false);
       }
     };
+    const onResize = () => syncOverlayLock(open, mode);
     window.addEventListener('keydown', onKey);
-    const syncLock = () => {
-      document.body.classList.toggle(
-        'acongm-chat-overlay-lock',
-        open && mode === 'drawer' && window.innerWidth < 1180,
-      );
-    };
-    syncLock();
-    window.addEventListener('resize', syncLock);
+    window.addEventListener('resize', onResize);
     return () => {
       window.removeEventListener('keydown', onKey);
-      window.removeEventListener('resize', syncLock);
+      window.removeEventListener('resize', onResize);
     };
   }, [open, mode]);
 
@@ -83,8 +108,9 @@ export function ChatUiProvider({
       closePanel,
       togglePanel,
       setMode,
+      notifyClosed,
     }),
-    [open, mode, openPanel, closePanel, togglePanel],
+    [open, mode, openPanel, closePanel, togglePanel, notifyClosed],
   );
 
   return (

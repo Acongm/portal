@@ -26,6 +26,7 @@ import {
   buildSummaryCardContent,
   loadSummaryV1,
 } from './runtime/summary-v1';
+import { ChatMarkdown } from './ChatMarkdown';
 
 export type DocChatContext = {
   /** summaries / API 使用的文档路径键，如 /react/react16.md */
@@ -333,12 +334,21 @@ export function ChatPanel({ active, context, className }: ChatPanelProps) {
                   </button>
                 ) : null}
               </div>
-              <p className="acongm-chat-message__body">
-                {message.content}
-                {message.streaming ? (
-                  <span className="acongm-chat-cursor" />
-                ) : null}
-              </p>
+              <div className="acongm-chat-message__body">
+                {message.role === 'assistant' ? (
+                  <>
+                    <ChatMarkdown
+                      content={message.content}
+                      streaming={message.streaming}
+                    />
+                    {message.streaming ? (
+                      <span className="acongm-chat-cursor" aria-hidden />
+                    ) : null}
+                  </>
+                ) : (
+                  message.content
+                )}
+              </div>
             </article>
           ),
         )}

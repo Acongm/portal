@@ -185,9 +185,105 @@
 
 .acongm-chat-message__body {
   margin: 0;
-  white-space: pre-wrap;
   line-height: 1.65;
   font-size: 13.5px;
+}
+
+.acongm-chat-message.is-user .acongm-chat-message__body {
+  white-space: pre-wrap;
+}
+
+.acongm-chat-md {
+  display: grid;
+  gap: 0.55em;
+  overflow-wrap: anywhere;
+}
+
+.acongm-chat-md > :first-child {
+  margin-top: 0;
+}
+
+.acongm-chat-md > :last-child {
+  margin-bottom: 0;
+}
+
+.acongm-chat-md p,
+.acongm-chat-md ul,
+.acongm-chat-md ol,
+.acongm-chat-md pre,
+.acongm-chat-md blockquote {
+  margin: 0;
+}
+
+.acongm-chat-md ul,
+.acongm-chat-md ol {
+  padding-left: 1.25em;
+}
+
+.acongm-chat-md li + li {
+  margin-top: 0.2em;
+}
+
+.acongm-chat-md strong {
+  font-weight: 650;
+}
+
+.acongm-chat-md a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.acongm-chat-md code {
+  font-family: var(
+    --acongm-font-mono,
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace
+  );
+  font-size: 0.92em;
+  padding: 0.1em 0.35em;
+  border-radius: 6px;
+  background: color-mix(in oklab, var(--acongm-surface-2, #e8e8e8) 88%, transparent);
+}
+
+.acongm-chat-message.is-user .acongm-chat-md code {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.acongm-chat-md pre {
+  padding: 10px 12px;
+  border-radius: 10px;
+  overflow: auto;
+  background: color-mix(in oklab, var(--acongm-surface-2, #111) 16%, transparent);
+  border: 1px solid var(--acongm-border);
+}
+
+.acongm-chat-md pre code {
+  padding: 0;
+  background: none;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.acongm-chat-md blockquote {
+  padding-left: 0.8em;
+  border-left: 3px solid var(--acongm-accent);
+  opacity: 0.92;
+}
+
+.acongm-chat-md table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.acongm-chat-md th,
+.acongm-chat-md td {
+  border: 1px solid var(--acongm-border);
+  padding: 4px 6px;
 }
 
 .acongm-chat-cursor {
@@ -278,7 +374,9 @@
 }
 
 .acongm-chat-composer__box button.is-stop {
-  background: var(--acongm-surface-ink);
+  background: var(--acongm-danger, #c23b3b);
+  color: #fff;
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--acongm-danger, #c23b3b) 35%, transparent);
 }
 
 .acongm-chat-composer__actions {
@@ -329,6 +427,57 @@
   }
 }
 
+@keyframes acongm-panel-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+}
+
+@keyframes acongm-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes acongm-sheet-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+}
+
+@keyframes acongm-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes acongm-backdrop-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 /* PC 分栏 */
 @media (min-width: 1180px) {
   html.acongm-chat-open #nd-page {
@@ -350,6 +499,10 @@
     animation: acongm-panel-in 0.42s var(--acongm-ease) both;
   }
 
+  .acongm-chat-drawer.is-closing {
+    animation: acongm-panel-out 0.36s var(--acongm-ease) both;
+  }
+
   .acongm-chat-drawer .acongm-chat-shell {
     height: 100%;
     max-height: none;
@@ -363,7 +516,6 @@
     z-index: var(--acongm-chat-z);
     display: flex;
     justify-content: flex-end;
-    animation: acongm-panel-in 0.36s var(--acongm-ease) both;
   }
 
   .acongm-chat-drawer .acongm-chat-shell {
@@ -373,6 +525,11 @@
     height: 100dvh !important;
     max-height: none !important;
     border-radius: 18px 0 0 18px;
+    animation: acongm-panel-in 0.36s var(--acongm-ease) both;
+  }
+
+  .acongm-chat-drawer.is-closing .acongm-chat-shell {
+    animation: acongm-panel-out 0.32s var(--acongm-ease) both;
   }
 
   .acongm-chat-backdrop {
@@ -383,6 +540,11 @@
     border: 0;
     background: var(--acongm-overlay);
     backdrop-filter: blur(3px);
+    animation: acongm-backdrop-in 0.28s ease both;
+  }
+
+  .acongm-chat-drawer.is-closing .acongm-chat-backdrop {
+    animation: acongm-backdrop-out 0.28s ease both;
   }
 }
 
@@ -413,6 +575,11 @@
     border: 0;
     border-radius: 22px 22px 0 0;
     padding-bottom: env(safe-area-inset-bottom);
+    animation: acongm-sheet-in 0.38s var(--acongm-ease) both;
+  }
+
+  .acongm-chat-drawer.is-closing .acongm-chat-shell {
+    animation: acongm-sheet-out 0.32s var(--acongm-ease) both;
   }
 
   .acongm-chat-backdrop {
@@ -422,6 +589,11 @@
     width: 100%;
     border: 0;
     background: var(--acongm-overlay);
+    animation: acongm-backdrop-in 0.28s ease both;
+  }
+
+  .acongm-chat-drawer.is-closing .acongm-chat-backdrop {
+    animation: acongm-backdrop-out 0.28s ease both;
   }
 
   .acongm-chat-message {
@@ -436,6 +608,8 @@ body.acongm-chat-overlay-lock {
 @media (prefers-reduced-motion: reduce) {
   .acongm-chat-fab,
   .acongm-chat-drawer,
+  .acongm-chat-drawer .acongm-chat-shell,
+  .acongm-chat-backdrop,
   .acongm-chat-message,
   html.acongm-chat-open #nd-page {
     animation: none !important;
