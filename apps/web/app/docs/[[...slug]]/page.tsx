@@ -21,7 +21,14 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   );
 
   return (
-    <DocsPage toc={page.data.toc} full={page.data.full}>
+    <DocsPage
+      toc={page.data.toc}
+      // 默认全宽模式：正文更宽；仍保留右侧 TOC（可用 frontmatter full: false 关闭）
+      full={page.data.full ?? true}
+      tableOfContent={{
+        enabled: true,
+      }}
+    >
       <DocsTitle>{page.data.title}</DocsTitle>
       {page.data.description ? (
         <DocsDescription className="mb-0">{page.data.description}</DocsDescription>
