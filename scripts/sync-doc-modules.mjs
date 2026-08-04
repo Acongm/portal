@@ -4,6 +4,7 @@
  *
  * - hidden 领域：不进入根 meta / Layout Tabs，但仍保留本地内容目录
  * - 缺失的模块 index.mdx 会自动创建（避免 /docs/<domain>/<module> 404）
+ * - 模块 meta 设置 root:true，详情页侧栏只显示当前模块，不与兄弟模块混滚
  */
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -34,7 +35,9 @@ function ensureModuleIndex(domainId, mod) {
   if (existsSync(metaPath)) {
     const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
     meta.title = mod.title;
-    delete meta.root;
+    if (mod.description) meta.description = mod.description;
+    // 模块作为独立 root：进入该模块后侧栏只显示本模块页面
+    meta.root = true;
     if (Array.isArray(meta.pages) && !meta.pages.includes('index')) {
       meta.pages = ['index', ...meta.pages.filter((p) => p !== 'index')];
     }
@@ -48,7 +51,16 @@ function ensureModuleIndex(domainId, mod) {
     }
     writeFileSync(
       metaPath,
-      JSON.stringify({ title: mod.title, pages }, null, 2) + '\n',
+      JSON.stringify(
+        {
+          title: mod.title,
+          description: mod.description,
+          root: true,
+          pages,
+        },
+        null,
+        2,
+      ) + '\n',
       'utf8',
     );
     console.log(`created meta: ${domainId}/${mod.folder}`);

@@ -4,5 +4,7 @@
     "index",
     "skill",
     "scss"
-  ]
+  ],
+  "description": "布局、动画与工程化样式方案",
+  "root": true
 }

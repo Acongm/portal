@@ -7,5 +7,7 @@
     "react17",
     "react18",
     "react-render"
-  ]
+  ],
+  "description": "Hooks、渲染机制与版本演进",
+  "root": true
 }

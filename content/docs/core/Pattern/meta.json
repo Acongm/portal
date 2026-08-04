@@ -27,5 +27,7 @@
     "ServiceRequest/ServiceRequestRegistry",
     "ServiceRequest/SharedStateBridge",
     "ServiceRequest/SharedStateBridgeSingleton"
-  ]
+  ],
+  "description": "前端常见模式与实现示例",
+  "root": true
 }

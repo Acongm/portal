@@ -4,5 +4,7 @@
     "index",
     "job-description-lib",
     "interview-question"
-  ]
+  ],
+  "description": "岗位大纲与 Hard Mode 题目",
+  "root": true
 }

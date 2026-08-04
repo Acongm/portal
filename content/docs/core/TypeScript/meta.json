@@ -3,5 +3,7 @@
   "pages": [
     "index",
     "Study"
-  ]
+  ],
+  "description": "类型系统与工程化实践",
+  "root": true
 }

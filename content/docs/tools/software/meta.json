@@ -10,5 +10,7 @@
     "webstorm",
     "zsh",
     "claude-skills-guide"
-  ]
+  ],
+  "description": "跨平台软件与编辑器插件",
+  "root": true
 }

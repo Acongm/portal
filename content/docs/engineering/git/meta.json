@@ -4,5 +4,7 @@
     "index",
     "command",
     "commit"
-  ]
+  ],
+  "description": "命令速查、提交规范与工作流",
+  "root": true
 }
