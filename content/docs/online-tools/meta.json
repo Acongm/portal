@@ -2,7 +2,8 @@
   "title": "在线工具",
   "pages": [
     "index",
-    "bookmark-scripts"
+    "bookmark-scripts",
+    "...utils"
   ],
   "root": true
 }

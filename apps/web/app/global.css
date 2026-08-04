@@ -7,18 +7,27 @@
   --color-fd-ring: #3eaf7c;
 }
 
-/* 首页顶栏全宽单行 */
+/* 首页顶栏全宽 + 导航下拉不被裁切 */
 .site-nav-bar {
   --fd-layout-width: 100%;
+  overflow: visible;
 }
 
 .site-nav-bar > div:first-child {
   max-width: none;
+  overflow: visible;
 }
 
+#nd-nav,
 #nd-nav > div,
 .site-nav-bar > div {
   max-width: none;
+  overflow: visible;
+}
+
+#nd-nav [data-radix-navigation-menu-viewport],
+.site-nav-bar [data-radix-navigation-menu-viewport] {
+  overflow: visible !important;
 }
 
 html {
