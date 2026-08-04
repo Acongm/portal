@@ -1,0 +1,31 @@
+{
+  "title": "前端技术",
+  "description": "语言、框架、工程化、工具与面试",
+  "root": true,
+  "pages": [
+    "index",
+    "---前端核心---",
+    "JavaScript",
+    "TypeScript",
+    "css",
+    "react",
+    "vue",
+    "Pattern",
+    "---工程实践---",
+    "webpack",
+    "node",
+    "git",
+    "performance",
+    "---工具与成长---",
+    "online-tools",
+    "software",
+    "mark",
+    "ai",
+    "issue",
+    "---面试求职---",
+    "interview-prep",
+    "theory",
+    "interview",
+    "job-description"
+  ]
+}

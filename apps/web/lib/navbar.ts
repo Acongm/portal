@@ -1,6 +1,7 @@
 import type { LinkItemType, MainItemType } from 'fumadocs-ui/layouts/shared';
+import { getDomainIdForLegacyFolder } from './modules.registry';
 
-/** VuePress 路径 → Portal `/docs` 路径 */
+/** VuePress 路径 → Portal `/docs/<domain>/...` 路径 */
 export function vuepressPathToPortalUrl(path: string): string {
   const trimmed = path.trim();
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
@@ -16,6 +17,23 @@ export function vuepressPathToPortalUrl(path: string): string {
   }
 
   if (!p) return '/docs';
+
+  // 已带领域前缀
+  if (
+    p.startsWith('frontend/') ||
+    p.startsWith('yoga/') ||
+    p.startsWith('education/') ||
+    p === 'frontend' ||
+    p === 'yoga' ||
+    p === 'education'
+  ) {
+    return `/docs/${p}`;
+  }
+
+  const first = p.split('/')[0];
+  const domain = getDomainIdForLegacyFolder(first);
+  if (domain) return `/docs/${domain}/${p}`;
+
   return `/docs/${p}`;
 }
 
@@ -40,7 +58,7 @@ function menu(text: string, items: MainItemType[]): LinkItemType {
 }
 
 /**
- * 与 vuepress `themeConfig.navbar` 对齐的顶栏菜单（路径已映射到 `/docs/*`）
+ * 与 vuepress `themeConfig.navbar` 对齐的顶栏菜单（路径已映射到领域前缀）
  */
 export const vuepressNavbarLinks: LinkItemType[] = [
   menu('基础语言', [

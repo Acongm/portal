@@ -2,28 +2,8 @@
   "title": "acongm",
   "pages": [
     "index",
-    "---前端核心---",
-    "JavaScript",
-    "TypeScript",
-    "css",
-    "react",
-    "vue",
-    "Pattern",
-    "---工程实践---",
-    "webpack",
-    "node",
-    "git",
-    "performance",
-    "---工具与成长---",
-    "online-tools",
-    "software",
-    "mark",
-    "ai",
-    "issue",
-    "---面试求职---",
-    "interview-prep",
-    "theory",
-    "interview",
-    "job-description"
+    "frontend",
+    "yoga",
+    "education"
   ]
 }

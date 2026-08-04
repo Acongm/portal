@@ -1,9 +1,0 @@
-{
-  "title": "Git",
-  "pages": [
-    "index",
-    "command",
-    "commit"
-  ],
-  "root": true
-}
