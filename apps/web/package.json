@@ -12,6 +12,9 @@
     "types:check": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@acongm/chat-ui": "workspace:*",
+    "@acongm/kb-types": "workspace:*",
+    "@acongm/ui-theme": "workspace:*",
     "cnfast": "^0.1.0",
     "fumadocs-core": "^16.14.0",
     "fumadocs-mdx": "^15.2.2",

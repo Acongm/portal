@@ -8,7 +8,10 @@ acongm Platform v2 文档站 — Next.js + Fumadocs。
 portal/
 ├── apps/web/          # Next.js 应用（Fumadocs UI）
 ├── content/docs/      # 文档内容（MDX + meta.json）
-├── packages/          # 后续 chat-ui、ui-theme、kb-types
+├── packages/
+│   ├── kb-types/      # @acongm/kb-types — ChatV1 / SummariesV1 契约
+│   ├── ui-theme/      # @acongm/ui-theme — Codex 主题 CSS 变量
+│   └── chat-ui/       # @acongm/chat-ui — ChatDrawer / ChatFullscreen
 └── scripts/           # 文档迁移脚本
 ```
 
@@ -20,6 +23,14 @@ pnpm dev
 ```
 
 访问 http://localhost:3000/docs
+
+## Chat（Phase 1）
+
+- `@acongm/kb-types`：对齐 `/api/ai/v1/chat(/stream)` 与 `summaries-v1.json`
+- `@acongm/ui-theme`：chat / dochub 可复用的 CSS token
+- `@acongm/chat-ui`：`ChatDrawer` + `ChatFullscreen` + 流式对话 / 停止重试
+- `apps/web`：`DocChatEmbed` 按路由绑定 `pagePath` / `moduleKey`（不跳转独立 chat）
+- 同源代理：`POST /api/ai/v1/chat/stream` → `api.acongm.com`
 
 ## 文档迁移
 
@@ -65,8 +76,10 @@ npx vercel link --cwd apps/web
 npx vercel --cwd apps/web
 ```
 
-
 ## 相关 Issue
 
-- [P1-01] 初始化 portal + Fumadocs 骨架
-- [P4-01] 批量迁移 MD + meta.json 脚本
+- [P1-02] packages/ui-theme（Codex 主题）
+- [P1-03] packages/chat-ui（ChatDrawer / ChatFullscreen）
+- [P1-04] packages/kb-types
+- [P1-10] ChatDrawer embed 接入文档页
+- [P4-04] ChatDrawer 绑定文档 context
