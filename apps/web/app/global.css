@@ -7,49 +7,45 @@
   --color-fd-ring: #3eaf7c;
 }
 
-/* 首页顶栏全宽 + 导航下拉不被裁切 */
-.site-nav-bar {
-  --fd-layout-width: 100%;
-  overflow: visible;
-}
-
-.site-nav-bar > div:first-child {
-  max-width: none;
-  overflow: visible;
-}
-
+/* 首页顶栏：保证二级卡片菜单完整显示 */
 #nd-nav,
-#nd-nav > div,
-.site-nav-bar > div {
+#nd-nav > div {
   max-width: none;
   overflow: visible;
 }
 
-#nd-nav [data-radix-navigation-menu-viewport],
-.site-nav-bar [data-radix-navigation-menu-viewport] {
+#nd-nav [data-radix-navigation-menu-viewport] {
   overflow: visible !important;
 }
 
-/* Soom 风格 mega-menu：去掉默认 viewport 裁切与灰底 */
-.site-nav-bar .site-mega-viewport,
-.site-nav-bar [data-radix-navigation-menu-viewport].site-mega-viewport {
-  position: absolute !important;
-  top: 100% !important;
-  left: 0 !important;
-  margin-top: 0.5rem !important;
-  width: auto !important;
-  height: auto !important;
-  overflow: visible !important;
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
+/* Fumadocs 原生 menu 卡片：加强层次与 hover（对齐 Soom/Fumadocs 文档站） */
+#nd-nav [data-slot='navigation-menu-content'] a[data-slot='navigation-menu-link'],
+#nd-nav [data-radix-navigation-menu-content] > a,
+#nd-nav [data-radix-navigation-menu-content] a {
+  border-radius: 0.75rem;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease,
+    background-color 0.15s ease;
 }
 
-.site-nav-bar .site-mega-panel {
-  position: relative;
-  width: max-content;
-  max-width: min(920px, 92vw);
+#nd-nav [data-radix-navigation-menu-content] a:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, var(--color-fd-primary) 45%, transparent);
+  box-shadow: 0 4px 14px color-mix(in oklab, var(--color-fd-primary) 12%, transparent);
+}
+
+/* Docs 侧栏领域切换：列表项改为卡片感 */
+#nd-docs-layout [data-radix-popper-content-wrapper] [data-radix-popover-content] a {
+  border: 1px solid color-mix(in oklab, var(--color-fd-border) 80%, transparent);
+  background: var(--color-fd-card);
+  padding: 0.625rem 0.75rem;
+  margin-block: 0.125rem;
+}
+
+#nd-docs-layout [data-radix-popper-content-wrapper] [data-radix-popover-content] a:hover {
+  border-color: color-mix(in oklab, var(--color-fd-primary) 40%, transparent);
 }
 
 html {
