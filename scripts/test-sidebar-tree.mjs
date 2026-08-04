@@ -48,7 +48,7 @@ function childrenWithIndex(folder) {
 }
 
 function folderToRoot(folder) {
-  const ref = folderRefParts(folder)?.join('/') ?? 'module';
+  const ref = folderRefParts(folder)?.join('/') ?? 'domain';
   return {
     $id: folder.$id ?? `root:${ref}`,
     name: folder.name,
@@ -70,13 +70,13 @@ function pickSidebarTree(fullTree, slug) {
   const parts = slug.map(decodeSeg);
   const roots = collectRootFolders(fullTree.children);
   let best = null;
-  let bestLen = -1;
+  let bestLen = Number.POSITIVE_INFINITY;
   for (const folder of roots) {
     const ref = folderRefParts(folder);
     if (!ref || ref.length === 0) continue;
     if (ref.length > parts.length) continue;
     if (!ref.every((seg, i) => seg === parts[i])) continue;
-    if (ref.length > bestLen) {
+    if (ref.length < bestLen) {
       best = folder;
       bestLen = ref.length;
     }
@@ -90,6 +90,72 @@ const fullTree = {
   children: [
     {
       type: 'folder',
+      name: '工程实践',
+      root: true,
+      $ref: { folder: 'engineering' },
+      index: {
+        type: 'page',
+        name: '工程实践',
+        url: '/docs/engineering',
+      },
+      children: [
+        {
+          type: 'folder',
+          name: 'webpack',
+          root: true,
+          $ref: { folder: 'engineering/webpack' },
+          index: {
+            type: 'page',
+            name: 'webpack',
+            url: '/docs/engineering/webpack',
+          },
+          children: [
+            {
+              type: 'page',
+              name: '知识梳理',
+              url: '/docs/engineering/webpack/知识梳理',
+            },
+            {
+              type: 'folder',
+              name: 'install',
+              defaultOpen: false,
+              collapsible: true,
+              children: [
+                {
+                  type: 'page',
+                  name: 'pnpm',
+                  url: '/docs/engineering/webpack/install/pnpm',
+                },
+              ],
+            },
+          ],
+        },
+        {
+          type: 'folder',
+          name: 'node',
+          root: true,
+          $ref: { folder: 'engineering/node' },
+          children: [
+            { type: 'page', name: 'npm', url: '/docs/engineering/node/npm' },
+          ],
+        },
+        {
+          type: 'folder',
+          name: 'git',
+          root: true,
+          $ref: { folder: 'engineering/git' },
+          children: [
+            {
+              type: 'page',
+              name: 'command',
+              url: '/docs/engineering/git/command',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      type: 'folder',
       name: '前端核心',
       root: true,
       $ref: { folder: 'core' },
@@ -99,40 +165,12 @@ const fullTree = {
           name: 'JavaScript',
           root: true,
           $ref: { folder: 'core/JavaScript' },
-          index: {
-            type: 'page',
-            name: 'js 基础知识',
-            url: '/docs/core/JavaScript',
-          },
           children: [
             {
               type: 'page',
               name: '闭包',
               url: '/docs/core/JavaScript/经典闭包处理',
             },
-            {
-              type: 'folder',
-              name: '进阶',
-              root: true, // 故意带 root，验证会被剥掉
-              defaultOpen: false,
-              collapsible: true,
-              children: [
-                {
-                  type: 'page',
-                  name: '深层页',
-                  url: '/docs/core/JavaScript/进阶/深层页',
-                },
-              ],
-            },
-          ],
-        },
-        {
-          type: 'folder',
-          name: 'React',
-          root: true,
-          $ref: { folder: 'core/react' },
-          children: [
-            { type: 'page', name: 'hooks', url: '/docs/core/react/class-hooks' },
           ],
         },
       ],
@@ -140,42 +178,51 @@ const fullTree = {
   ],
 };
 
-const domain = pickSidebarTree(fullTree, ['core']);
-assert.equal(domain.name, '前端核心');
-assert.equal(domain.children.length, 2);
-assert.equal(domain.children[0].root, false);
-assert.equal(domain.children[0].defaultOpen, true);
-assert.equal(domain.children[0].collapsible, false);
+// 领域首页与模块深页应得到同一棵领域树
+const domain = pickSidebarTree(fullTree, ['engineering']);
+const deep = pickSidebarTree(fullTree, [
+  'engineering',
+  'webpack',
+  encodeURIComponent('知识梳理'),
+]);
+const moduleIndex = pickSidebarTree(fullTree, ['engineering', 'webpack']);
 
-const js = pickSidebarTree(fullTree, [
+assert.equal(domain.name, '工程实践');
+assert.equal(deep.name, '工程实践');
+assert.equal(moduleIndex.name, '工程实践');
+assert.equal(domain.children.length, deep.children.length);
+// index + webpack + node + git
+assert.equal(domain.children.length, 4);
+assert.equal(domain.children[0].url, '/docs/engineering');
+
+const names = (tree) =>
+  tree.children.filter((n) => n.type === 'folder').map((n) => n.name);
+assert.deepEqual(names(domain), ['webpack', 'node', 'git']);
+assert.deepEqual(names(deep), ['webpack', 'node', 'git']);
+
+// 子模块 root 被剥离，避免 TreeContext 再次收窄
+for (const folder of deep.children.filter((n) => n.type === 'folder')) {
+  assert.equal(folder.root, false);
+  assert.equal(folder.defaultOpen, true);
+  assert.equal(folder.collapsible, false);
+}
+
+const webpack = deep.children.find((n) => n.name === 'webpack');
+assert.ok(webpack);
+const install = webpack.children.find((n) => n.name === 'install');
+assert.ok(install);
+assert.equal(install.root, false);
+assert.equal(install.collapsible, false);
+
+// 中文深页仍落在领域树
+const jsDeep = pickSidebarTree(fullTree, [
   'core',
   'JavaScript',
   encodeURIComponent('经典闭包处理'),
 ]);
-assert.equal(js.name, 'JavaScript');
-// index 被补进 children
-assert.equal(js.children[0].url, '/docs/core/JavaScript');
-assert.equal(js.children.length, 3);
-const nested = js.children.find((n) => n.type === 'folder' && n.name === '进阶');
-assert.ok(nested);
-assert.equal(nested.root, false);
-assert.equal(nested.defaultOpen, true);
-assert.equal(nested.collapsible, false);
-
-const deep = pickSidebarTree(fullTree, [
-  'core',
-  'JavaScript',
-  '进阶',
-  '深层页',
-]);
-assert.equal(deep.name, 'JavaScript');
-assert.equal(deep.children.length, 3);
-const deepNested = deep.children.find((n) => n.name === '进阶');
-assert.equal(deepNested.collapsible, false);
-assert.equal(deepNested.defaultOpen, true);
-
-const react = pickSidebarTree(fullTree, ['core', 'react', 'class-hooks']);
-assert.equal(react.name, 'React');
-assert.equal(react.children.length, 1);
+assert.equal(jsDeep.name, '前端核心');
+assert.equal(jsDeep.children.length, 1);
+assert.equal(jsDeep.children[0].name, 'JavaScript');
+assert.equal(jsDeep.children[0].root, false);
 
 console.log('sidebar-tree unit checks passed');
