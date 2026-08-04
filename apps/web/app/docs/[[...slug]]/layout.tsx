@@ -36,7 +36,8 @@ export default async function DocsSlugLayout({
       }))}
       sidebar={{
         collapsible: true,
-        // 模块内各级目录默认全部展开
+        // pickSidebarTree 已对文件夹设 collapsible:false + defaultOpen:true；
+        // 仍保留高 defaultOpenLevel 作为兜底
         defaultOpenLevel: 99,
       }}
     >

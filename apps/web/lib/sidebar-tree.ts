@@ -1,4 +1,4 @@
-import type { Root as PageTreeRoot, Folder, Node } from 'fumadocs-core/page-tree';
+import type { Root as PageTreeRoot, Folder, Node, Item } from 'fumadocs-core/page-tree';
 
 function decodeSeg(value: string): string {
   try {
@@ -28,27 +28,64 @@ function collectRootFolders(nodes: Node[], out: Folder[] = []): Folder[] {
   return out;
 }
 
+/**
+ * 深拷贝并固定侧栏文件夹行为：
+ * - 去掉 root，避免 TreeContext 在深层路径上再次把 sidebar root 收窄到子目录
+ * - defaultOpen: true + collapsible: false，保证模块树始终完整展开可见
+ */
+function normalizeNodes(nodes: Node[]): Node[] {
+  return nodes.map((node) => {
+    if (node.type !== 'folder') return node;
+    return {
+      ...node,
+      root: false,
+      defaultOpen: true,
+      collapsible: false,
+      children: normalizeNodes(node.children),
+    };
+  });
+}
+
+function childrenWithIndex(folder: Folder): Node[] {
+  const children = [...folder.children];
+  const index = folder.index as Item | undefined;
+  if (!index?.url) return children;
+  const exists = children.some(
+    (child) => child.type === 'page' && child.url === index.url,
+  );
+  if (!exists) children.unshift(index);
+  return children;
+}
+
 function folderToRoot(folder: Folder): PageTreeRoot {
+  const ref = folderRefParts(folder)?.join('/') ?? 'module';
   return {
-    $id: folder.$id ?? `root:${folderRefParts(folder)?.join('/') ?? 'module'}`,
+    $id: folder.$id ?? `root:${ref}`,
     name: folder.name,
     description: folder.description,
-    children: folder.children,
+    children: normalizeNodes(childrenWithIndex(folder)),
     $ref: folder.$ref,
+  };
+}
+
+function normalizeRoot(tree: PageTreeRoot): PageTreeRoot {
+  return {
+    ...tree,
+    children: normalizeNodes(tree.children),
   };
 }
 
 /**
  * 按路由 slug 选取侧栏 tree，绕开 fumadocs searchPath 对中文 URL 编解码不一致导致的 root 回退。
  *
- * - `/docs/core` → 领域 root（各模块）
- * - `/docs/core/JavaScript/...` → JavaScript 模块 root（仅本模块页面）
+ * - `/docs/core` → 领域 root（各模块，强制展开）
+ * - `/docs/core/JavaScript/...` → JavaScript 模块 root（完整模块树，强制展开）
  */
 export function pickSidebarTree(
   fullTree: PageTreeRoot,
   slug?: string[],
 ): PageTreeRoot {
-  if (!slug || slug.length === 0) return fullTree;
+  if (!slug || slug.length === 0) return normalizeRoot(fullTree);
 
   const parts = normalizeSlug(slug);
   const roots = collectRootFolders(fullTree.children);
@@ -68,6 +105,6 @@ export function pickSidebarTree(
     }
   }
 
-  if (!best) return fullTree;
+  if (!best) return normalizeRoot(fullTree);
   return folderToRoot(best);
 }
