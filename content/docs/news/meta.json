@@ -1,0 +1,10 @@
+{
+  "title": "资讯",
+  "description": "每日技术资讯与阅读摘要",
+  "root": true,
+  "pages": [
+    "index",
+    "---阅读---",
+    "daily-news"
+  ]
+}

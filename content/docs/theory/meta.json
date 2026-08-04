@@ -1,9 +1,0 @@
-{
-  "title": "面试题库",
-  "root": true,
-  "pages": [
-    "index",
-    "job-description-lib",
-    "interview-question"
-  ]
-}

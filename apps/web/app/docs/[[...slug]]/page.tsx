@@ -2,6 +2,7 @@ import { getPageImageUrl, source } from '@/lib/source';
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/layouts/docs/page';
 import { notFound } from 'next/navigation';
 import { getMDXComponents } from '@/components/mdx';
+import { shouldSuppressLeadingH1, withSuppressLeadingH1 } from '@/lib/mdx-page';
 import type { Metadata } from 'next';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
 
@@ -11,6 +12,13 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   if (!page) notFound();
 
   const MDX = page.data.body;
+  const suppressH1 = shouldSuppressLeadingH1(params.slug);
+  const mdxComponents = withSuppressLeadingH1(
+    getMDXComponents({
+      a: createRelativeLink(source, page),
+    }),
+    suppressH1,
+  );
 
   return (
     <DocsPage toc={page.data.toc} full={page.data.full}>
@@ -19,11 +27,7 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
         <DocsDescription className="mb-0">{page.data.description}</DocsDescription>
       ) : null}
       <DocsBody>
-        <MDX
-          components={getMDXComponents({
-            a: createRelativeLink(source, page),
-          })}
-        />
+        <MDX components={mdxComponents} />
       </DocsBody>
     </DocsPage>
   );

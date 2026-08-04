@@ -9,12 +9,41 @@ import {
   NavigationMenuTrigger,
 } from 'fumadocs-ui/components/ui/navigation-menu';
 import { ChevronRight } from 'lucide-react';
+import { useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { vuepressNavbarTree } from '@/lib/vuepress-navbar';
 import type {
   VuepressNavGroup,
   VuepressNavLink,
   VuepressNavNode,
 } from '@/lib/vuepress-navbar';
+
+function FlyoutPanel({
+  open,
+  anchor,
+  children,
+  onClose,
+}: {
+  open: boolean;
+  anchor: HTMLElement | null;
+  children: ReactNode;
+  onClose: () => void;
+}) {
+  if (!open || !anchor) return null;
+
+  const rect = anchor.getBoundingClientRect();
+
+  return createPortal(
+    <div
+      className="fixed z-[300] min-w-[14rem] rounded-lg border border-fd-border bg-fd-background p-1 shadow-lg"
+      style={{ top: rect.top, left: rect.right + 4 }}
+      onMouseLeave={onClose}
+    >
+      {children}
+    </div>,
+    document.body,
+  );
+}
 
 function NavLeaf({ item, nested }: { item: VuepressNavLink; nested?: boolean }) {
   const className =
@@ -38,21 +67,23 @@ function NavLeaf({ item, nested }: { item: VuepressNavLink; nested?: boolean }) 
 }
 
 function NavSubGroup({ item }: { item: VuepressNavGroup }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+
   return (
-    <div className="group/sub relative min-w-[11rem]">
+    <div ref={ref} className="relative min-w-[11rem]">
       <div
         className="flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-fd-accent hover:text-fd-accent-foreground whitespace-nowrap"
+        onMouseEnter={() => setOpen(true)}
       >
         <span>{item.text}</span>
         <ChevronRight className="size-4 shrink-0 text-fd-muted-foreground" />
       </div>
-      <div
-        className="absolute top-0 left-full z-50 hidden min-w-[14rem] rounded-lg border border-fd-border bg-fd-background p-1 shadow-lg group-hover/sub:block"
-      >
+      <FlyoutPanel open={open} anchor={ref.current} onClose={() => setOpen(false)}>
         {item.children.map((child, index) => (
           <NavNode key={`${item.text}-${index}`} item={child} nested />
         ))}
-      </div>
+      </FlyoutPanel>
     </div>
   );
 }
@@ -70,8 +101,8 @@ function TopLevelMenu({ group }: { group: VuepressNavGroup }) {
       <NavigationMenuTrigger className="h-8 rounded-md px-2 py-1 text-sm font-medium whitespace-nowrap">
         {group.text}
       </NavigationMenuTrigger>
-      <NavigationMenuContent className="p-2">
-        <div className="flex">
+      <NavigationMenuContent className="overflow-visible p-2">
+        <div className="flex overflow-visible">
           {group.children.map((child, index) =>
             child.type === 'group' ? (
               <NavSubGroup key={`${group.text}-${index}`} item={child} />
@@ -84,16 +115,6 @@ function TopLevelMenu({ group }: { group: VuepressNavGroup }) {
         </div>
       </NavigationMenuContent>
     </NavigationMenuItem>
-  );
-}
-
-export function VuepressNavMenu({ className }: { className?: string }) {
-  return (
-    <NavigationMenuList className={className}>
-      {vuepressNavbarTree.map((group) => (
-        <TopLevelMenu key={group.text} group={group} />
-      ))}
-    </NavigationMenuList>
   );
 }
 
@@ -131,6 +152,16 @@ function MobileNavNode({ item, depth }: { item: VuepressNavNode; depth: number }
     );
   }
   return <MobileNavGroup item={item} depth={depth} />;
+}
+
+export function VuepressNavMenu({ className }: { className?: string }) {
+  return (
+    <NavigationMenuList className={className}>
+      {vuepressNavbarTree.map((group) => (
+        <TopLevelMenu key={group.text} group={group} />
+      ))}
+    </NavigationMenuList>
+  );
 }
 
 export function VuepressMobileNav() {

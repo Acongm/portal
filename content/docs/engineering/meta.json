@@ -1,0 +1,15 @@
+{
+  "title": "工程实践",
+  "description": "构建、Node、Git、性能与踩坑",
+  "root": true,
+  "pages": [
+    "index",
+    "---构建与运行时---",
+    "webpack",
+    "node",
+    "git",
+    "performance",
+    "---问题排查---",
+    "issue"
+  ]
+}

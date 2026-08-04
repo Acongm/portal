@@ -1,9 +1,0 @@
-{
-  "title": "工具函数",
-  "pages": [
-    "regexp",
-    "function",
-    "library"
-  ],
-  "root": true
-}

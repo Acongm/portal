@@ -10,28 +10,23 @@ import {
   NavigationMenuViewport,
 } from 'fumadocs-ui/components/ui/navigation-menu';
 import type { BaseSlots } from 'fumadocs-ui/layouts/shared';
-import type { DocsSlots } from 'fumadocs-ui/layouts/notebook';
 import type { NavOptions } from 'fumadocs-ui/layouts/shared';
-import { ChevronDown, Languages, Sidebar } from 'lucide-react';
+import { ChevronDown, Languages } from 'lucide-react';
 import { useState, type ComponentProps } from 'react';
 import { VuepressMobileNav, VuepressNavMenu } from '@/components/vuepress-nav-menu';
 
 type NavSlots = Pick<
   BaseSlots,
   'navTitle' | 'searchTrigger' | 'themeSwitch' | 'languageSelect'
-> & {
-  sidebar?: DocsSlots['sidebar'];
-};
+>;
 
 export function SiteNavBar({
   slots,
   nav,
-  docsMode = false,
   ...props
 }: ComponentProps<'header'> & {
   slots: NavSlots;
   nav?: NavOptions;
-  docsMode?: boolean;
 }) {
   const [menuOpen, setMenuOpen] = useState('');
 
@@ -40,11 +35,10 @@ export function SiteNavBar({
   return (
     <NavigationMenu value={menuOpen} onValueChange={setMenuOpen} asChild>
       <header
-        id={docsMode ? 'nd-subnav' : 'nd-nav'}
+        id="nd-nav"
         {...props}
         className={cn(
           'site-nav-bar sticky top-0 z-40 w-full border-b bg-fd-background/80 backdrop-blur-sm',
-          docsMode && '[grid-area:header]',
           props.className,
         )}
       >
@@ -75,34 +69,8 @@ export function SiteNavBar({
               </slots.languageSelect.root>
             ) : null}
             {slots.themeSwitch ? <slots.themeSwitch /> : null}
-            {docsMode && slots.sidebar ? (
-              <slots.sidebar.collapseTrigger
-                className={cn(
-                  buttonVariants({
-                    color: 'secondary',
-                    size: 'icon-sm',
-                    className: 'rounded-full text-fd-muted-foreground max-md:hidden',
-                  }),
-                )}
-              >
-                <Sidebar className="size-4" />
-              </slots.sidebar.collapseTrigger>
-            ) : null}
             {slots.searchTrigger ? (
               <slots.searchTrigger.sm hideIfDisabled className="p-2 lg:hidden" />
-            ) : null}
-            {docsMode && slots.sidebar ? (
-              <slots.sidebar.trigger
-                className={cn(
-                  buttonVariants({
-                    color: 'ghost',
-                    size: 'icon-sm',
-                    className: 'p-2 lg:hidden',
-                  }),
-                )}
-              >
-                <Sidebar className="size-5" />
-              </slots.sidebar.trigger>
             ) : null}
             <NavigationMenuItem asChild className="lg:hidden">
               <div>
