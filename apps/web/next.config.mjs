@@ -54,6 +54,16 @@ const config = {
         destination: '/docs/core',
         permanent: true,
       },
+      {
+        source: '/docs/news/mark',
+        destination: '/docs/career/mark',
+        permanent: true,
+      },
+      {
+        source: '/docs/news/mark/:path*',
+        destination: '/docs/career/mark/:path*',
+        permanent: true,
+      },
       ...byFolder,
     ];
   },

@@ -1,6 +1,6 @@
 {
   "title": "面试求职",
-  "description": "面试准备、题库、记录与简历",
+  "description": "面试准备、题库、记录、简历与查漏补缺",
   "root": true,
   "pages": [
     "index",
@@ -9,6 +9,7 @@
     "theory",
     "---记录与简历---",
     "interview",
-    "job-description"
+    "job-description",
+    "mark"
   ]
 }

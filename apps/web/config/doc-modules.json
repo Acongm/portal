@@ -165,7 +165,7 @@
     {
       "id": "career",
       "title": "面试求职",
-      "description": "面试准备、题库、记录与简历",
+      "description": "面试准备、题库、记录、简历与查漏补缺",
       "icon": "GraduationCap",
       "accent": "#14b8a6",
       "categories": [
@@ -204,6 +204,13 @@
               "description": "简历项目与问答大纲",
               "icon": "FileUser",
               "accent": "#78716c"
+            },
+            {
+              "folder": "mark",
+              "title": "技能提炼",
+              "description": "简历查漏补缺与知识点梳理",
+              "icon": "BookOpen",
+              "accent": "#ec4899"
             }
           ]
         }
@@ -213,12 +220,12 @@
     {
       "id": "news",
       "title": "资讯",
-      "description": "每日资讯与技能提炼笔记",
+      "description": "每日技术资讯与阅读摘要",
       "icon": "Newspaper",
       "accent": "#ec4899",
       "categories": [
         {
-          "title": "阅读与提炼",
+          "title": "阅读",
           "modules": [
             {
               "folder": "daily-news",
@@ -226,13 +233,6 @@
               "description": "技术资讯与阅读摘要",
               "icon": "Newspaper",
               "accent": "#f43f5e"
-            },
-            {
-              "folder": "mark",
-              "title": "技能提炼",
-              "description": "知识点梳理与专题笔记",
-              "icon": "BookOpen",
-              "accent": "#ec4899"
             }
           ]
         }
