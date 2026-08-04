@@ -12,12 +12,8 @@
   --fd-layout-width: 100%;
 }
 
-/* 加宽正文阅读区（默认 900px / full 1168px 仍偏窄） */
+/* 加宽正文阅读区（默认 900px 偏窄；不依赖 DocsPage full，避免影响右侧 TOC） */
 #nd-page {
-  max-width: min(72rem, 100%);
-}
-
-#nd-page[data-full='true'] {
   max-width: min(80rem, 100%);
 }
 
