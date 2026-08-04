@@ -20,8 +20,8 @@ export default function Layout({ children }: LayoutProps<'/docs'>) {
       }))}
       sidebar={{
         collapsible: true,
-        // 模块树通常较浅，默认收起避免误展开兄弟模块
-        defaultOpenLevel: 0,
+        // 模块内各级目录默认全部展开，保证任意深度页面看到的模块 tree 一致、完整
+        defaultOpenLevel: 99,
       }}
     >
       {children}
