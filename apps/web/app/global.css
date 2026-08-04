@@ -37,15 +37,25 @@
 }
 
 /* Docs 侧栏领域切换：列表项改为卡片感 */
-#nd-docs-layout [data-radix-popper-content-wrapper] [data-radix-popover-content] a {
-  border: 1px solid color-mix(in oklab, var(--color-fd-border) 80%, transparent);
-  background: var(--color-fd-card);
-  padding: 0.625rem 0.75rem;
-  margin-block: 0.125rem;
+#nd-docs-layout .fd-scroll-container {
+  gap: 0.375rem;
+  padding: 0.5rem;
 }
 
-#nd-docs-layout [data-radix-popper-content-wrapper] [data-radix-popover-content] a:hover {
+#nd-docs-layout .fd-scroll-container > a {
+  border: 1px solid color-mix(in oklab, var(--color-fd-border) 85%, transparent);
+  background: var(--color-fd-card);
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.75rem;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+#nd-docs-layout .fd-scroll-container > a:hover {
   border-color: color-mix(in oklab, var(--color-fd-primary) 40%, transparent);
+  box-shadow: 0 2px 8px color-mix(in oklab, var(--color-fd-primary) 10%, transparent);
 }
 
 html {
