@@ -34,16 +34,13 @@ export type DocDomain = {
 /** 领域注册表 — 编辑 config/doc-modules.json 后运行 pnpm sync:modules */
 export const docDomains: DocDomain[] = registry.domains;
 
-/** @deprecated 兼容旧首页：扁平化「当前主领域」品类 */
-export const docModuleCategories: DocModuleCategory[] =
-  docDomains.find((d) => d.id === 'frontend')?.categories ?? [];
-
-export const nestedDocModules: NestedDocModule[] =
-  docDomains.find((d) => d.id === 'frontend')?.nestedModules ?? [];
-
-export const docModules: DocModuleEntry[] = docModuleCategories.flatMap(
-  (category) => category.modules,
+export const docModules: DocModuleEntry[] = docDomains.flatMap((domain) =>
+  (domain.categories ?? []).flatMap((category) => category.modules),
 );
+
+/** @deprecated 兼容：默认取「前端核心」品类 */
+export const docModuleCategories: DocModuleCategory[] =
+  docDomains.find((d) => d.id === 'core')?.categories ?? [];
 
 export function getDomainById(id: string): DocDomain | undefined {
   return docDomains.find((d) => d.id === id);
@@ -57,7 +54,7 @@ export function getDomainHref(domainId: string): string {
   return `/docs/${domainId}`;
 }
 
-/** 旧路径模块 → 所属领域（用于 redirect / 导航兼容） */
+/** 旧路径模块 → 所属领域（redirect / 导航兼容） */
 export function getDomainIdForLegacyFolder(folder: string): string | undefined {
   for (const domain of docDomains) {
     const modules = [
@@ -67,4 +64,17 @@ export function getDomainIdForLegacyFolder(folder: string): string | undefined {
     if (modules.some((m) => m.folder === folder)) return domain.id;
   }
   return undefined;
+}
+
+export function listAllDomainModuleFolders(): Array<{ domainId: string; folder: string }> {
+  const result: Array<{ domainId: string; folder: string }> = [];
+  for (const domain of docDomains) {
+    for (const mod of [
+      ...(domain.categories ?? []).flatMap((c) => c.modules),
+      ...(domain.nestedModules ?? []),
+    ]) {
+      result.push({ domainId: domain.id, folder: mod.folder });
+    }
+  }
+  return result;
 }

@@ -1,0 +1,16 @@
+{
+  "title": "前端核心",
+  "description": "语言基础、框架生态与设计模式",
+  "root": true,
+  "pages": [
+    "index",
+    "---语言基础---",
+    "JavaScript",
+    "TypeScript",
+    "css",
+    "---框架与模式---",
+    "react",
+    "vue",
+    "Pattern"
+  ]
+}

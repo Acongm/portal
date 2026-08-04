@@ -2,7 +2,11 @@
   "title": "acongm",
   "pages": [
     "index",
-    "frontend",
+    "core",
+    "engineering",
+    "tools",
+    "career",
+    "news",
     "yoga",
     "education"
   ]

@@ -1,0 +1,14 @@
+{
+  "title": "面试求职",
+  "description": "面试准备、题库、记录与简历",
+  "root": true,
+  "pages": [
+    "index",
+    "---备战与题库---",
+    "interview-prep",
+    "theory",
+    "---记录与简历---",
+    "interview",
+    "job-description"
+  ]
+}

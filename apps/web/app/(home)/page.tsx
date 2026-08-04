@@ -18,26 +18,26 @@ export default function HomePage() {
           />
           <h1 className="mb-3 text-4xl font-bold tracking-tight md:text-5xl">acongm</h1>
           <p className="mb-8 max-w-2xl text-base text-fd-muted-foreground md:text-lg">
-            多领域知识库：前端技术、瑜伽学习、小学教育。先选领域，再进入模块阅读。
+            按领域阅读：前端核心、工程实践、工具、面试求职、资讯；另有瑜伽与小学教育可扩展空间。
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Link
-              href="/docs/frontend"
+              href="/docs/core"
               className="inline-flex h-10 items-center rounded-full bg-[#3eaf7c] px-6 text-sm font-medium text-white transition-colors hover:bg-[#359e6c]"
             >
-              前端技术
+              前端核心
             </Link>
             <Link
-              href="/docs/yoga"
+              href="/docs/engineering"
               className="inline-flex h-10 items-center rounded-full border border-fd-border bg-fd-background px-6 text-sm font-medium transition-colors hover:bg-fd-accent"
             >
-              瑜伽学习
+              工程实践
             </Link>
             <Link
-              href="/docs/education"
+              href="/docs/career"
               className="inline-flex h-10 items-center rounded-full border border-fd-border bg-fd-background px-6 text-sm font-medium transition-colors hover:bg-fd-accent"
             >
-              小学教育
+              面试求职
             </Link>
           </div>
         </div>

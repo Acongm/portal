@@ -1,15 +1,15 @@
 {
   "domains": [
     {
-      "id": "frontend",
-      "title": "前端技术",
-      "description": "语言、框架、工程化、工具与面试",
+      "id": "core",
+      "title": "前端核心",
+      "description": "语言基础、框架生态与设计模式",
       "icon": "Code2",
       "accent": "#3eaf7c",
       "categories": [
         {
-          "title": "前端核心",
-          "description": "语言基础、框架生态与设计模式",
+          "title": "语言基础",
+          "description": "JavaScript / TypeScript / CSS",
           "modules": [
             {
               "folder": "JavaScript",
@@ -31,7 +31,13 @@
               "description": "布局、动画与工程化样式方案",
               "icon": "Palette",
               "accent": "#264de4"
-            },
+            }
+          ]
+        },
+        {
+          "title": "框架与模式",
+          "description": "React / Vue / 设计模式",
+          "modules": [
             {
               "folder": "react",
               "title": "React",
@@ -54,10 +60,19 @@
               "accent": "#8b5cf6"
             }
           ]
-        },
+        }
+      ],
+      "nestedModules": []
+    },
+    {
+      "id": "engineering",
+      "title": "工程实践",
+      "description": "构建、Node、Git、性能与踩坑",
+      "icon": "Package",
+      "accent": "#0ea5e9",
+      "categories": [
         {
-          "title": "工程实践",
-          "description": "构建工具、Node、Git 与性能优化",
+          "title": "构建与运行时",
           "modules": [
             {
               "folder": "webpack",
@@ -90,8 +105,29 @@
           ]
         },
         {
-          "title": "工具与成长",
-          "description": "在线工具、软件推荐、踩坑与 AI 专题",
+          "title": "问题排查",
+          "modules": [
+            {
+              "folder": "issue",
+              "title": "踩坑记录",
+              "description": "兼容性疑难杂症与解决方案",
+              "icon": "Bug",
+              "accent": "#ef4444"
+            }
+          ]
+        }
+      ],
+      "nestedModules": []
+    },
+    {
+      "id": "tools",
+      "title": "工具",
+      "description": "在线工具、软件推荐、工具函数与 AI 辅助",
+      "icon": "Wrench",
+      "accent": "#6366f1",
+      "categories": [
+        {
+          "title": "效率工具",
           "modules": [
             {
               "folder": "online-tools",
@@ -108,31 +144,33 @@
               "accent": "#6366f1"
             },
             {
-              "folder": "mark",
-              "title": "技能提炼",
-              "description": "面试知识点梳理与每日资讯",
-              "icon": "BookOpen",
-              "accent": "#ec4899"
-            },
-            {
               "folder": "ai",
               "title": "AI 开发",
               "description": "AI 相关实践与文档增强",
               "icon": "Sparkles",
               "accent": "#a855f7"
-            },
-            {
-              "folder": "issue",
-              "title": "踩坑记录",
-              "description": "兼容性疑难杂症与解决方案",
-              "icon": "Bug",
-              "accent": "#ef4444"
             }
           ]
-        },
+        }
+      ],
+      "nestedModules": [
         {
-          "title": "面试求职",
-          "description": "面试准备、题库、记录与简历",
+          "folder": "utils",
+          "title": "工具函数",
+          "description": "正则等常用工具函数片段",
+          "parent": "online-tools"
+        }
+      ]
+    },
+    {
+      "id": "career",
+      "title": "面试求职",
+      "description": "面试准备、题库、记录与简历",
+      "icon": "GraduationCap",
+      "accent": "#14b8a6",
+      "categories": [
+        {
+          "title": "备战与题库",
           "modules": [
             {
               "folder": "interview-prep",
@@ -147,7 +185,12 @@
               "description": "岗位大纲与 Hard Mode 题目",
               "icon": "GraduationCap",
               "accent": "#14b8a6"
-            },
+            }
+          ]
+        },
+        {
+          "title": "记录与简历",
+          "modules": [
             {
               "folder": "interview",
               "title": "面试记录",
@@ -165,20 +208,36 @@
           ]
         }
       ],
-      "nestedModules": [
+      "nestedModules": []
+    },
+    {
+      "id": "news",
+      "title": "资讯",
+      "description": "每日资讯与技能提炼笔记",
+      "icon": "Newspaper",
+      "accent": "#ec4899",
+      "categories": [
         {
-          "folder": "utils",
-          "title": "工具函数",
-          "description": "正则等常用工具函数片段",
-          "parent": "online-tools"
-        },
-        {
-          "folder": "daily-news",
-          "title": "每日资讯",
-          "description": "技术资讯与阅读摘要",
-          "parent": "mark"
+          "title": "阅读与提炼",
+          "modules": [
+            {
+              "folder": "daily-news",
+              "title": "每日资讯",
+              "description": "技术资讯与阅读摘要",
+              "icon": "Newspaper",
+              "accent": "#f43f5e"
+            },
+            {
+              "folder": "mark",
+              "title": "技能提炼",
+              "description": "知识点梳理与专题笔记",
+              "icon": "BookOpen",
+              "accent": "#ec4899"
+            }
+          ]
         }
-      ]
+      ],
+      "nestedModules": []
     },
     {
       "id": "yoga",

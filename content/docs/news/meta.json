@@ -1,0 +1,11 @@
+{
+  "title": "资讯",
+  "description": "每日资讯与技能提炼笔记",
+  "root": true,
+  "pages": [
+    "index",
+    "---阅读与提炼---",
+    "daily-news",
+    "mark"
+  ]
+}

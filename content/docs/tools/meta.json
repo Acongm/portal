@@ -1,0 +1,12 @@
+{
+  "title": "工具",
+  "description": "在线工具、软件推荐、工具函数与 AI 辅助",
+  "root": true,
+  "pages": [
+    "index",
+    "---效率工具---",
+    "online-tools",
+    "software",
+    "ai"
+  ]
+}
