@@ -3,5 +3,10 @@
   "framework": "nextjs",
   "installCommand": "cd ../.. && pnpm install",
   "buildCommand": "cd ../.. && pnpm build",
-  "devCommand": "pnpm dev"
+  "devCommand": "pnpm dev",
+  "build": {
+    "env": {
+      "NODE_VERSION": "22"
+    }
+  }
 }

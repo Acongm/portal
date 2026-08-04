@@ -13,7 +13,7 @@ import type { BaseSlots } from 'fumadocs-ui/layouts/shared';
 import type { NavOptions } from 'fumadocs-ui/layouts/shared';
 import { ChevronDown, Languages } from 'lucide-react';
 import { useState, type ComponentProps } from 'react';
-import { VuepressMobileNav, VuepressNavMenu } from '@/components/vuepress-nav-menu';
+import { DomainMobileNav, DomainNavMenu } from '@/components/domain-nav-menu';
 
 type NavSlots = Pick<
   BaseSlots,
@@ -44,7 +44,7 @@ export function SiteNavBar({
       >
         <div
           className={cn(
-            'flex h-14 w-full max-w-none items-center gap-2 px-4 md:px-6',
+            'flex h-14 w-full max-w-none items-center gap-1 px-4 md:gap-2 md:px-6',
             menuOpen.length > 0 && 'max-lg:shadow-lg',
           )}
         >
@@ -52,15 +52,13 @@ export function SiteNavBar({
             <slots.navTitle className="inline-flex shrink-0 items-center gap-2.5 font-semibold" />
           ) : null}
 
-          <VuepressNavMenu
-            className="ms-2 flex min-w-0 flex-1 flex-nowrap items-center gap-0.5 max-lg:hidden"
-          />
+          <DomainNavMenu className="ms-1 flex min-w-0 flex-1 flex-nowrap items-center gap-0.5 overflow-x-auto max-lg:hidden" />
 
           <div className="flex shrink-0 items-center gap-1.5 ms-auto">
             {slots.searchTrigger ? (
               <slots.searchTrigger.full
                 hideIfDisabled
-                className="w-[min(240px,28vw)] shrink-0 rounded-full ps-2.5 max-lg:hidden"
+                className="w-[min(220px,24vw)] shrink-0 rounded-full ps-2.5 max-lg:hidden"
               />
             ) : null}
             {slots.languageSelect ? (
@@ -84,12 +82,10 @@ export function SiteNavBar({
                     }),
                   )}
                 >
-                  <ChevronDown
-                    className="transition-transform duration-300 group-data-[state=open]:rotate-180"
-                  />
+                  <ChevronDown className="transition-transform duration-300 group-data-[state=open]:rotate-180" />
                 </NavigationMenuTrigger>
                 <NavigationMenuContent className="flex max-h-[70vh] flex-col gap-3 overflow-y-auto p-4">
-                  <VuepressMobileNav />
+                  <DomainMobileNav />
                   <div className="flex items-center gap-2 border-t border-fd-border pt-3">
                     {slots.languageSelect ? (
                       <slots.languageSelect.root>
@@ -103,7 +99,7 @@ export function SiteNavBar({
             </NavigationMenuItem>
           </div>
         </div>
-        <NavigationMenuViewport />
+        <NavigationMenuViewport className="!overflow-visible" />
       </header>
     </NavigationMenu>
   );
