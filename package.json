@@ -11,7 +11,8 @@
     "build": "pnpm --filter web build",
     "start": "pnpm --filter web start",
     "types:check": "pnpm --filter web types:check",
-    "migrate:docs": "node scripts/migrate-docs.mjs"
+    "migrate:docs": "node scripts/migrate-docs.mjs",
+    "sync:modules": "node scripts/sync-doc-modules.mjs"
   },
   "pnpm": {
     "onlyBuiltDependencies": ["esbuild", "sharp"]
