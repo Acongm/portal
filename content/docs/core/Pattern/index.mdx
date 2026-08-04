@@ -13,13 +13,13 @@ description: "前端常见模式与实现示例"
 
 | #   | 模式           | 核心文件                                                                        | 文档                                   | 特点                 | 最佳场景         |
 | --- | -------------- | ------------------------------------------------------------------------------- | -------------------------------------- | -------------------- | ---------------- |
-| 1   | **发布订阅**   | [SharedStateBridgeSingleton.ts](./ServiceRequest/SharedStateBridgeSingleton.md) | [README](./ServiceRequest/README.md)   | 完全解耦，多对多通信 | 工单系统、微前端 |
-| 2   | **观察者**     | [ObserverSingleton.ts](./Observer/ObserverSingleton.md)                         | [README](./Observer/README.md)         | 一对多依赖关系       | 数据驱动更新     |
-| 3   | **事件总线**   | [EventBusSingleton.ts](./EventBus/EventBusSingleton.md)                         | [README](./EventBus/README.md)         | 简单直接，on/emit    | 全局事件通知     |
-| 4   | **状态容器**   | [StoreSingleton.ts](./Store/StoreSingleton.md)                                  | [README](./Store/README.md)            | 状态快照，批量更新   | 简单状态管理     |
-| 5   | **广播通道**   | [BroadcastSingleton.ts](./BroadcastChannel/BroadcastSingleton.md)               | [README](./BroadcastChannel/README.md) | 跨标签页同步         | 多标签页/iframe  |
-| 6   | **自定义事件** | [CustomEventSingleton.ts](./CustomEvent/CustomEventSingleton.md)                | [README](./CustomEvent/README.md)      | 原生 DOM API         | 跨框架通信       |
-| 7   | **代理模式**   | [ProxyStoreSingleton.ts](./ProxyStore/ProxyStoreSingleton.md)                   | [README](./ProxyStore/README.md)       | 透明响应式操作       | Vue3/Valtio 风格 |
+| 1   | **发布订阅**   | [SharedStateBridgeSingleton.ts](./ServiceRequest/SharedStateBridgeSingleton.mdx) | [README](./ServiceRequest/index.mdx)   | 完全解耦，多对多通信 | 工单系统、微前端 |
+| 2   | **观察者**     | [ObserverSingleton.ts](./Observer/ObserverSingleton.mdx)                         | [README](./Observer/index.mdx)         | 一对多依赖关系       | 数据驱动更新     |
+| 3   | **事件总线**   | [EventBusSingleton.ts](./EventBus/EventBusSingleton.mdx)                         | [README](./EventBus/index.mdx)         | 简单直接，on/emit    | 全局事件通知     |
+| 4   | **状态容器**   | [StoreSingleton.ts](./Store/StoreSingleton.mdx)                                  | [README](./Store/index.mdx)            | 状态快照，批量更新   | 简单状态管理     |
+| 5   | **广播通道**   | [BroadcastSingleton.ts](./BroadcastChannel/BroadcastSingleton.mdx)               | [README](./BroadcastChannel/index.mdx) | 跨标签页同步         | 多标签页/iframe  |
+| 6   | **自定义事件** | [CustomEventSingleton.ts](./CustomEvent/CustomEventSingleton.mdx)                | [README](./CustomEvent/index.mdx)      | 原生 DOM API         | 跨框架通信       |
+| 7   | **代理模式**   | [ProxyStoreSingleton.ts](./ProxyStore/ProxyStoreSingleton.mdx)                   | [README](./ProxyStore/index.mdx)       | 透明响应式操作       | Vue3/Valtio 风格 |
 
 ---
 
@@ -140,12 +140,12 @@ Pattern/
 
 ### 1️⃣ 发布订阅模式 (Pub/Sub)
 
-> 📁 [ServiceRequest/](./ServiceRequest/) | 📄 [文档](./ServiceRequest/README.md)
+> 📁 [ServiceRequest/](./ServiceRequest/) | 📄 [文档](./ServiceRequest/index.mdx)
 
 **核心文件**：
 
-- [SharedStateBridge.ts](./ServiceRequest/SharedStateBridge.md) - 发布订阅核心类
-- [SharedStateBridgeSingleton.ts](./ServiceRequest/SharedStateBridgeSingleton.md) - 单例导出
+- [SharedStateBridge.ts](./ServiceRequest/SharedStateBridge.mdx) - 发布订阅核心类
+- [SharedStateBridgeSingleton.ts](./ServiceRequest/SharedStateBridgeSingleton.mdx) - 单例导出
 
 **原理**：通过中间调度中心解耦发布者和订阅者，支持多对多通信。
 
@@ -168,12 +168,12 @@ subscribeSharedData('user.profile', (data) => {
 
 ### 2️⃣ 观察者模式 (Observer)
 
-> 📁 [Observer/](./Observer/) | 📄 [文档](./Observer/README.md)
+> 📁 [Observer/](./Observer/) | 📄 [文档](./Observer/index.mdx)
 
 **核心文件**：
 
-- [Subject.ts](./Observer/Subject.md) - 被观察者（Subject）类
-- [ObserverSingleton.ts](./Observer/ObserverSingleton.md) - 单例导出
+- [Subject.ts](./Observer/Subject.mdx) - 被观察者（Subject）类
+- [ObserverSingleton.ts](./Observer/ObserverSingleton.mdx) - 单例导出
 
 **原理**：被观察者维护观察者列表，状态变化时直接通知所有观察者。
 
@@ -191,12 +191,12 @@ counter$.notify(10)
 
 ### 3️⃣ 事件总线 (Event Bus)
 
-> 📁 [EventBus/](./EventBus/) | 📄 [文档](./EventBus/README.md)
+> 📁 [EventBus/](./EventBus/) | 📄 [文档](./EventBus/index.mdx)
 
 **核心文件**：
 
-- [EventBus.ts](./EventBus/EventBus.md) - 事件总线核心类
-- [EventBusSingleton.ts](./EventBus/EventBusSingleton.md) - 单例导出
+- [EventBus.ts](./EventBus/EventBus.mdx) - 事件总线核心类
+- [EventBusSingleton.ts](./EventBus/EventBusSingleton.mdx) - 单例导出
 
 **原理**：集中式事件管理，经典的 on/emit 模式。
 
@@ -218,12 +218,12 @@ on('app:ready', (ready) => console.log('ready?', ready))
 
 ### 4️⃣ 状态容器 (Singleton Store)
 
-> 📁 [Store/](./Store/) | 📄 [文档](./Store/README.md)
+> 📁 [Store/](./Store/) | 📄 [文档](./Store/index.mdx)
 
 **核心文件**：
 
-- [Store.ts](./Store/Store.md) - 状态容器核心类
-- [StoreSingleton.ts](./Store/StoreSingleton.md) - 单例导出
+- [Store.ts](./Store/Store.mdx) - 状态容器核心类
+- [StoreSingleton.ts](./Store/StoreSingleton.mdx) - 单例导出
 
 **原理**：单例状态对象 + 订阅机制，支持状态快照和批量更新。
 
@@ -248,12 +248,12 @@ console.log(getSnapshot())
 
 ### 5️⃣ 广播通道 (Broadcast Channel)
 
-> 📁 [BroadcastChannel/](./BroadcastChannel/) | 📄 [文档](./BroadcastChannel/README.md)
+> 📁 [BroadcastChannel/](./BroadcastChannel/) | 📄 [文档](./BroadcastChannel/index.mdx)
 
 **核心文件**：
 
-- [BroadcastBridge.ts](./BroadcastChannel/BroadcastBridge.md) - 广播桥接核心类
-- [BroadcastSingleton.ts](./BroadcastChannel/BroadcastSingleton.md) - 单例导出
+- [BroadcastBridge.ts](./BroadcastChannel/BroadcastBridge.mdx) - 广播桥接核心类
+- [BroadcastSingleton.ts](./BroadcastChannel/BroadcastSingleton.mdx) - 单例导出
 
 **原理**：浏览器原生 BroadcastChannel API，支持跨标签页通信。
 
@@ -275,12 +275,12 @@ subscribe('session', (session) => {
 
 ### 6️⃣ 自定义事件 (Custom Events)
 
-> 📁 [CustomEvent/](./CustomEvent/) | 📄 [文档](./CustomEvent/README.md)
+> 📁 [CustomEvent/](./CustomEvent/) | 📄 [文档](./CustomEvent/index.mdx)
 
 **核心文件**：
 
-- [CustomEventBridge.ts](./CustomEvent/CustomEventBridge.md) - 自定义事件核心类
-- [CustomEventSingleton.ts](./CustomEvent/CustomEventSingleton.md) - 单例导出
+- [CustomEventBridge.ts](./CustomEvent/CustomEventBridge.mdx) - 自定义事件核心类
+- [CustomEventSingleton.ts](./CustomEvent/CustomEventSingleton.mdx) - 单例导出
 
 **原理**：原生 DOM CustomEvent + dispatchEvent。
 
@@ -302,12 +302,12 @@ on('button:clicked', (data) => {
 
 ### 7️⃣ 代理模式 (Proxy Store)
 
-> 📁 [ProxyStore/](./ProxyStore/) | 📄 [文档](./ProxyStore/README.md)
+> 📁 [ProxyStore/](./ProxyStore/) | 📄 [文档](./ProxyStore/index.mdx)
 
 **核心文件**：
 
-- [ProxyStore.ts](./ProxyStore/ProxyStore.md) - 代理存储核心类
-- [ProxyStoreSingleton.ts](./ProxyStore/ProxyStoreSingleton.md) - 单例导出
+- [ProxyStore.ts](./ProxyStore/ProxyStore.mdx) - 代理存储核心类
+- [ProxyStoreSingleton.ts](./ProxyStore/ProxyStoreSingleton.mdx) - 单例导出
 
 **原理**：ES6 Proxy 拦截读写操作，自动触发响应。
 
@@ -338,6 +338,6 @@ state.count++ // 输出: Count: 11
 
 ## 📚 扩展阅读
 
-- [观察者模式 vs 发布订阅模式](./Observer/README.md#与发布订阅模式的区别)
-- [React 状态管理对比](./ServiceRequest/README.md#react-状态管理-vs-发布订阅模式对比)
-- [微前端通信方案](./CustomEvent/README.md#微前端通信)
+- [观察者模式 vs 发布订阅模式](./Observer/index.mdx#与发布订阅模式的区别)
+- [React 状态管理对比](./ServiceRequest/index.mdx#react-状态管理-vs-发布订阅模式对比)
+- [微前端通信方案](./CustomEvent/index.mdx#微前端通信)

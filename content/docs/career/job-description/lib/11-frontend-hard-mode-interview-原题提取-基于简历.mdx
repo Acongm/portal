@@ -550,7 +550,7 @@ $('div').animate({ left: '1891px' })
 
 ### **4. 封装了极易使用的 Ajax**
 
-本书[壹.2.13 已有一段用原生的 JavaScript 实现 ajax 请求的代码](../1/1.2.13.md#ajax)，相当的复杂。而 用上了 jQuery 后，简洁了不少！如下所示：
+本书[壹.2.13 已有一段用原生的 JavaScript 实现 ajax 请求的代码](../1/1.2.13.mdx#ajax)，相当的复杂。而 用上了 jQuery 后，简洁了不少！如下所示：
 
 ```javascript
 $.ajax({
@@ -575,7 +575,7 @@ $.ajax({
 
 jQuery 能够快速选取 DOM 结点，这个无疑是 jQuery 受欢迎的一个重要的原因。但是就目前情况来说，这个优势已经没有了，为什么呢？有两个已经成为 W3C 标准的 API：`document.querySelector`和`document.querySelectorAll`，这两个 API 可以通过传入 css 选择器形式的字符串，以匹配到预期的 DOM 节点，而且基于浏览器的实现其执行效率更好。
 
-而 MVVM 一类的框架比如 React/Vue/Angular 的流行，其双向绑定的特性已经让 DOM 的更新变成由框架自行处理，让前端工程师可以不需要操作 DOM（改为让框架自行去操作[Virtual DOM](../1/1.4.3.md)），只需要专注数据和业务逻辑。而且 React/Vue/Angular 这些主流框架针对 DOM 的操作时做了大量的[Repaint 和 Reflow](../1/1.4.2.md)有关的优化，比如基于 Virtual DOM 进行计算，将多次对真实 DOM 的操作精简为最小变动然后操作真实 DOM、在同一个 Event Loop 循环内将多次 DOM 操作事件合并……这些优化措施都能有能更好的表现，而这些优化 jQuery 并没有做。
+而 MVVM 一类的框架比如 React/Vue/Angular 的流行，其双向绑定的特性已经让 DOM 的更新变成由框架自行处理，让前端工程师可以不需要操作 DOM（改为让框架自行去操作[Virtual DOM](../1/1.4.3.mdx)），只需要专注数据和业务逻辑。而且 React/Vue/Angular 这些主流框架针对 DOM 的操作时做了大量的[Repaint 和 Reflow](../1/1.4.2.mdx)有关的优化，比如基于 Virtual DOM 进行计算，将多次对真实 DOM 的操作精简为最小变动然后操作真实 DOM、在同一个 Event Loop 循环内将多次 DOM 操作事件合并……这些优化措施都能有能更好的表现，而这些优化 jQuery 并没有做。
 
 ### 3. 动画领域的替代方案
 
@@ -617,7 +617,7 @@ axios.get('/api').then(fn1, fn2)
 
 #### 函数重载
 
-在[壹.2.1 函数](../1/1.2.1.md) 里面最末尾有 John Resig 的一段有关“用原生 JavaScript 实现函数重载”的代码，已经见识到 jQuery 之父的 coding 能力。jQuery 里的函数重载是这样的：
+在[壹.2.1 函数](../1/1.2.1.mdx) 里面最末尾有 John Resig 的一段有关“用原生 JavaScript 实现函数重载”的代码，已经见识到 jQuery 之父的 coding 能力。jQuery 里的函数重载是这样的：
 
 ```javascript
 $(fn)

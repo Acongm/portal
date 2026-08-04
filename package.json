@@ -11,6 +11,8 @@
     "build": "pnpm --filter web build",
     "start": "pnpm --filter web start",
     "types:check": "pnpm --filter web types:check",
+    "test:doc-links": "node scripts/test-doc-links.mjs",
+    "fix:doc-links": "node scripts/fix-doc-internal-links.mjs",
     "migrate:docs": "node scripts/migrate-docs.mjs",
     "sync:modules": "node scripts/sync-doc-modules.mjs",
     "sync:module-intros": "node scripts/sync-module-index-intro.mjs",
