@@ -28,6 +28,8 @@ export function baseOptions(): BaseLayoutProps {
     },
     themeSwitch: {
       enabled: true,
+      // 明 / 暗 / 跟随系统；首次默认 system（见 RootProvider）
+      mode: 'light-dark-system',
     },
   };
 }
