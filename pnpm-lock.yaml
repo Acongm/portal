@@ -10,6 +10,15 @@ importers:
 
   apps/web:
     dependencies:
+      '@acongm/chat-ui':
+        specifier: workspace:*
+        version: link:../../packages/chat-ui
+      '@acongm/kb-types':
+        specifier: workspace:*
+        version: link:../../packages/kb-types
+      '@acongm/ui-theme':
+        specifier: workspace:*
+        version: link:../../packages/ui-theme
       cnfast:
         specifier: ^0.1.0
         version: 0.1.0
@@ -56,6 +65,46 @@ importers:
       tailwindcss:
         specifier: ^4.1.13
         version: 4.3.3
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+
+  packages/chat-ui:
+    dependencies:
+      '@acongm/kb-types':
+        specifier: workspace:*
+        version: link:../kb-types
+      '@acongm/ui-theme':
+        specifier: workspace:*
+        version: link:../ui-theme
+      lucide-react:
+        specifier: ^0.544.0
+        version: 0.544.0(react@19.2.8)
+    devDependencies:
+      '@types/react':
+        specifier: ^19.1.9
+        version: 19.2.18
+      '@types/react-dom':
+        specifier: ^19.1.7
+        version: 19.2.4(@types/react@19.2.18)
+      react:
+        specifier: ^19.2.0
+        version: 19.2.8
+      react-dom:
+        specifier: ^19.2.0
+        version: 19.2.8(react@19.2.8)
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+
+  packages/kb-types:
+    devDependencies:
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+
+  packages/ui-theme:
+    devDependencies:
       typescript:
         specifier: ^5.9.2
         version: 5.9.3

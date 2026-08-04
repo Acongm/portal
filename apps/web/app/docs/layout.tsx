@@ -2,6 +2,9 @@ import { source } from '@/lib/source';
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import { baseOptions } from '@/lib/layout.shared';
 import { docDomains, getDomainHref } from '@/lib/modules.registry';
+import { DocChatEmbed } from '@/components/doc-chat-embed';
+import '@acongm/ui-theme/tokens.css';
+import '@acongm/chat-ui/styles.css';
 
 export default function Layout({ children }: LayoutProps<'/docs'>) {
   const base = baseOptions();
@@ -25,6 +28,7 @@ export default function Layout({ children }: LayoutProps<'/docs'>) {
       }}
     >
       {children}
+      <DocChatEmbed />
     </DocsLayout>
   );
 }
