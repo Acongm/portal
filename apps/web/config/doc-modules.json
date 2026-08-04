@@ -1,0 +1,55 @@
+{
+  "categories": [
+    {
+      "title": "基础语言",
+      "modules": [
+        { "folder": "JavaScript", "title": "JavaScript" },
+        { "folder": "TypeScript", "title": "TypeScript" },
+        { "folder": "css", "title": "CSS" }
+      ]
+    },
+    {
+      "title": "框架生态",
+      "modules": [
+        { "folder": "react", "title": "React" },
+        { "folder": "vue", "title": "Vue" },
+        { "folder": "Pattern", "title": "设计模式" }
+      ]
+    },
+    {
+      "title": "工程化",
+      "modules": [
+        { "folder": "webpack", "title": "Webpack" },
+        { "folder": "node", "title": "Node.js" },
+        { "folder": "git", "title": "Git" },
+        { "folder": "performance", "title": "性能优化" }
+      ]
+    },
+    {
+      "title": "进阶专题",
+      "modules": [
+        { "folder": "mark", "title": "技能提炼" },
+        { "folder": "ai", "title": "AI 开发" },
+        { "folder": "daily-news", "title": "每日资讯" },
+        { "folder": "issue", "title": "踩坑记录" }
+      ]
+    },
+    {
+      "title": "工具箱",
+      "modules": [
+        { "folder": "utils", "title": "工具函数" },
+        { "folder": "online-tools", "title": "在线工具" },
+        { "folder": "software", "title": "软件推荐" }
+      ]
+    },
+    {
+      "title": "面试",
+      "modules": [
+        { "folder": "interview-prep", "title": "面试准备" },
+        { "folder": "theory", "title": "面试题库" },
+        { "folder": "interview", "title": "面试记录" },
+        { "folder": "job-description", "title": "简历问答" }
+      ]
+    }
+  ]
+}

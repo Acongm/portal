@@ -7,7 +7,7 @@
   --color-fd-ring: #3eaf7c;
 }
 
-/* 顶栏全宽单行：避免 Fumadocs 默认 max-width 挤压菜单换行 */
+/* 首页顶栏全宽单行 */
 .site-nav-bar {
   --fd-layout-width: 100%;
 }
@@ -17,14 +17,8 @@
 }
 
 #nd-nav > div,
-#nd-subnav > div[data-header-body],
 .site-nav-bar > div {
   max-width: none;
-}
-
-/* Notebook 自定义 header 固定单行高度 */
-#nd-subnav.site-nav-bar {
-  --fd-header-height: --spacing(14);
 }
 
 html {

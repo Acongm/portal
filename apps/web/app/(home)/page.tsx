@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { docModuleCategories } from '@/lib/modules.registry';
 
 const features = [
   {
@@ -59,6 +60,33 @@ export default function HomePage() {
               <p className="text-sm text-fd-muted-foreground">{feature.details}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="border-t border-fd-border">
+        <div className="mx-auto max-w-5xl px-6 py-12">
+          <h2 className="mb-8 text-center text-xl font-semibold">文档模块</h2>
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {docModuleCategories.map((category) => (
+              <div key={category.title}>
+                <h3 className="mb-3 text-sm font-medium text-fd-muted-foreground">
+                  {category.title}
+                </h3>
+                <ul className="flex flex-col gap-2">
+                  {category.modules.map((module) => (
+                    <li key={module.folder}>
+                      <Link
+                        href={`/docs/${module.folder}`}
+                        className="text-sm font-medium text-fd-foreground transition-colors hover:text-[#3eaf7c]"
+                      >
+                        {module.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
