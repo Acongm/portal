@@ -30,6 +30,28 @@
   overflow: visible !important;
 }
 
+/* Soom 风格 mega-menu：去掉默认 viewport 裁切与灰底 */
+.site-nav-bar .site-mega-viewport,
+.site-nav-bar [data-radix-navigation-menu-viewport].site-mega-viewport {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  margin-top: 0.5rem !important;
+  width: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+.site-nav-bar .site-mega-panel {
+  position: relative;
+  width: max-content;
+  max-width: min(920px, 92vw);
+}
+
 html {
   scrollbar-gutter: stable;
 }
