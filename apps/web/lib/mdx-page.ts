@@ -1,12 +1,11 @@
 import type { MDXComponents } from 'mdx/types';
 
-/** 模块首页 MDX 常与 frontmatter title 重复渲染 h1 */
-export function shouldSuppressLeadingH1(slug?: string[]): boolean {
-  if (!slug || slug.length === 0) return true;
-  // /docs/<domain> or /docs/<domain>/<module>
-  if (slug.length <= 2) return true;
-  const last = slug[slug.length - 1];
-  return last === 'index' || last === 'INDEX';
+/**
+ * DocsPage 已渲染 DocsTitle；MDX 正文再出 h1 会双标题。
+ * 所有文档页统一抑制正文首个 h1。
+ */
+export function shouldSuppressLeadingH1(_slug?: string[]): boolean {
+  return true;
 }
 
 export function withSuppressLeadingH1(
