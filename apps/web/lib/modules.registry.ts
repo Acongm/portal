@@ -27,12 +27,19 @@ export type DocDomain = {
   description?: string;
   icon?: string;
   accent?: string;
+  /** 隐藏入口：不出现在导航 / 首页 / 侧栏领域 Tab */
+  hidden?: boolean;
   categories: DocModuleCategory[];
   nestedModules?: NestedDocModule[];
 };
 
-/** 领域注册表 — 编辑 config/doc-modules.json 后运行 pnpm sync:modules */
-export const docDomains: DocDomain[] = registry.domains;
+const allDomains = registry.domains as DocDomain[];
+
+/** 领域注册表（含 hidden）— 编辑 config/doc-modules.json 后运行 pnpm sync:modules */
+export const allDocDomains: DocDomain[] = allDomains;
+
+/** 对外可见领域（导航、首页卡片、顶栏菜单） */
+export const docDomains: DocDomain[] = allDomains.filter((d) => !d.hidden);
 
 export const docModules: DocModuleEntry[] = docDomains.flatMap((domain) =>
   (domain.categories ?? []).flatMap((category) => category.modules),
@@ -43,7 +50,7 @@ export const docModuleCategories: DocModuleCategory[] =
   docDomains.find((d) => d.id === 'core')?.categories ?? [];
 
 export function getDomainById(id: string): DocDomain | undefined {
-  return docDomains.find((d) => d.id === id);
+  return allDocDomains.find((d) => d.id === id);
 }
 
 export function getModuleHref(domainId: string, folder: string): string {
@@ -56,7 +63,7 @@ export function getDomainHref(domainId: string): string {
 
 /** 旧路径模块 → 所属领域（redirect / 导航兼容） */
 export function getDomainIdForLegacyFolder(folder: string): string | undefined {
-  for (const domain of docDomains) {
+  for (const domain of allDocDomains) {
     const modules = [
       ...(domain.categories ?? []).flatMap((c) => c.modules),
       ...(domain.nestedModules ?? []),
@@ -68,7 +75,7 @@ export function getDomainIdForLegacyFolder(folder: string): string | undefined {
 
 export function listAllDomainModuleFolders(): Array<{ domainId: string; folder: string }> {
   const result: Array<{ domainId: string; folder: string }> = [];
-  for (const domain of docDomains) {
+  for (const domain of allDocDomains) {
     for (const mod of [
       ...(domain.categories ?? []).flatMap((c) => c.modules),
       ...(domain.nestedModules ?? []),

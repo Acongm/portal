@@ -245,6 +245,7 @@
       "description": "体式、呼吸与练习计划（待扩充）",
       "icon": "Flower2",
       "accent": "#f472b6",
+      "hidden": true,
       "categories": [],
       "nestedModules": []
     },
@@ -254,6 +255,7 @@
       "description": "学习资料与辅导笔记（待扩充）",
       "icon": "School",
       "accent": "#38bdf8",
+      "hidden": true,
       "categories": [],
       "nestedModules": []
     }

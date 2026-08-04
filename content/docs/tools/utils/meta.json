@@ -1,6 +1,7 @@
 {
   "title": "工具函数",
   "pages": [
+    "index",
     "regexp",
     "function",
     "library"

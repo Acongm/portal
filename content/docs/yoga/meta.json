@@ -1,7 +1,6 @@
 {
   "title": "瑜伽学习",
   "description": "体式、呼吸与练习计划（待扩充）",
-  "root": true,
   "pages": [
     "index"
   ]
