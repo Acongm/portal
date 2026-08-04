@@ -7,6 +7,16 @@
   --color-fd-ring: #3eaf7c;
 }
 
+/* Docs 全宽布局：侧栏贴左，正文区吃满剩余宽度（默认约 1600px 居中过窄） */
+:root {
+  --fd-layout-width: 100%;
+}
+
+/* 加宽正文阅读区（默认 900px 偏窄；不依赖 DocsPage full，避免影响右侧 TOC） */
+#nd-page {
+  max-width: min(80rem, 100%);
+}
+
 /* 首页顶栏：保证二级卡片菜单完整显示 */
 #nd-nav,
 #nd-nav > div {
