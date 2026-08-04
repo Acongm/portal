@@ -7,7 +7,7 @@ export default function HomePage() {
     <div className="flex flex-1 flex-col">
       <section className="relative overflow-hidden border-b border-fd-border">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#3eaf7c]/10 via-transparent to-transparent" />
-        <div className="relative mx-auto flex max-w-6xl flex-col items-center px-6 py-16 text-center md:py-24">
+        <div className="relative mx-auto flex w-full max-w-[min(80rem,100%)] flex-col items-center px-6 py-16 text-center md:px-8 md:py-24">
           <Image
             src="/logo.jpg"
             alt="acongm"
@@ -43,7 +43,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 py-14 md:py-16">
+      <section className="mx-auto w-full max-w-[min(80rem,100%)] px-6 py-14 md:px-8 md:py-16">
         <div className="mb-10 text-center">
           <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">按领域浏览</h2>
           <p className="mt-3 text-sm text-fd-muted-foreground md:text-base">

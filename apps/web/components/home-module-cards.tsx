@@ -97,7 +97,7 @@ export function HomeModuleCards() {
                     <h3 className="mb-4 text-sm font-medium text-fd-muted-foreground">
                       {category.title}
                     </h3>
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                       {category.modules.map((module) => {
                         const Icon = iconMap[module.icon ?? ''] ?? BookOpen;
                         const accent = module.accent ?? domainAccent;
