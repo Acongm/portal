@@ -99,7 +99,7 @@ export function SiteNavBar({
             </NavigationMenuItem>
           </div>
         </div>
-        <NavigationMenuViewport className="!overflow-visible" />
+        <NavigationMenuViewport className="site-mega-viewport !absolute !top-full !left-0 !mt-2 !h-auto !w-auto !overflow-visible !rounded-none !border-0 !bg-transparent !shadow-none" />
       </header>
     </NavigationMenu>
   );
