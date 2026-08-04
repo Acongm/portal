@@ -1,7 +1,6 @@
 {
   "title": "小学教育",
   "description": "学习资料与辅导笔记（待扩充）",
-  "root": true,
   "pages": [
     "index"
   ]

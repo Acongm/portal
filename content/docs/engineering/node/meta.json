@@ -1,6 +1,7 @@
 {
   "title": "Node.js",
   "pages": [
+    "index",
     "npm",
     "toolkit"
   ]

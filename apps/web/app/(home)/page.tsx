@@ -18,7 +18,7 @@ export default function HomePage() {
           />
           <h1 className="mb-3 text-4xl font-bold tracking-tight md:text-5xl">acongm</h1>
           <p className="mb-8 max-w-2xl text-base text-fd-muted-foreground md:text-lg">
-            按领域阅读：前端核心、工程实践、工具、面试求职、资讯；另有瑜伽与小学教育可扩展空间。
+            按领域阅读：前端核心、工程实践、工具、面试求职、资讯。
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Link

@@ -1,6 +1,7 @@
 {
   "title": "软件推荐",
   "pages": [
+    "index",
     "cross-platform",
     "mac",
     "windows",

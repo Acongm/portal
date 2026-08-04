@@ -1,6 +1,7 @@
 {
   "title": "简历问答",
   "pages": [
+    "index",
     "ASK_LIST",
     "ASK_RECORD_SPEAK_AI",
     "ASK_CODE_EXAMPLES",

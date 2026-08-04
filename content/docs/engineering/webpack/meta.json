@@ -1,6 +1,7 @@
 {
   "title": "Webpack",
   "pages": [
+    "index",
     "知识梳理",
     "架构及原理",
     "vite-知识梳理",
