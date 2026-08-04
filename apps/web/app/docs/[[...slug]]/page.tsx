@@ -2,9 +2,9 @@ import { getPageImageUrl, source } from '@/lib/source';
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/layouts/docs/page';
 import { notFound } from 'next/navigation';
 import { getMDXComponents } from '@/components/mdx';
+import { createDocRelativeLink } from '@/components/doc-relative-link';
 import { shouldSuppressLeadingH1, withSuppressLeadingH1 } from '@/lib/mdx-page';
 import type { Metadata } from 'next';
-import { createRelativeLink } from 'fumadocs-ui/mdx';
 
 export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   const params = await props.params;
@@ -15,7 +15,7 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   const suppressH1 = shouldSuppressLeadingH1(params.slug);
   const mdxComponents = withSuppressLeadingH1(
     getMDXComponents({
-      a: createRelativeLink(source, page),
+      a: createDocRelativeLink(source, page),
     }),
     suppressH1,
   );
