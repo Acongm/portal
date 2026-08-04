@@ -8,5 +8,7 @@
     "ASK_RECORD_KEY",
     "ASK_RECORD_BOOK_AI",
     "web前端开发工程师-彭聪"
-  ]
+  ],
+  "description": "简历项目与问答大纲",
+  "root": true
 }

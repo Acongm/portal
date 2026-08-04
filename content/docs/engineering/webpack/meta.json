@@ -12,5 +12,7 @@
     "install/pnpm",
     "install/yarn",
     "打包工具"
-  ]
+  ],
+  "description": "打包原理、Vite 对比与安装指南",
+  "root": true
 }

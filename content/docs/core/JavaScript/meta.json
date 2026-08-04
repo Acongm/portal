@@ -7,5 +7,7 @@
     "call、apply与bind",
     "js模拟bind方法",
     "js模拟new操作"
-  ]
+  ],
+  "description": "类型、闭包、原型链与经典面试题",
+  "root": true
 }

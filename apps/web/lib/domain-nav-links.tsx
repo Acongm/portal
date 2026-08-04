@@ -72,6 +72,8 @@ export function getDomainNavLinks(): LinkItemType[] {
 
     return {
       type: 'menu' as const,
+      // 仅首页顶栏展示；避免泄漏到 Docs 侧栏变成「全站模块列表」
+      on: 'nav' as const,
       text: domain.title,
       url: getDomainHref(domain.id),
       icon: <DomainIcon name={domain.icon} />,

@@ -22,5 +22,7 @@
     "tech__typescript",
     "tech__vite",
     "tech__webpack"
-  ]
+  ],
+  "description": "项目与技术面复习矩阵",
+  "root": true
 }

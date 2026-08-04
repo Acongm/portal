@@ -2,5 +2,7 @@
   "title": "AI 开发",
   "pages": [
     "index"
-  ]
+  ],
+  "description": "AI 相关实践与文档增强",
+  "root": true
 }

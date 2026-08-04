@@ -2,5 +2,7 @@
   "title": "性能优化",
   "pages": [
     "index"
-  ]
+  ],
+  "description": "加载、渲染与监控实战",
+  "root": true
 }

@@ -4,5 +4,7 @@
     "index",
     "bookmark-scripts",
     "...utils"
-  ]
+  ],
+  "description": "书签脚本与常用网页工具",
+  "root": true
 }

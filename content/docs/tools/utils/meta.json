@@ -5,5 +5,7 @@
     "regexp",
     "function",
     "library"
-  ]
+  ],
+  "description": "正则等常用工具函数片段",
+  "root": true
 }

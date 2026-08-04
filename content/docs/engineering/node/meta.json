@@ -4,5 +4,7 @@
     "index",
     "npm",
     "toolkit"
-  ]
+  ],
+  "description": "npm 生态与常用工具链",
+  "root": true
 }

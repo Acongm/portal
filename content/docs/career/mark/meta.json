@@ -17,5 +17,7 @@
     "React更新流程详解",
     "ai-doc-content-enhancement",
     "...daily-news"
-  ]
+  ],
+  "description": "简历查漏补缺与知识点梳理",
+  "root": true
 }

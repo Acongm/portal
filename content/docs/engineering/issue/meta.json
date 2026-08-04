@@ -4,5 +4,7 @@
     "index",
     "h5",
     "pc"
-  ]
+  ],
+  "description": "兼容性疑难杂症与解决方案",
+  "root": true
 }

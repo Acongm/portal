@@ -10,5 +10,7 @@
     "code/proxy-observe",
     "vue-render",
     "vue2"
-  ]
+  ],
+  "description": "响应式、编译与 Vue 2/3 对比",
+  "root": true
 }
