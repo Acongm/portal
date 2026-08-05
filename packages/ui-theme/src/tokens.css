@@ -43,6 +43,15 @@
   --acongm-chat-z: 1200;
   --acongm-fab-z: 1100;
   --acongm-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* FAB：亮色主题用 accent 绿 + 白字，保证浅色页上醒目 */
+  --acongm-fab-bg: var(--acongm-accent);
+  --acongm-fab-bg-soft: color-mix(in oklab, var(--acongm-accent) 78%, #0b3d28);
+  --acongm-fab-fg: #ffffff;
+  --acongm-fab-border: color-mix(in oklab, #ffffff 24%, transparent);
+  --acongm-fab-icon-bg: color-mix(in oklab, #ffffff 18%, transparent);
+  --acongm-fab-shadow: 0 10px 28px color-mix(in oklab, var(--acongm-accent) 38%, transparent);
+  --acongm-fab-glow: color-mix(in oklab, var(--acongm-accent-hover) 50%, transparent);
 }
 
 .dark,
@@ -56,4 +65,13 @@
   --acongm-text-muted: #9aa3b5;
   --acongm-accent-soft: color-mix(in oklab, var(--acongm-accent) 22%, black);
   --acongm-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+
+  /* FAB：暗色主题用更亮的绿 + 深色字，避免白字/近黑底发灰 */
+  --acongm-fab-bg: #3eaf7c;
+  --acongm-fab-bg-soft: #2f9a6a;
+  --acongm-fab-fg: #0b1f16;
+  --acongm-fab-border: color-mix(in oklab, #ffffff 30%, transparent);
+  --acongm-fab-icon-bg: color-mix(in oklab, #0b1f16 14%, transparent);
+  --acongm-fab-shadow: 0 12px 32px rgba(62, 175, 124, 0.4);
+  --acongm-fab-glow: color-mix(in oklab, #7ee0b0 45%, transparent);
 }
