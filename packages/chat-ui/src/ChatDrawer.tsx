@@ -14,7 +14,13 @@ export type ChatDrawerProps = {
 type DrawerLayout = 'desktop' | 'tablet' | 'mobile';
 
 function useDrawerLayout(): DrawerLayout {
-  const [layout, setLayout] = useState<DrawerLayout>('desktop');
+  const [layout, setLayout] = useState<DrawerLayout>(() => {
+    if (typeof window === 'undefined') return 'desktop';
+    const width = window.innerWidth;
+    if (width >= 1180) return 'desktop';
+    if (width >= 768) return 'tablet';
+    return 'mobile';
+  });
 
   useEffect(() => {
     const sync = () => {
@@ -67,6 +73,9 @@ function ChatDrawerPanel({
 /**
  * 文档页嵌入抽屉：基于 rc-drawer（portal + mask + 开关动画）。
  * PC 右侧无遮罩分栏；平板右侧遮罩；手机底部 sheet。
+ *
+ * 注意：不要把 acongm-aui-root 挂在 rc-drawer 根上——该 class 带纯色 background，
+ * 而 rc-drawer 根是 inset:0 全屏层，会整页挡住正文。
  */
 export function ChatDrawer({ context }: ChatDrawerProps) {
   const { open, closePanel, mode } = useChatUi();
@@ -101,9 +110,19 @@ export function ChatDrawer({ context }: ChatDrawerProps) {
       destroyOnClose
       getContainer={() => document.body}
       zIndex={1200}
-      rootClassName={`acongm-chat-rd acongm-chat-root acongm-aui-root is-${layout}`}
-      className="acongm-chat-rd__content"
+      rootClassName={`acongm-chat-rd is-${layout}`}
+      className="acongm-chat-rd__content acongm-chat-root acongm-aui-root"
       maskClassName="acongm-chat-rd__mask"
+      styles={{
+        mask: {
+          background: 'rgba(20, 22, 31, 0.36)',
+        },
+        wrapper: isDesktop
+          ? {
+              boxShadow: 'var(--acongm-shadow)',
+            }
+          : undefined,
+      }}
     >
       <ChatDrawerPanel context={context} open={open} onClose={closePanel} />
     </Drawer>

@@ -22,6 +22,12 @@
 
   color: var(--acongm-text);
   font-family: var(--acongm-font-sans);
+}
+
+/* 仅面板容器铺底；勿给全屏 portal 根节点上色（会挡住正文） */
+.acongm-aui-root:not(.rc-drawer),
+.aui-root:not(.rc-drawer),
+.acongm-chat-root:not(.rc-drawer) {
   background: var(--acongm-surface-0);
 }
 
