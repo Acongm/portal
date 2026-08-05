@@ -41,7 +41,7 @@
 
   --acongm-chat-width: clamp(400px, 30vw, 520px);
   --acongm-chat-z: 1200;
-  --acongm-fab-z: 40;
+  --acongm-fab-z: 1100;
   --acongm-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
