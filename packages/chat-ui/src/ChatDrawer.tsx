@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Drawer from 'rc-drawer';
+import { X } from 'lucide-react';
 import { DocChatRuntimeProvider } from './runtime/DocChatRuntimeProvider';
 import { AssistantThread } from './thread/AssistantThread';
 import { useChatUi } from './ChatUiProvider';
@@ -49,16 +50,20 @@ function ChatDrawerPanel({
   return (
     <div className="acongm-chat-shell">
       <div className="acongm-chat-shell__header">
-        <div>
+        <div className="acongm-chat-shell__titles">
           <h3>AI 阅读助手</h3>
-          <p>{context.title || '当前文档'}</p>
+          <p title={context.title || '当前文档'}>
+            {context.title || '当前文档'}
+          </p>
         </div>
         <button
           type="button"
           className="acongm-chat-shell__close"
           onClick={onClose}
+          title="关闭"
+          aria-label="关闭助手"
         >
-          收起
+          <X size={16} strokeWidth={2} aria-hidden />
         </button>
       </div>
       <div className="acongm-chat-shell__body">
