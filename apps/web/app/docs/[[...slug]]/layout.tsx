@@ -4,7 +4,7 @@ import { baseOptions } from '@/lib/layout.shared';
 import { docDomains, getDomainHref } from '@/lib/modules.registry';
 import { pickSidebarTree } from '@/lib/sidebar-tree';
 import { DocChatEmbed } from '@/components/doc-chat-embed';
-import '@acongm/ui-theme/tokens.css';
+import '@acongm/assistant-ui-theme/assistant-ui.css';
 import '@acongm/chat-ui/styles.css';
 
 /**

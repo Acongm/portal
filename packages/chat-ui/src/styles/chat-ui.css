@@ -1,4 +1,5 @@
-/* 宿主需同时引入 @acongm/ui-theme/tokens.css（或 chat.css） */
+/* 宿主需引入 @acongm/assistant-ui-theme/assistant-ui.css（含 tokens） */
+/* 本文件：Drawer/FAB 壳 + assistant-ui Thread 布局 */
 
 .acongm-chat-fab {
   position: fixed;
@@ -433,16 +434,344 @@ body.acongm-chat-overlay-lock {
   overflow: hidden;
 }
 
+/* —— assistant-ui Thread（Codex 风） —— */
+
+.acongm-aui-thread {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--acongm-surface-0);
+  color: var(--acongm-text);
+  font-family: var(--acongm-font-sans);
+}
+
+.acongm-aui-thread__viewport {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 16px 8px;
+  scroll-behavior: smooth;
+}
+
+.acongm-aui-thread__footer {
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  background: color-mix(in oklab, var(--acongm-surface-0) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--acongm-border);
+}
+
+.acongm-aui-empty {
+  margin: 28px 8px;
+  padding: 20px;
+  border: 1px dashed var(--acongm-border-strong);
+  border-radius: var(--acongm-radius-lg);
+  background: var(--acongm-surface-1);
+  text-align: center;
+}
+
+.acongm-aui-empty__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.acongm-aui-empty__desc {
+  margin: 8px 0 0;
+  color: var(--acongm-text-muted);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.acongm-aui-msg {
+  margin: 0 0 14px;
+  animation: acongm-msg-in 0.28s var(--acongm-ease) both;
+}
+
+.acongm-aui-msg.is-user {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.acongm-aui-msg.is-user .acongm-aui-msg__bubble {
+  max-width: 88%;
+  padding: 10px 14px;
+  border-radius: 16px 16px 4px 16px;
+  background: var(--acongm-surface-ink);
+  color: #f5f6f8;
+  font-size: 13.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.acongm-aui-msg.is-assistant {
+  max-width: 100%;
+}
+
+.acongm-aui-msg__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.acongm-aui-msg__label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--acongm-text-muted);
+  text-transform: uppercase;
+}
+
+.acongm-aui-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.acongm-aui-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--acongm-text-muted);
+  cursor: pointer;
+}
+
+.acongm-aui-icon-btn:hover {
+  background: var(--acongm-surface-2);
+  color: var(--acongm-text);
+}
+
+.acongm-aui-msg__body {
+  padding: 2px 2px 4px;
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+
+.acongm-aui-md {
+  overflow-wrap: anywhere;
+}
+
+.acongm-aui-md p {
+  margin: 0 0 0.75em;
+}
+
+.acongm-aui-md p:last-child {
+  margin-bottom: 0;
+}
+
+.acongm-aui-md pre {
+  margin: 0.6em 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  border-radius: 10px;
+  background: var(--acongm-surface-ink);
+  color: #e8eaef;
+  font-family: var(--acongm-font-mono);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.acongm-aui-md code {
+  font-family: var(--acongm-font-mono);
+  font-size: 0.92em;
+}
+
+.acongm-aui-md :not(pre) > code {
+  padding: 0.12em 0.4em;
+  border-radius: 6px;
+  background: var(--acongm-surface-2);
+}
+
+.acongm-aui-md ul,
+.acongm-aui-md ol {
+  margin: 0.4em 0 0.8em;
+  padding-left: 1.35em;
+}
+
+.acongm-aui-md a {
+  color: var(--acongm-accent-hover);
+}
+
+/* Reasoning / thinking — Codex 折叠块 */
+.acongm-aui-reasoning {
+  margin: 0 0 10px;
+  border: 1px solid var(--acongm-border);
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--acongm-surface-2) 70%, transparent);
+  overflow: hidden;
+}
+
+.acongm-aui-reasoning__trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--acongm-text-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.acongm-aui-reasoning__icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.acongm-aui-reasoning__chevron {
+  width: 14px;
+  height: 14px;
+  margin-left: auto;
+  transition: transform 0.2s var(--acongm-ease);
+}
+
+.acongm-aui-reasoning.is-open .acongm-aui-reasoning__chevron {
+  transform: rotate(180deg);
+}
+
+.acongm-aui-reasoning__body {
+  max-height: 220px;
+  overflow: auto;
+  border-top: 1px solid var(--acongm-border);
+  padding: 10px 12px 12px;
+}
+
+.acongm-aui-reasoning__text {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: var(--acongm-font-sans);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--acongm-text-muted);
+}
+
+.acongm-aui-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--acongm-text-muted) 0%,
+    var(--acongm-text) 45%,
+    var(--acongm-text-muted) 90%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: acongm-shimmer 1.4s linear infinite;
+}
+
+@keyframes acongm-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Composer — Codex 圆角输入条 */
+.acongm-aui-composer {
+  padding: 10px 14px max(14px, env(safe-area-inset-bottom));
+}
+
+.acongm-aui-composer__topline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.acongm-aui-composer__box {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  border: 1px solid var(--acongm-border-strong);
+  border-radius: 18px;
+  padding: 8px 8px 8px 14px;
+  background: var(--acongm-surface-1);
+  box-shadow: var(--acongm-shadow);
+}
+
+.acongm-aui-composer__input {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  border: 0;
+  outline: 0;
+  font: inherit;
+  line-height: 1.5;
+  background: transparent;
+  color: inherit;
+  max-height: 160px;
+}
+
+.acongm-aui-send,
+.acongm-aui-stop {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.acongm-aui-send {
+  background: var(--acongm-surface-ink);
+  color: #fff;
+}
+
+.acongm-aui-send:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.acongm-aui-stop {
+  background: var(--acongm-danger);
+  color: #fff;
+}
+
+.acongm-chat-shell__header {
+  background: var(--acongm-surface-1);
+  color: var(--acongm-text);
+  border-bottom: 1px solid var(--acongm-border);
+}
+
+.acongm-chat-shell__header h3 {
+  color: var(--acongm-text);
+}
+
+.acongm-chat-shell__header p {
+  color: var(--acongm-text-muted);
+  opacity: 1;
+}
+
+.acongm-chat-shell__close {
+  background: var(--acongm-surface-2);
+  color: var(--acongm-text);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .acongm-chat-fab,
   .acongm-chat-drawer,
   .acongm-chat-message,
+  .acongm-aui-msg,
   html.acongm-chat-open #nd-page {
     animation: none !important;
     transition-duration: 0.01ms !important;
   }
 
-  .acongm-chat-cursor {
+  .acongm-chat-cursor,
+  .acongm-aui-shimmer {
     animation: none;
   }
 }

@@ -18,7 +18,13 @@ for (const domain of registry.domains) {
 /** @type {import('next').NextConfig} */
 const config = {
   reactStrictMode: true,
-  transpilePackages: ['@acongm/chat-ui', '@acongm/ui-theme', '@acongm/kb-types'],
+  transpilePackages: [
+    '@acongm/chat-ui',
+    '@acongm/ui-theme',
+    '@acongm/kb-types',
+    '@acongm/agent-session-sdk',
+    '@acongm/assistant-ui-theme',
+  ],
   async redirects() {
     const byFolder = moduleMap.flatMap(({ domainId, folder }) => [
       {
