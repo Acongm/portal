@@ -24,12 +24,49 @@ import {
 import type { DocChatContext } from '../types';
 import { createDocChatModelAdapter } from './createDocChatModelAdapter';
 
+function textPartsOf(
+  content: ThreadMessageLike['content'],
+): { text: string; thinking: string } {
+  if (typeof content === 'string') return { text: content, thinking: '' };
+  const parts = content ?? [];
+  const text = parts
+    .filter(
+      (part): part is { type: 'text'; text: string } =>
+        typeof part === 'object' &&
+        part !== null &&
+        'type' in part &&
+        part.type === 'text',
+    )
+    .map((part) => part.text)
+    .join('');
+  const thinking = parts
+    .filter(
+      (part): part is { type: 'reasoning'; text: string } =>
+        typeof part === 'object' &&
+        part !== null &&
+        'type' in part &&
+        part.type === 'reasoning',
+    )
+    .map((part) => part.text)
+    .join('');
+  return { text, thinking };
+}
+
 function toThreadMessage(message: ChatUiMessage): ThreadMessageLike {
   // assistant-ui：status 仅允许出现在 assistant 消息上
+  const thinking = message.thinking?.trim() || '';
+  const text = message.content || '';
+  const content = [
+    ...(thinking && message.role === 'assistant'
+      ? [{ type: 'reasoning' as const, text: thinking }]
+      : []),
+    ...(text ? [{ type: 'text' as const, text }] : []),
+  ];
+
   const base: ThreadMessageLike = {
     id: message.id,
     role: message.role,
-    content: [{ type: 'text', text: message.content }],
+    content: content.length ? content : [{ type: 'text', text: '' }],
     metadata: {
       custom: {
         isSummary: Boolean(message.isSummary),
@@ -50,19 +87,7 @@ function toThreadMessage(message: ChatUiMessage): ThreadMessageLike {
 
 function fromThreadLike(messages: readonly ThreadMessageLike[]): ChatUiMessage[] {
   return messages.map((message, index) => {
-    const content =
-      typeof message.content === 'string'
-        ? message.content
-        : (message.content ?? [])
-            .filter(
-              (part): part is { type: 'text'; text: string } =>
-                typeof part === 'object' &&
-                part !== null &&
-                'type' in part &&
-                part.type === 'text',
-            )
-            .map((part) => part.text)
-            .join('');
+    const { text, thinking } = textPartsOf(message.content);
     const custom = message.metadata?.custom as
       | { isSummary?: boolean; isError?: boolean }
       | undefined;
@@ -71,7 +96,8 @@ function fromThreadLike(messages: readonly ThreadMessageLike[]): ChatUiMessage[]
       role: (message.role === 'assistant' ? 'assistant' : 'user') as
         | 'user'
         | 'assistant',
-      content,
+      content: text,
+      ...(thinking ? { thinking } : {}),
       isSummary: Boolean(custom?.isSummary),
       isError: Boolean(custom?.isError),
     };
@@ -147,20 +173,32 @@ function DocChatRuntimeInner({
   const persist = useCallback(() => {
     if (typeof sessionStorage === 'undefined') return;
     const messages = runtime.thread.getState().messages;
-    const ui = messages.map((message) => ({
-      id: message.id,
-      role: (message.role === 'assistant' ? 'assistant' : 'user') as
-        | 'user'
-        | 'assistant',
-      content: message.content
+    const ui = messages.map((message) => {
+      const text = message.content
         .filter(
           (part): part is { type: 'text'; text: string } => part.type === 'text',
         )
         .map((part) => part.text)
-        .join(''),
-      isSummary: Boolean(message.metadata?.custom?.isSummary),
-      isError: message.status?.type === 'incomplete',
-    }));
+        .join('');
+      const thinking = message.content
+        .filter(
+          (part): part is { type: 'reasoning'; text: string } =>
+            part.type === 'reasoning',
+        )
+        .map((part) => part.text)
+        .join('')
+        .trim();
+      return {
+        id: message.id,
+        role: (message.role === 'assistant' ? 'assistant' : 'user') as
+          | 'user'
+          | 'assistant',
+        content: text,
+        ...(thinking ? { thinking } : {}),
+        isSummary: Boolean(message.metadata?.custom?.isSummary),
+        isError: message.status?.type === 'incomplete',
+      };
+    });
     saveChatHistory(sessionStorage, context.pagePath, ui);
   }, [context.pagePath, runtime]);
 
