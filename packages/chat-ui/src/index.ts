@@ -1,5 +1,4 @@
-export type { DocChatContext, ChatPanelProps } from './ChatPanel';
-export { ChatPanel } from './ChatPanel';
+export type { DocChatContext } from './types';
 
 export type { ChatDrawerProps } from './ChatDrawer';
 export { ChatDrawer } from './ChatDrawer';
@@ -16,24 +15,18 @@ export { ChatUiProvider, useChatUi } from './ChatUiProvider';
 export type { DocsChatShellProps } from './DocsChatShell';
 export { DocsChatShell } from './DocsChatShell';
 
+export { AssistantThread } from './thread/AssistantThread';
+export { DocChatRuntimeProvider } from './runtime/DocChatRuntimeProvider';
+
+// re-export session SDK for chat repo convenience
 export {
   streamChatV1,
   resolveChatStreamUrl,
-  parseSseStream,
   DEFAULT_CHAT_STREAM_PROXY,
   DEFAULT_CHAT_STREAM_UPSTREAM,
-} from './runtime/chat-stream';
-
-export {
-  findSummaryV1ByPath,
-  loadSummaryV1,
-  loadSummaryV1Snapshot,
-  buildSummaryCardContent,
-  summaryPathVariants,
-} from './runtime/summary-v1';
-
-export {
   CHAT_V1_TAGS,
   insertChatTag,
   deriveTagOptions,
-} from './runtime/chat-tags';
+  loadSummaryV1,
+  buildSummaryCardContent,
+} from '@acongm/agent-session-sdk';

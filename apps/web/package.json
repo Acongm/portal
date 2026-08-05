@@ -12,6 +12,8 @@
     "types:check": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@acongm/agent-session-sdk": "workspace:*",
+    "@acongm/assistant-ui-theme": "workspace:*",
     "@acongm/chat-ui": "workspace:*",
     "@acongm/kb-types": "workspace:*",
     "@acongm/ui-theme": "workspace:*",

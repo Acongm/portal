@@ -1,19 +1,21 @@
 'use client';
 
-import { ChatPanel, type DocChatContext } from './ChatPanel';
+import { DocChatRuntimeProvider } from './runtime/DocChatRuntimeProvider';
+import { AssistantThread } from './thread/AssistantThread';
 import { useChatUi } from './ChatUiProvider';
+import type { DocChatContext } from './types';
 
 export type ChatDrawerProps = {
   context: DocChatContext;
 };
 
-/** 文档页嵌入抽屉：PC 分栏 / 平板侧栏 / 手机底栏 */
+/** 文档页嵌入抽屉：PC 分栏 / 平板侧栏 / 手机底栏（壳）+ assistant-ui Thread（内容） */
 export function ChatDrawer({ context }: ChatDrawerProps) {
   const { open, closePanel, mode } = useChatUi();
   if (!open || mode !== 'drawer') return null;
 
   return (
-    <div className="acongm-chat-drawer acongm-chat-root">
+    <div className="acongm-chat-drawer acongm-chat-root acongm-aui-root">
       <button
         className="acongm-chat-backdrop"
         type="button"
@@ -34,11 +36,11 @@ export function ChatDrawer({ context }: ChatDrawerProps) {
             收起
           </button>
         </div>
-        <ChatPanel
-          className="acongm-chat-shell__body"
-          active={open}
-          context={context}
-        />
+        <div className="acongm-chat-shell__body">
+          <DocChatRuntimeProvider context={context} active={open}>
+            <AssistantThread />
+          </DocChatRuntimeProvider>
+        </div>
       </aside>
     </div>
   );

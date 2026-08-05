@@ -1,4 +1,5 @@
-/* 宿主需同时引入 @acongm/ui-theme/tokens.css（或 chat.css） */
+/* 宿主需引入 @acongm/assistant-ui-theme/assistant-ui.css（含 tokens） */
+/* 本文件：Drawer/FAB 壳 + assistant-ui Thread 布局 */
 
 .acongm-chat-fab {
   position: fixed;

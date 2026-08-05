@@ -30,7 +30,6 @@ function syncOpenClass(open: boolean) {
 
 export type ChatUiProviderProps = {
   children: ReactNode;
-  /** 默认 drawer；fullscreen 用于独立 chat 页 */
   defaultMode?: ChatLayoutMode;
 };
 
