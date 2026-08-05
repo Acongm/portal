@@ -25,19 +25,26 @@ import type { DocChatContext } from '../types';
 import { createDocChatModelAdapter } from './createDocChatModelAdapter';
 
 function toThreadMessage(message: ChatUiMessage): ThreadMessageLike {
-  return {
+  // assistant-ui：status 仅允许出现在 assistant 消息上
+  const base: ThreadMessageLike = {
     id: message.id,
     role: message.role,
     content: [{ type: 'text', text: message.content }],
-    status: message.isError
-      ? { type: 'incomplete', reason: 'error', error: message.content }
-      : { type: 'complete', reason: 'stop' },
     metadata: {
       custom: {
         isSummary: Boolean(message.isSummary),
         isError: Boolean(message.isError),
       },
     },
+  };
+
+  if (message.role !== 'assistant') return base;
+
+  return {
+    ...base,
+    status: message.isError
+      ? { type: 'incomplete', reason: 'error', error: message.content }
+      : { type: 'complete', reason: 'stop' },
   };
 }
 
