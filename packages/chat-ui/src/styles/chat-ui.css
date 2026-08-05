@@ -321,17 +321,30 @@
 
 .acongm-chat-rd.rc-drawer {
   z-index: var(--acongm-chat-z);
+  /* 全屏 portal 根必须透明，否则会纯色盖住文章 */
+  background: transparent !important;
+  pointer-events: none;
 }
 
 .acongm-chat-rd .rc-drawer-mask,
 .acongm-chat-rd__mask {
-  background: var(--acongm-overlay);
+  /* 半透明遮罩，禁止落成不透明纯色 */
+  background: rgba(20, 22, 31, 0.36) !important;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  pointer-events: auto;
+}
+
+.acongm-chat-rd.is-desktop .rc-drawer-mask {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 .acongm-chat-rd .rc-drawer-content-wrapper {
   box-shadow: var(--acongm-shadow);
+  pointer-events: auto;
+  background: transparent;
 }
 
 .acongm-chat-rd .rc-drawer-content,
@@ -341,10 +354,12 @@
   background: var(--acongm-surface-0);
   color: var(--acongm-text);
   overflow: hidden;
+  pointer-events: auto;
 }
 
 .acongm-chat-rd .acongm-chat-shell {
   height: 100%;
+  background: var(--acongm-surface-0);
 }
 
 /* PC：无遮罩，浮在右侧并给正文让宽 */
