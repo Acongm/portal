@@ -27,11 +27,11 @@ function AssistantMarkdown() {
   );
 }
 
-/** Codex 风格可折叠思考块（assistant-ui reasoning part） */
+/** Codex 风格可折叠思考块：流式时展开，历史默认收起可点开查看 */
 function ReasoningPart() {
   const part = useMessagePartReasoning();
   const running = part.status?.type === 'running';
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (running) setOpen(true);

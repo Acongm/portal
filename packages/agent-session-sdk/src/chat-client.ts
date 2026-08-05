@@ -64,7 +64,7 @@ function clean(messages: ChatUiMessage[]): ChatUiMessage[] {
     (message) =>
       (message.role === 'user' || message.role === 'assistant') &&
       typeof message.content === 'string' &&
-      message.content.trim(),
+      (message.content.trim() || Boolean(message.thinking?.trim())),
   );
 }
 
@@ -73,6 +73,7 @@ export function modelHistory(
 ): Array<{ role: 'user' | 'assistant'; content: string }> {
   return clean(messages)
     .filter((message) => !message.isSummary && !message.isError)
+    .filter((message) => message.content.trim())
     .slice(-MAX_MODEL_MESSAGES)
     .map(({ role, content }) => ({ role, content }));
 }
@@ -87,14 +88,17 @@ export function saveChatHistory(
   let chars = 0;
   for (let index = selected.length - 1; index >= 0; index -= 1) {
     const message = selected[index];
-    if (chars + message.content.length > MAX_STORED_CHARS) break;
+    const thinking = message.thinking?.trim() || undefined;
+    const weight = message.content.length + (thinking?.length ?? 0);
+    if (chars + weight > MAX_STORED_CHARS) break;
     bounded.unshift({
       id: message.id,
       role: message.role,
       content: message.content,
+      ...(thinking ? { thinking } : {}),
       isSummary: Boolean(message.isSummary),
     });
-    chars += message.content.length;
+    chars += weight;
   }
   storage?.setItem(`ai-chat-v1:${key}`, JSON.stringify(bounded));
 }
