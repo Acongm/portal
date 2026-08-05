@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
+import Drawer from 'rc-drawer';
 import { DocChatRuntimeProvider } from './runtime/DocChatRuntimeProvider';
 import { AssistantThread } from './thread/AssistantThread';
 import { useChatUi } from './ChatUiProvider';
@@ -11,56 +11,101 @@ export type ChatDrawerProps = {
   context: DocChatContext;
 };
 
+type DrawerLayout = 'desktop' | 'tablet' | 'mobile';
+
+function useDrawerLayout(): DrawerLayout {
+  const [layout, setLayout] = useState<DrawerLayout>('desktop');
+
+  useEffect(() => {
+    const sync = () => {
+      const width = window.innerWidth;
+      if (width >= 1180) setLayout('desktop');
+      else if (width >= 768) setLayout('tablet');
+      else setLayout('mobile');
+    };
+    sync();
+    window.addEventListener('resize', sync);
+    return () => window.removeEventListener('resize', sync);
+  }, []);
+
+  return layout;
+}
+
+function ChatDrawerPanel({
+  context,
+  open,
+  onClose,
+}: {
+  context: DocChatContext;
+  open: boolean;
+  onClose: () => void;
+}) {
+  return (
+    <div className="acongm-chat-shell">
+      <div className="acongm-chat-shell__header">
+        <div>
+          <h3>AI 阅读助手</h3>
+          <p>{context.title || '当前文档'}</p>
+        </div>
+        <button
+          type="button"
+          className="acongm-chat-shell__close"
+          onClick={onClose}
+        >
+          收起
+        </button>
+      </div>
+      <div className="acongm-chat-shell__body">
+        <DocChatRuntimeProvider context={context} active={open}>
+          <AssistantThread />
+        </DocChatRuntimeProvider>
+      </div>
+    </div>
+  );
+}
+
 /**
- * 文档页嵌入抽屉：PC 分栏 / 平板侧栏 / 手机底栏。
- * 挂到 document.body，避免被 Fumadocs layout 的 transform/overflow 裁切，
- * 遮罩与面板分开动画（参考 Radix Dialog / assistant-ui Modal portal 模式）。
+ * 文档页嵌入抽屉：基于 rc-drawer（portal + mask + 开关动画）。
+ * PC 右侧无遮罩分栏；平板右侧遮罩；手机底部 sheet。
  */
 export function ChatDrawer({ context }: ChatDrawerProps) {
   const { open, closePanel, mode } = useChatUi();
+  const layout = useDrawerLayout();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  if (!mounted || !open || mode !== 'drawer') return null;
+  if (!mounted || mode !== 'drawer') return null;
 
-  return createPortal(
-    <div
-      className="acongm-chat-drawer acongm-chat-root acongm-aui-root"
-      role="dialog"
-      aria-modal="true"
-      aria-label="AI 阅读助手"
+  const isMobile = layout === 'mobile';
+  const isDesktop = layout === 'desktop';
+
+  return (
+    <Drawer
+      open={open}
+      onClose={closePanel}
+      placement={isMobile ? 'bottom' : 'right'}
+      width={
+        isMobile
+          ? '100%'
+          : isDesktop
+            ? 'var(--acongm-chat-width)'
+            : 'min(520px, 88vw)'
+      }
+      height={isMobile ? 'min(76vh, 92dvh)' : undefined}
+      mask={!isDesktop}
+      maskClosable
+      keyboard
+      destroyOnClose
+      getContainer={() => document.body}
+      zIndex={1200}
+      rootClassName={`acongm-chat-rd acongm-chat-root acongm-aui-root is-${layout}`}
+      className="acongm-chat-rd__content"
+      maskClassName="acongm-chat-rd__mask"
     >
-      <button
-        className="acongm-chat-backdrop"
-        type="button"
-        tabIndex={-1}
-        aria-label="关闭 AI 阅读助手"
-        onClick={closePanel}
-      />
-      <aside className="acongm-chat-shell">
-        <div className="acongm-chat-shell__header">
-          <div>
-            <h3>AI 阅读助手</h3>
-            <p>{context.title || '当前文档'}</p>
-          </div>
-          <button
-            type="button"
-            className="acongm-chat-shell__close"
-            onClick={closePanel}
-          >
-            收起
-          </button>
-        </div>
-        <div className="acongm-chat-shell__body">
-          <DocChatRuntimeProvider context={context} active={open}>
-            <AssistantThread />
-          </DocChatRuntimeProvider>
-        </div>
-      </aside>
-    </div>,
-    document.body,
+      <ChatDrawerPanel context={context} open={open} onClose={closePanel} />
+    </Drawer>
   );
 }

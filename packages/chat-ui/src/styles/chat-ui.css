@@ -1,5 +1,6 @@
 /* 宿主需引入 @acongm/assistant-ui-theme/assistant-ui.css（含 tokens） */
-/* 本文件：Drawer/FAB 壳 + assistant-ui Thread 布局 */
+/* 本文件：rc-drawer 壳 + FAB + assistant-ui Thread 布局 */
+@import 'rc-drawer/assets/index.css';
 
 .acongm-chat-fab {
   position: fixed;
@@ -32,17 +33,6 @@
   height: 18px;
 }
 
-.acongm-chat-backdrop {
-  /* PC 分栏模式默认不显示遮罩；平板/手机在 media 中覆盖 */
-  display: none;
-  appearance: none;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  cursor: pointer;
-  background: transparent;
-}
-
 .acongm-chat-shell {
   box-sizing: border-box;
   display: flex;
@@ -50,10 +40,10 @@
   width: 100%;
   height: 100%;
   max-height: 100%;
-  border: 1px solid var(--acongm-border);
-  border-radius: 18px;
+  border: 0;
+  border-radius: 0;
   background: var(--acongm-surface-0);
-  box-shadow: var(--acongm-shadow);
+  box-shadow: none;
   overflow: hidden;
   position: relative;
   z-index: 1;
@@ -71,8 +61,9 @@
   justify-content: space-between;
   gap: 12px;
   padding: 14px 16px;
-  background: var(--acongm-accent-gradient);
-  color: var(--acongm-text-on-accent);
+  background: var(--acongm-surface-1);
+  color: var(--acongm-text);
+  border-bottom: 1px solid var(--acongm-border);
   flex-shrink: 0;
 }
 
@@ -80,24 +71,26 @@
   margin: 0;
   font-size: 15px;
   font-weight: 650;
+  color: var(--acongm-text);
 }
 
 .acongm-chat-shell__header p {
   margin: 4px 0 0;
   font-size: 12px;
-  opacity: 0.9;
+  color: var(--acongm-text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 280px;
+  opacity: 1;
 }
 
 .acongm-chat-shell__close {
   border: none;
   border-radius: var(--acongm-radius-pill);
   padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.18);
-  color: inherit;
+  background: var(--acongm-surface-2);
+  color: var(--acongm-text);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -324,38 +317,37 @@
   }
 }
 
-@keyframes acongm-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+/* —— rc-drawer 主题覆盖 —— */
+
+.acongm-chat-rd.rc-drawer {
+  z-index: var(--acongm-chat-z);
 }
 
-@keyframes acongm-panel-in {
-  from {
-    opacity: 0;
-    transform: translateX(28px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+.acongm-chat-rd .rc-drawer-mask,
+.acongm-chat-rd__mask {
+  background: var(--acongm-overlay);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
-@keyframes acongm-sheet-up {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.acongm-chat-rd .rc-drawer-content-wrapper {
+  box-shadow: var(--acongm-shadow);
 }
 
-/* PC 分栏：无遮罩，右侧固定面板（portal 到 body） */
+.acongm-chat-rd .rc-drawer-content,
+.acongm-chat-rd__content {
+  display: flex;
+  flex-direction: column;
+  background: var(--acongm-surface-0);
+  color: var(--acongm-text);
+  overflow: hidden;
+}
+
+.acongm-chat-rd .acongm-chat-shell {
+  height: 100%;
+}
+
+/* PC：无遮罩，浮在右侧并给正文让宽 */
 @media (min-width: 1180px) {
   html.acongm-chat-open #nd-page {
     margin-right: calc(var(--acongm-chat-width) + 24px);
@@ -366,68 +358,28 @@
     display: none;
   }
 
-  .acongm-chat-drawer {
-    position: fixed;
+  .acongm-chat-rd.is-desktop.rc-drawer-right .rc-drawer-content-wrapper {
     top: calc(var(--fd-nav-height, 3.5rem) + 12px);
     right: 16px;
     bottom: 16px;
-    z-index: var(--acongm-chat-z);
-    width: var(--acongm-chat-width);
-    pointer-events: none;
+    height: auto !important;
   }
 
-  .acongm-chat-drawer .acongm-chat-backdrop {
-    display: none;
-  }
-
-  .acongm-chat-drawer .acongm-chat-shell {
-    pointer-events: auto;
-    height: 100%;
-    max-height: none;
-    animation: acongm-panel-in 0.42s var(--acongm-ease) both;
+  .acongm-chat-rd.is-desktop .rc-drawer-content {
+    border: 1px solid var(--acongm-border);
+    border-radius: 18px;
+    overflow: hidden;
   }
 }
 
-/* 平板：全屏层 + 淡入遮罩 + 右侧滑入面板 */
+/* 平板：右侧圆角 */
 @media (min-width: 768px) and (max-width: 1179px) {
-  .acongm-chat-drawer {
-    position: fixed;
-    inset: 0;
-    z-index: var(--acongm-chat-z);
-    display: block;
-    pointer-events: none;
-  }
-
-  .acongm-chat-drawer .acongm-chat-backdrop {
-    position: absolute;
-    inset: 0;
-    display: block;
-    width: 100%;
-    height: 100%;
-    pointer-events: auto;
-    background: var(--acongm-overlay);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    animation: acongm-fade-in 0.28s ease both;
-  }
-
-  .acongm-chat-drawer .acongm-chat-shell {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1;
-    pointer-events: auto;
-    width: min(520px, 88vw);
-    height: 100dvh;
-    max-height: none;
+  .acongm-chat-rd.is-tablet.rc-drawer-right .rc-drawer-content {
     border-radius: 18px 0 0 18px;
-    border-right: 0;
-    animation: acongm-panel-in 0.36s var(--acongm-ease) both;
   }
 }
 
-/* 手机：全屏层 + 淡入遮罩 + 底部 sheet */
+/* 手机：底部 sheet */
 @media (max-width: 767px) {
   .acongm-chat-fab {
     bottom: calc(72px + env(safe-area-inset-bottom));
@@ -438,51 +390,14 @@
     display: none;
   }
 
-  .acongm-chat-drawer {
-    position: fixed;
-    inset: 0;
-    z-index: var(--acongm-chat-z);
-    display: block;
-    pointer-events: none;
-  }
-
-  .acongm-chat-drawer .acongm-chat-backdrop {
-    position: absolute;
-    inset: 0;
-    display: block;
-    width: 100%;
-    height: 100%;
-    pointer-events: auto;
-    background: var(--acongm-overlay);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    animation: acongm-fade-in 0.25s ease both;
-  }
-
-  .acongm-chat-drawer .acongm-chat-shell {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1;
-    pointer-events: auto;
-    width: 100%;
-    height: min(76vh, 92dvh);
-    max-height: 92dvh;
-    border: 0;
+  .acongm-chat-rd.is-mobile.rc-drawer-bottom .rc-drawer-content {
     border-radius: 22px 22px 0 0;
     padding-bottom: env(safe-area-inset-bottom);
-    animation: acongm-sheet-up 0.34s var(--acongm-ease) both;
   }
 
   .acongm-chat-message {
     max-width: 94%;
   }
-}
-
-body.acongm-chat-overlay-lock {
-  overflow: hidden;
-  touch-action: none;
 }
 
 /* —— assistant-ui Thread（Codex 风） —— */
@@ -791,31 +706,11 @@ body.acongm-chat-overlay-lock {
   color: #fff;
 }
 
-.acongm-chat-shell__header {
-  background: var(--acongm-surface-1);
-  color: var(--acongm-text);
-  border-bottom: 1px solid var(--acongm-border);
-}
-
-.acongm-chat-shell__header h3 {
-  color: var(--acongm-text);
-}
-
-.acongm-chat-shell__header p {
-  color: var(--acongm-text-muted);
-  opacity: 1;
-}
-
-.acongm-chat-shell__close {
-  background: var(--acongm-surface-2);
-  color: var(--acongm-text);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .acongm-chat-fab,
-  .acongm-chat-drawer,
-  .acongm-chat-drawer .acongm-chat-backdrop,
-  .acongm-chat-drawer .acongm-chat-shell,
+  .acongm-chat-rd,
+  .acongm-chat-rd .rc-drawer-mask,
+  .acongm-chat-rd .rc-drawer-content-wrapper,
   .acongm-chat-message,
   .acongm-aui-msg,
   html.acongm-chat-open #nd-page {

@@ -46,30 +46,13 @@ export function ChatUiProvider({
 
   useEffect(() => {
     syncOpenClass(open);
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && open && mode === 'drawer') {
-        setOpen(false);
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    const syncLock = () => {
-      document.body.classList.toggle(
-        'acongm-chat-overlay-lock',
-        open && mode === 'drawer' && window.innerWidth < 1180,
-      );
-    };
-    syncLock();
-    window.addEventListener('resize', syncLock);
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      window.removeEventListener('resize', syncLock);
-    };
-  }, [open, mode]);
+    // PC 分栏：给正文让出右侧宽度；遮罩/滚动锁交给 rc-drawer
+    return () => syncOpenClass(false);
+  }, [open]);
 
   useEffect(
     () => () => {
       syncOpenClass(false);
-      document.body.classList.remove('acongm-chat-overlay-lock');
     },
     [],
   );
