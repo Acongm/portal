@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { MessageSquareText } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { useChatUi } from './ChatUiProvider';
 
 export type ChatTriggerProps = {
@@ -11,7 +11,7 @@ export type ChatTriggerProps = {
 };
 
 /**
- * FAB 同样 portal 到 body，避免 docs layout 裁切 / 低 z-index。
+ * FAB portal 到 body；入场动画 + 轻脉冲提示可点。
  */
 export function ChatTrigger({
   label = 'AI 助手',
@@ -19,9 +19,12 @@ export function ChatTrigger({
 }: ChatTriggerProps) {
   const { open, openPanel } = useChatUi();
   const [mounted, setMounted] = useState(false);
+  const [entered, setEntered] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    const id = window.requestAnimationFrame(() => setEntered(true));
+    return () => window.cancelAnimationFrame(id);
   }, []);
 
   if (!mounted || open) return null;
@@ -29,12 +32,15 @@ export function ChatTrigger({
   return createPortal(
     <button
       type="button"
-      className="acongm-chat-fab acongm-chat-root"
+      className={`acongm-chat-fab${entered ? ' is-entered' : ''}`}
       title={title}
       aria-label={`打开 ${title}`}
       onClick={openPanel}
     >
-      <MessageSquareText className="acongm-chat-fab__icon" aria-hidden />
+      <span className="acongm-chat-fab__glow" aria-hidden />
+      <span className="acongm-chat-fab__icon-wrap" aria-hidden>
+        <Sparkles className="acongm-chat-fab__icon" />
+      </span>
       <span className="acongm-chat-fab__text">{label}</span>
     </button>,
     document.body,

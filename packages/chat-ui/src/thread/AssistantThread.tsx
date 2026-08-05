@@ -129,23 +129,20 @@ function Composer() {
       <div className="acongm-aui-composer__box">
         <ComposerPrimitive.Input
           rows={2}
-          placeholder="结合文档提问，Enter 发送…"
+          placeholder="结合文档提问…"
           className="acongm-aui-composer__input"
         />
         <ThreadPrimitive.If running={false}>
           <ComposerPrimitive.Send className="acongm-aui-send" title="发送">
-            <ArrowUp size={16} />
+            <ArrowUp size={16} strokeWidth={2.25} />
           </ComposerPrimitive.Send>
         </ThreadPrimitive.If>
         <ThreadPrimitive.If running>
           <ComposerPrimitive.Cancel className="acongm-aui-stop" title="停止">
-            <Square size={14} />
+            <Square size={12} fill="currentColor" />
           </ComposerPrimitive.Cancel>
         </ThreadPrimitive.If>
       </div>
-      <p className="acongm-chat-composer__hint">
-        基于 assistant-ui · 思考流来自 ChatV1 SSE · 仅发送时调用 AI
-      </p>
     </ComposerPrimitive.Root>
   );
 }
