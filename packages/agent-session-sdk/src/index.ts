@@ -11,8 +11,21 @@ export {
   resolveChatStreamUrl,
   parseSseStream,
   streamChatV1,
+  ChatStreamError,
   type StreamChatOptions,
 } from './chat-stream';
+
+export {
+  DEFAULT_THREADS_PROXY,
+  DEFAULT_THREADS_UPSTREAM,
+  resolveThreadsBaseUrl,
+  createChatThread,
+  listChatThreads,
+  getChatThread,
+  deleteChatThread,
+  appendThreadMessage,
+  streamThreadMessage,
+} from './chat-threads';
 
 export {
   CALL_SOURCES,

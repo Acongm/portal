@@ -28,9 +28,18 @@ function toUiMessages(messages: readonly ThreadMessage[]): ChatUiMessage[] {
     }));
 }
 
+function yieldParts(thinking: string, text: string) {
+  return {
+    content: [
+      ...(thinking ? [{ type: 'reasoning' as const, text: thinking }] : []),
+      ...(text ? [{ type: 'text' as const, text }] : []),
+    ],
+  };
+}
+
 /**
- * 薄 ChatModelAdapter：只负责 ChatV1 SSE → yield 累计 text。
- * 消息 / 停止 / 重试由 LocalRuntime 管理（官方推荐自定义 API 路径）。
+ * 薄 ChatModelAdapter：ChatV1 SSE（含 thinking）→ reasoning + text parts。
+ * 对齐 node-vercel-starter PR #22。
  */
 export function createDocChatModelAdapter(
   getContext: () => DocChatContext,
@@ -44,6 +53,9 @@ export function createDocChatModelAdapter(
         tags = [],
         content = '',
         streamUrl,
+        enableThinking = true,
+        maxTokens,
+        historyMode = 'short',
       } = getContext();
 
       const lastUser = [...messages]
@@ -73,19 +85,32 @@ export function createDocChatModelAdapter(
             content,
           },
           enableWebSearch: tagOptions.enableWebSearch,
+          enableThinking,
+          maxTokens,
+          historyMode,
         },
         { signal: abortSignal, callSource, url: streamUrl },
       );
 
+      let thinking = '';
       let text = '';
+
       for await (const event of events) {
+        if (event.type === 'thinking') {
+          thinking += event.content || '';
+          yield yieldParts(thinking, text);
+        }
         if (event.type === 'delta') {
           text += event.content || '';
-          yield { content: [{ type: 'text', text }] };
+          yield yieldParts(thinking, text);
         }
         if (event.type === 'error') {
           throw new Error(event.message || '回答失败');
         }
+      }
+
+      if (!text && thinking) {
+        yield yieldParts(thinking, '');
       }
     },
   };

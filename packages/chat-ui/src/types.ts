@@ -10,4 +10,10 @@ export type DocChatContext = {
   streamUrl?: string;
   /** 覆盖 summaries JSON 地址 */
   summariesUrl?: string;
+  /** 默认 true：请求 enableThinking，渲染 reasoning 块 */
+  enableThinking?: boolean;
+  /** 1–8192，透传 ChatV1 */
+  maxTokens?: number;
+  /** portal 文档助手默认 short；chat 站长对话用 long / threads */
+  historyMode?: 'short' | 'long';
 };

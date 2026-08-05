@@ -27,10 +27,11 @@ DocChatEmbed (#18/#23)
 ## Runtime 原则（减少自研）
 
 1. **用 LocalRuntime**：消息、停止、重试、分支由 assistant-ui 管理。
-2. **只写薄 ChatModelAdapter**：`async *run` 内调 `streamChatV1`，yield 累计 `{ content: [{ type: 'text', text }] }`。
+2. **只写薄 ChatModelAdapter**：`async *run` 内调 `streamChatV1`，yield 累计 text / reasoning parts。
 3. **禁止 ExternalStore**（除非引入全局 store）：不要手写 `messages` / `isRunning` / `abortRef` / `onNew` 状态机。
 4. **摘要**：静态 `/summaries-v1.json` → `initialMessages` / `thread.reset`；打开助手零 Chat API。
 5. **历史**：sessionStorage 经 sdk `load/saveChatHistory`；路由切换时 `reset`，不清空别篇文章会话。
+6. **与 starter #22 对齐**：`thinking` SSE → reasoning UI；限额 `CHAT_RATE_LIMIT`；threads 客户端留给 chat 站。缺口见 `docs/issues/api-gaps-starter-pr22.md`。
 
 ## 过时 PR 标记
 
@@ -38,6 +39,7 @@ DocChatEmbed (#18/#23)
 |----|------|
 | #86 | `[superseded]` 自研 ChatPanel / Markdown 方向错误，已由 #87 替代 |
 | #87 | 正确方向：assistant-ui 包拆分；Runtime 须为 LocalRuntime（非 ExternalStore） |
+| starter #22 | Chat 思考/长对话/限额；portal 契约对接见 api-gaps 文档 |
 
 ---
 

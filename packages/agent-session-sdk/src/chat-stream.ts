@@ -1,5 +1,9 @@
-import type { ChatV1Request, ChatV1StreamEvent } from '@acongm/kb-types';
-import { buildChatHeaders } from './chat-client';
+import type {
+  ChatRateLimitErrorBody,
+  ChatV1Request,
+  ChatV1StreamEvent,
+} from '@acongm/kb-types';
+import { buildChatHeaders, getConversationId } from './chat-client';
 
 /** 同源代理路径（Next.js route 或其它 BFF） */
 export const DEFAULT_CHAT_STREAM_PROXY = '/api/ai/v1/chat/stream';
@@ -11,6 +15,23 @@ export type StreamChatOptions = {
   signal?: AbortSignal;
   callSource?: string;
 };
+
+export class ChatStreamError extends Error {
+  readonly status: number;
+  readonly code?: string;
+  readonly body?: unknown;
+
+  constructor(
+    message: string,
+    options: { status: number; code?: string; body?: unknown },
+  ) {
+    super(message);
+    this.name = 'ChatStreamError';
+    this.status = options.status;
+    this.code = options.code;
+    this.body = options.body;
+  }
+}
 
 export function resolveChatStreamUrl(configured?: string): string {
   const value = (configured ?? '').trim();
@@ -61,27 +82,101 @@ export async function* parseSseStream(
   }
 }
 
+function formatRateLimitMessage(body: ChatRateLimitErrorBody): string {
+  const limit = body.limit ?? '?';
+  const tier = body.tier === 'user' ? '登录用户' : '匿名';
+  const reset = body.resetAt
+    ? `，重置时间 ${new Date(body.resetAt).toLocaleString()}`
+    : '';
+  return `今日对话次数已达上限（${tier} ${limit} 次/天）${reset}。`;
+}
+
+async function readErrorBody(response: Response): Promise<unknown> {
+  const contentType = response.headers.get('content-type') || '';
+  try {
+    if (contentType.includes('application/json')) {
+      return await response.json();
+    }
+    const text = await response.text();
+    if (!text) return undefined;
+    try {
+      return JSON.parse(text);
+    } catch {
+      return { message: text };
+    }
+  } catch {
+    return undefined;
+  }
+}
+
+function throwFromFailedResponse(response: Response, body: unknown): never {
+  const record =
+    body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
+  const code = typeof record.code === 'string' ? record.code : undefined;
+
+  if (response.status === 429 || code === 'CHAT_RATE_LIMIT') {
+    const rateBody: ChatRateLimitErrorBody = {
+      code: 'CHAT_RATE_LIMIT',
+      message:
+        (record.message as string | string[]) ||
+        'Daily chat limit exceeded.',
+      limit: typeof record.limit === 'number' ? record.limit : undefined,
+      remaining:
+        typeof record.remaining === 'number' ? record.remaining : undefined,
+      resetAt: typeof record.resetAt === 'string' ? record.resetAt : undefined,
+      tier:
+        record.tier === 'user' || record.tier === 'anon'
+          ? record.tier
+          : undefined,
+    };
+    throw new ChatStreamError(formatRateLimitMessage(rateBody), {
+      status: 429,
+      code: 'CHAT_RATE_LIMIT',
+      body: rateBody,
+    });
+  }
+
+  const message =
+    typeof record.message === 'string'
+      ? record.message
+      : Array.isArray(record.message)
+        ? record.message.join('; ')
+        : `对话请求失败 (${response.status})`;
+
+  throw new ChatStreamError(message, {
+    status: response.status,
+    code,
+    body,
+  });
+}
+
 export async function streamChatV1(
   payload: ChatV1Request,
   options: StreamChatOptions = {},
 ): Promise<AsyncGenerator<ChatV1StreamEvent>> {
   const pagePath = payload.context.pagePath ?? '/';
   const callSource = options.callSource || 'portal:reading-assistant';
-  const response = await fetch(
-    options.url || resolveChatStreamUrl(),
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'text/event-stream',
-        ...buildChatHeaders({ pagePath, callSource }),
-      },
-      body: JSON.stringify(payload),
-      signal: options.signal,
+  const conversationId =
+    payload.conversationId || getConversationId(pagePath);
+
+  const response = await fetch(options.url || resolveChatStreamUrl(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream',
+      ...buildChatHeaders({ pagePath, callSource }),
     },
-  );
+    body: JSON.stringify({
+      ...payload,
+      conversationId,
+    }),
+    signal: options.signal,
+  });
+
   if (!response.ok || !response.body) {
-    throw new Error(`对话请求失败 (${response.status})`);
+    const body = await readErrorBody(response);
+    throwFromFailedResponse(response, body);
   }
+
   return parseSseStream(response.body);
 }
