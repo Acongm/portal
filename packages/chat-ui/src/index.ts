@@ -17,6 +17,7 @@ export { DocsChatShell } from './DocsChatShell';
 
 export { AssistantThread } from './thread/AssistantThread';
 export { DocChatRuntimeProvider } from './runtime/DocChatRuntimeProvider';
+export { createDocChatModelAdapter } from './runtime/createDocChatModelAdapter';
 
 // re-export session SDK for chat repo convenience
 export {
