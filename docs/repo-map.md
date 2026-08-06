@@ -10,7 +10,7 @@
 | [Acongm/auth](https://github.com/Acongm/auth) | `auth.acongm.com` | OAuth SSO 中转 + `@acongm/auth-client` / `@acongm/config` | `apps/auth` | `3100` |
 | [Acongm/node-vercel-starter](https://github.com/Acongm/node-vercel-starter) | `api.acongm.com` | NestJS API（Chat / Threads / 同步预留） | 仓库根（`vercel.json`） | `3001` |
 | [Acongm/dochub](https://github.com/Acongm/dochub) | `dochub.acongm.com` | DocHub 编辑端（Phase 3，仓体尚未落地） | TBD | TBD |
-| [Acongm/chat](https://github.com/Acongm/chat) | `chat.acongm.com` | 独立 Chat 站（Phase 1 扩展，仓体尚未落地） | TBD | TBD |
+| [Acongm/chat](https://github.com/Acongm/chat) | `chat.acongm.com` | 独立 Chat 站（模块/文章上下文 + 隔离白名单） | `apps/web` | `3200` |
 
 > 历史仓库名 `Acongm/platform` 已指向 portal；规划 Issues 中出现的 platform 一律按 portal 理解。
 
@@ -20,8 +20,8 @@
 | --- | --- | --- |
 | `@acongm/kb-types` | portal | ChatV1 / SummariesV1 类型 |
 | `@acongm/ui-theme` | portal | Codex 主题 CSS 变量 |
-| `@acongm/chat-ui` | portal | ChatDrawer / Fullscreen |
-| `@acongm/agent-session-sdk` | portal | Threads 客户端 SDK |
+| `@acongm/chat-ui` | portal / chat | ChatDrawer / Fullscreen |
+| `@acongm/agent-session-sdk` | portal / chat | Threads 客户端 SDK |
 | `@acongm/auth-client` | auth | Supabase session / cookie / hooks |
 | `@acongm/config` | auth | `site.config.yaml` 加载与 OAuth URL |
 
@@ -51,6 +51,7 @@ git clone https://github.com/Acongm/chat.git
 cd portal && pnpm install
 cd ../auth && pnpm install
 cd ../node-vercel-starter && npm install
+cd ../chat && pnpm install
 
 cp auth/apps/auth/.env.example auth/apps/auth/.env.local
 # 填入 nest 项目 Supabase URL + anon key（见 auth/docs/oauth-setup.md）
@@ -65,8 +66,9 @@ cp auth/apps/auth/.env.example auth/apps/auth/.env.local
 | portal | `cd portal && pnpm dev` | http://localhost:3000/docs |
 | auth | `cd auth && pnpm dev` | http://localhost:3100/login |
 | api | `cd node-vercel-starter && npm run start` | http://localhost:3001 |
+| chat | `cd chat && pnpm dev` | http://localhost:3200 |
 
-portal 本地 Chat 代理默认指向 `AI_CHAT_UPSTREAM_URL=http://localhost:3001/api/ai/v1/chat/stream`（见 `portal/apps/web/.env.local`）。
+portal 本地 Chat 代理默认指向 `AI_CHAT_UPSTREAM_URL=http://localhost:3001/api/ai/v1/chat/stream`（见 `portal/apps/web/.env.local`）。独立 chat 站见 `chat/apps/web/.env.example`。
 
 ## Vercel 要点
 
@@ -75,6 +77,7 @@ portal 本地 Chat 代理默认指向 `AI_CHAT_UPSTREAM_URL=http://localhost:300
 | portal | `apps/web` | monorepo 根 `pnpm install`（见 `apps/web/vercel.json`） | 生产域名 `www.acongm.com` |
 | auth | `apps/auth` | `cd ../.. && pnpm install` | 需 `NEXT_PUBLIC_AUTH_COOKIE_DOMAIN=.acongm.com` |
 | api | `.` | `npm install` | 需配置 `SUPABASE_JWT_SECRET` 等 |
+| chat | `apps/web` | monorepo 根 `pnpm install` | 生产域名 `chat.acongm.com`；隔离策略见 `chat.config.yaml` |
 
 ## 默认分支
 

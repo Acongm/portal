@@ -9,10 +9,11 @@ import {
   readDocPageTitle,
   toLegacyDocPath,
 } from '@/lib/doc-chat-path';
+import { buildChatSiteUrl } from '@/lib/chat-site-link';
 
 /**
  * P1-10 / P4-04：在文档页嵌入 ChatDrawer，并随路由更新 context。
- * 不跳转独立 chat；pagePath / moduleKey 由 portal 路径派生。
+ * 可通过右下角「全屏对话」跳转 chat.acongm.com（同 pagePath / moduleKey）。
  */
 export function DocChatEmbed() {
   const pathname = usePathname() || '/';
@@ -21,7 +22,6 @@ export function DocChatEmbed() {
   const [content, setContent] = useState('');
 
   useEffect(() => {
-    // 等正文 hydration 后再取 DOM
     const frame = requestAnimationFrame(() => {
       setTitle(readDocPageTitle());
       setContent(extractDocPageContent());
@@ -40,5 +40,23 @@ export function DocChatEmbed() {
     [pagePath, title, content],
   );
 
-  return <DocsChatShell context={context} />;
+  const chatSiteUrl = useMemo(
+    () => buildChatSiteUrl({ pagePath, title }),
+    [pagePath, title],
+  );
+
+  return (
+    <>
+      <DocsChatShell context={context} />
+      <a
+        href={chatSiteUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="acongm-chat-site-link"
+        title="在 chat.acongm.com 打开全屏对话（保留当前文章上下文）"
+      >
+        全屏对话
+      </a>
+    </>
+  );
 }
