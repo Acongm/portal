@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 import { getDomainNavLinks } from '@/lib/domain-nav-links';
+import { PortalAuthNav } from '@/components/portal-auth-nav';
 import { appName } from './shared';
 
 export function baseOptions(): BaseLayoutProps {
@@ -22,7 +23,14 @@ export function baseOptions(): BaseLayoutProps {
       url: '/',
     },
     // 领域二级菜单：Fumadocs 原生 card 网格（icon / 标题 / 描述）
-    links: getDomainNavLinks(),
+    links: [
+      ...getDomainNavLinks(),
+      {
+        type: 'custom',
+        secondary: true,
+        children: <PortalAuthNav />,
+      },
+    ],
     searchToggle: {
       enabled: true,
     },

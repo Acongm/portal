@@ -85,3 +85,42 @@ html > body[data-scroll-locked] {
   margin-right: 0px !important;
   --removed-body-scroll-bar-size: 0px !important;
 }
+
+/* Auth 顶栏入口 */
+.portal-auth-nav {
+  display: inline-flex;
+  align-items: center;
+}
+
+.acongm-auth-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 0.75rem;
+  border: 1px solid color-mix(in oklab, var(--color-fd-border) 90%, transparent);
+  border-radius: 999px;
+  background: var(--color-fd-card, transparent);
+  color: inherit;
+  font-size: 0.85rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.acongm-auth-btn:hover {
+  border-color: color-mix(in oklab, var(--color-fd-primary) 45%, transparent);
+}
+
+.acongm-auth-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.acongm-auth-user__name {
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
