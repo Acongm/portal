@@ -1,4 +1,4 @@
-import { allDocDomains } from '@/lib/modules.registry';
+import { allDocDomains, listAllDomainModuleFolders } from '@/lib/modules.registry';
 
 const DOMAIN_IDS = allDocDomains.map((d) => d.id);
 
@@ -44,6 +44,43 @@ export function toLegacyDocPath(pathname: string): string {
 export function moduleKeyFromLegacyPath(pagePath: string): string {
   const segments = pagePath.replace(/^\//, '').split('/').filter(Boolean);
   return segments[0] || '';
+}
+
+/** legacy pagePath → chat 站 moduleKey（doc-modules folder）与文章 slug */
+export function moduleFolderFromLegacyPath(pagePath: string): {
+  folder: string;
+  slugParts: string[];
+} {
+  const segments = pagePath
+    .replace(/^\//, '')
+    .split('/')
+    .filter(Boolean)
+    .map((part) => part.replace(/\.mdx?$/i, ''))
+    .filter((part) => !/^readme$/i.test(part) && !/^index$/i.test(part));
+
+  if (!segments.length) return { folder: '', slugParts: [] };
+
+  const knownFolders = new Set(
+    listAllDomainModuleFolders().map((entry) => entry.folder),
+  );
+
+  let folder = '';
+  let folderIndex = -1;
+  for (let i = 0; i < segments.length; i += 1) {
+    if (knownFolders.has(segments[i])) {
+      folder = segments[i];
+      folderIndex = i;
+    }
+  }
+
+  if (!folder) {
+    return { folder: segments[0], slugParts: segments.slice(1) };
+  }
+
+  return {
+    folder,
+    slugParts: segments.slice(folderIndex + 1),
+  };
 }
 
 const MAX_ARTICLE_CHARS = 8000;
