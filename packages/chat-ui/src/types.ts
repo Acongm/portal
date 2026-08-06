@@ -16,4 +16,8 @@ export type DocChatContext = {
   maxTokens?: number;
   /** portal 文档助手默认 short；chat 站长对话用 long / threads */
   historyMode?: 'short' | 'long';
+  /** 未从 quick-tag 解析到 scope 时的默认值 */
+  defaultScope?: 'article' | 'module';
+  /** x-call-source 前缀，如 portal / chat-site */
+  callSourcePrefix?: string;
 };

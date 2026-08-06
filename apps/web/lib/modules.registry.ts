@@ -1,39 +1,23 @@
-import registry from '@/config/doc-modules.json';
+import registryJson from '@/config/doc-modules.json';
+import {
+  getDomainIdForLegacyFolder as catalogGetDomainId,
+  listAllDomainModuleFolders as catalogListFolders,
+  type DocDomain,
+  type DocModuleCategory,
+  type DocModuleEntry,
+  type DocModulesRegistry,
+  type NestedDocModule,
+} from '@acongm/kb-catalog';
 
-export type DocModuleEntry = {
-  folder: string;
-  title: string;
-  description?: string;
-  icon?: string;
-  accent?: string;
+export type {
+  DocModuleEntry,
+  DocModuleCategory,
+  NestedDocModule,
+  DocDomain,
 };
 
-export type DocModuleCategory = {
-  title: string;
-  description?: string;
-  modules: DocModuleEntry[];
-};
-
-export type NestedDocModule = {
-  folder: string;
-  title: string;
-  description?: string;
-  parent: string;
-};
-
-export type DocDomain = {
-  id: string;
-  title: string;
-  description?: string;
-  icon?: string;
-  accent?: string;
-  /** 隐藏入口：不出现在导航 / 首页 / 侧栏领域 Tab */
-  hidden?: boolean;
-  categories: DocModuleCategory[];
-  nestedModules?: NestedDocModule[];
-};
-
-const allDomains = registry.domains as DocDomain[];
+const registry = registryJson as DocModulesRegistry;
+const allDomains = registry.domains;
 
 /** 领域注册表（含 hidden）— 编辑 config/doc-modules.json 后运行 pnpm sync:modules */
 export const allDocDomains: DocDomain[] = allDomains;
@@ -63,25 +47,17 @@ export function getDomainHref(domainId: string): string {
 
 /** 旧路径模块 → 所属领域（redirect / 导航兼容） */
 export function getDomainIdForLegacyFolder(folder: string): string | undefined {
-  for (const domain of allDocDomains) {
-    const modules = [
-      ...(domain.categories ?? []).flatMap((c) => c.modules),
-      ...(domain.nestedModules ?? []),
-    ];
-    if (modules.some((m) => m.folder === folder)) return domain.id;
-  }
-  return undefined;
+  return catalogGetDomainId(registry, folder);
 }
 
-export function listAllDomainModuleFolders(): Array<{ domainId: string; folder: string }> {
-  const result: Array<{ domainId: string; folder: string }> = [];
-  for (const domain of allDocDomains) {
-    for (const mod of [
-      ...(domain.categories ?? []).flatMap((c) => c.modules),
-      ...(domain.nestedModules ?? []),
-    ]) {
-      result.push({ domainId: domain.id, folder: mod.folder });
-    }
-  }
-  return result;
+export function listAllDomainModuleFolders(): Array<{
+  domainId: string;
+  folder: string;
+}> {
+  return catalogListFolders(registry);
+}
+
+/** 供 chat 深链 / kb-catalog 使用的 registry 单例 */
+export function getDocModulesRegistry(): DocModulesRegistry {
+  return registry;
 }
