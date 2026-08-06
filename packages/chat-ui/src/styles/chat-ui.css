@@ -60,6 +60,39 @@
   filter: brightness(0.98);
 }
 
+/* portal 文档页 → chat.acongm.com 全屏深链（叠在 FAB 上方） */
+.acongm-chat-site-link {
+  position: fixed;
+  bottom: calc(144px + env(safe-area-inset-bottom));
+  right: 20px;
+  z-index: var(--acongm-fab-z);
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--acongm-fab-border);
+  border-radius: 999px;
+  background: var(--acongm-fab-bg);
+  color: var(--acongm-fab-fg);
+  font-family: var(--acongm-font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  box-shadow: var(--acongm-fab-shadow);
+  opacity: 0.92;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    filter 0.2s ease;
+}
+
+.acongm-chat-site-link:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
 .acongm-chat-fab__glow {
   position: absolute;
   inset: -2px;
@@ -553,6 +586,13 @@
 
 /* 手机：底部 sheet */
 @media (max-width: 767px) {
+  .acongm-chat-site-link {
+    bottom: calc(124px + env(safe-area-inset-bottom));
+    right: 14px;
+    font-size: 11px;
+    padding: 0 10px;
+  }
+
   .acongm-chat-fab {
     bottom: calc(68px + env(safe-area-inset-bottom));
     right: 14px;
