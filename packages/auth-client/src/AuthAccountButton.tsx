@@ -48,6 +48,42 @@ function LoginIcon() {
   );
 }
 
+function LoginControl({
+  className,
+  variant,
+  onLogin,
+}: {
+  className?: string;
+  variant: NonNullable<AuthAccountButtonProps['variant']>;
+  onLogin: () => void;
+}) {
+  if (variant === 'avatar') return null;
+  if (variant === 'icon') {
+    return (
+      <button
+        type="button"
+        className={className ?? 'acongm-auth-icon-btn'}
+        title="登录"
+        aria-label="登录"
+        onClick={onLogin}
+      >
+        <LoginIcon />
+      </button>
+    );
+  }
+  return (
+    <button
+      type="button"
+      className={className ?? 'acongm-auth-btn'}
+      data-variant={variant}
+      onClick={onLogin}
+    >
+      <LoginIcon />
+      <span>登录</span>
+    </button>
+  );
+}
+
 export function AuthAccountButton({
   className,
   variant = 'nav',
@@ -55,33 +91,7 @@ export function AuthAccountButton({
   const { session, loading, configured } = useSession();
   const { login, logout } = useAuthActions();
 
-  if (!configured) {
-    if (variant === 'avatar') return null;
-    if (variant === 'icon') {
-      return (
-        <a
-          className={className ?? 'acongm-auth-icon-btn'}
-          href="https://auth.acongm.com/login"
-          title="登录"
-          aria-label="登录"
-        >
-          <LoginIcon />
-        </a>
-      );
-    }
-    return (
-      <a
-        className={className ?? 'acongm-auth-btn'}
-        href="https://auth.acongm.com/login"
-        data-variant={variant}
-      >
-        <LoginIcon />
-        <span>登录</span>
-      </a>
-    );
-  }
-
-  if (loading) {
+  if (configured && loading) {
     if (variant === 'avatar' || variant === 'icon') {
       return (
         <span
@@ -100,31 +110,14 @@ export function AuthAccountButton({
     );
   }
 
-  if (!session) {
-    if (variant === 'avatar') return null;
-    if (variant === 'icon') {
-      return (
-        <button
-          type="button"
-          className={className ?? 'acongm-auth-icon-btn'}
-          title="登录"
-          aria-label="登录"
-          onClick={() => login()}
-        >
-          <LoginIcon />
-        </button>
-      );
-    }
+  // 未配置 Supabase 时仍可跳转 SSO（login 带 return_to）
+  if (!configured || !session) {
     return (
-      <button
-        type="button"
-        className={className ?? 'acongm-auth-btn'}
-        data-variant={variant}
-        onClick={() => login()}
-      >
-        <LoginIcon />
-        <span>登录</span>
-      </button>
+      <LoginControl
+        className={className}
+        variant={variant}
+        onLogin={() => login()}
+      />
     );
   }
 
