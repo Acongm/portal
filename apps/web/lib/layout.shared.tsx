@@ -1,37 +1,16 @@
-import Image from 'next/image';
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 import { getDomainNavLinks } from '@/lib/domain-nav-links';
-import { PortalAuthNav } from '@/components/portal-auth-nav';
+import { PortalNavBrand } from '@/components/portal-nav-brand';
 import { PortalThemeSwitchWithKnowledge } from '@/components/portal-theme-switch-with-knowledge';
-import { appName } from './shared';
 
 export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
-      title: (
-        <span className="inline-flex items-center gap-2 font-semibold">
-          <Image
-            src="/logo.jpg"
-            alt=""
-            width={28}
-            height={28}
-            className="rounded-sm"
-            priority
-          />
-          {appName}
-        </span>
-      ),
+      title: <PortalNavBrand />,
       url: '/',
     },
     // 领域二级菜单：Fumadocs 原生 card 网格（icon / 标题 / 描述）
-    links: [
-      ...getDomainNavLinks(),
-      {
-        type: 'custom',
-        secondary: true,
-        children: <PortalAuthNav />,
-      },
-    ],
+    links: [...getDomainNavLinks()],
     searchToggle: {
       enabled: true,
     },
@@ -39,7 +18,7 @@ export function baseOptions(): BaseLayoutProps {
       enabled: true,
       mode: 'light-dark-system',
     },
-    // 关联入口放在主题开关左侧（覆盖默认 ThemeSwitch 插槽）
+    // Chat + 登录图标在主题开关左侧（主题按钮位置不变）
     slots: {
       themeSwitch: PortalThemeSwitchWithKnowledge,
     },

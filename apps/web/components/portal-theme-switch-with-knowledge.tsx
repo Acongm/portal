@@ -1,38 +1,32 @@
 'use client';
 
 import type { ComponentProps } from 'react';
-import { BookMarked } from 'lucide-react';
+import { MessagesSquare } from 'lucide-react';
 import { ThemeSwitch } from 'fumadocs-ui/layouts/shared/slots/theme-switch';
+import { AuthAccountButton } from '@acongm/auth-client';
 
 /**
- * 主题开关左侧的「关联知识」入口：
- * - 文档页已挂载 DocsChatShell 时：打开抽屉并弹出 + 同源选择器
- * - 否则回退到独立 chat 站
+ * 主题开关左侧：跳转 Chat + 登录图标；主题按钮位置与样式保持不变。
  */
 export function PortalThemeSwitchWithKnowledge(
   props: ComponentProps<typeof ThemeSwitch>,
 ) {
-  const onAssociate = () => {
-    if (document.documentElement.classList.contains('acongm-chat-ready')) {
-      window.dispatchEvent(new Event('acongm-chat-associate'));
-      return;
-    }
-    const chatBase =
-      process.env.NEXT_PUBLIC_CHAT_URL || 'https://chat.acongm.com';
-    window.open(chatBase, '_blank', 'noopener,noreferrer');
-  };
+  const chatBase =
+    process.env.NEXT_PUBLIC_CHAT_URL || 'https://chat.acongm.com';
 
   return (
-    <div className="inline-flex items-center gap-1.5">
-      <button
-        type="button"
-        className="inline-flex size-8 items-center justify-center rounded-full border border-fd-border text-fd-muted-foreground transition-colors hover:bg-fd-accent hover:text-fd-accent-foreground"
-        title="关联知识并打开对话"
-        aria-label="关联知识并打开对话"
-        onClick={onAssociate}
+    <div className="portal-chrome-actions inline-flex items-center gap-1.5">
+      <a
+        href={chatBase}
+        className="portal-chrome-icon-btn"
+        title="打开 Chat"
+        aria-label="打开 Chat"
+        target="_blank"
+        rel="noopener noreferrer"
       >
-        <BookMarked className="size-3.5" aria-hidden />
-      </button>
+        <MessagesSquare className="size-3.5" aria-hidden />
+      </a>
+      <AuthAccountButton variant="icon" className="portal-chrome-icon-btn" />
       <ThemeSwitch mode="light-dark-system" {...props} />
     </div>
   );
