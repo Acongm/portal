@@ -2,6 +2,7 @@ import Image from 'next/image';
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 import { getDomainNavLinks } from '@/lib/domain-nav-links';
 import { PortalAuthNav } from '@/components/portal-auth-nav';
+import { PortalThemeSwitchWithKnowledge } from '@/components/portal-theme-switch-with-knowledge';
 import { appName } from './shared';
 
 export function baseOptions(): BaseLayoutProps {
@@ -36,8 +37,11 @@ export function baseOptions(): BaseLayoutProps {
     },
     themeSwitch: {
       enabled: true,
-      // 明 / 暗 / 跟随系统；首次默认 system（见 RootProvider）
       mode: 'light-dark-system',
+    },
+    // 关联入口放在主题开关左侧（覆盖默认 ThemeSwitch 插槽）
+    slots: {
+      themeSwitch: PortalThemeSwitchWithKnowledge,
     },
   };
 }

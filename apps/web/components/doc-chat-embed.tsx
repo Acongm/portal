@@ -1,25 +1,36 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { DocsChatShell, type DocChatContext } from '@acongm/chat-ui';
+import {
+  createArticleRef,
+  searchKnowledgeCatalog,
+  type KnowledgeRef,
+  type KnowledgeSearchHit,
+} from '@acongm/kb-catalog';
 import {
   extractDocPageContent,
   moduleKeyFromLegacyPath,
   readDocPageTitle,
   toLegacyDocPath,
 } from '@/lib/doc-chat-path';
-import { buildChatSiteUrl } from '@/lib/chat-site-link';
+import { getDocModulesRegistry } from '@/lib/modules.registry';
+import { usePortalArticleIndex } from '@/lib/use-portal-article-index';
 
 /**
- * P1-10 / P4-04：在文档页嵌入 ChatDrawer，并随路由更新 context。
- * 可通过右下角「全屏对话」跳转 chat.acongm.com（同 pagePath / moduleKey）。
+ * 文档页嵌入 ChatDrawer；与 chat 站共用 Composer（+/@/chips）与接口。
+ * 当前文章自动写入关联知识；顶栏「关联」入口通过事件打开抽屉并弹出选择器。
  */
 export function DocChatEmbed() {
   const pathname = usePathname() || '/';
   const pagePath = toLegacyDocPath(pathname);
+  const moduleKey = moduleKeyFromLegacyPath(pagePath);
   const [title, setTitle] = useState('当前文档');
   const [content, setContent] = useState('');
+  const [chips, setChips] = useState<KnowledgeRef[]>([]);
+  const articleIndex = usePortalArticleIndex();
+  const registry = useMemo(() => getDocModulesRegistry(), []);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -29,34 +40,59 @@ export function DocChatEmbed() {
     return () => cancelAnimationFrame(frame);
   }, [pathname]);
 
-  const context = useMemo<DocChatContext>(
-    () => ({
-      pagePath,
-      moduleKey: moduleKeyFromLegacyPath(pagePath),
-      title,
+  useEffect(() => {
+    if (!moduleKey) {
+      setChips([]);
+      return;
+    }
+    setChips([
+      createArticleRef({
+        moduleKey,
+        pagePath,
+        title: title || moduleKey,
+      }),
+    ]);
+  }, [moduleKey, pagePath, title]);
+
+  const context = useMemo<DocChatContext>(() => {
+    const primary = chips[0];
+    return {
+      pagePath: primary?.pagePath || pagePath,
+      moduleKey: primary?.moduleKey || moduleKey,
+      title: primary?.title || title,
       content,
       tags: [],
-    }),
-    [pagePath, title, content],
+      historyMode: 'short',
+      callSourcePrefix: 'portal',
+      enableThinking: true,
+    };
+  }, [chips, pagePath, moduleKey, title, content]);
+
+  const resolveMentionHits = useCallback(
+    (query: string): KnowledgeSearchHit[] =>
+      searchKnowledgeCatalog({
+        registry,
+        isolation: {
+          allowedDomains: [],
+          allowedModules: [],
+        },
+        articles: articleIndex.articles,
+        query,
+        limit: 16,
+      }),
+    [registry, articleIndex.articles],
   );
 
-  const chatSiteUrl = useMemo(
-    () => buildChatSiteUrl({ pagePath, title }),
-    [pagePath, title],
-  );
+  const onChipsChange = useCallback((next: KnowledgeRef[]) => {
+    setChips(next);
+  }, []);
 
   return (
-    <>
-      <DocsChatShell context={context} />
-      <a
-        href={chatSiteUrl}
-        target="_blank"
-        rel="noreferrer"
-        className="acongm-chat-site-link"
-        title="在 chat.acongm.com 打开全屏对话（保留当前文章上下文）"
-      >
-        全屏对话
-      </a>
-    </>
+    <DocsChatShell
+      context={context}
+      chips={chips}
+      onChipsChange={onChipsChange}
+      resolveMentionHits={resolveMentionHits}
+    />
   );
 }
