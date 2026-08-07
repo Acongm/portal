@@ -5,7 +5,7 @@ import { useAuthActions, useSession } from './hooks';
 export type AuthAccountButtonProps = {
   className?: string;
   /**
-   * nav：顶栏文字；sidebar：侧栏；icon：仅图标；avatar：首字圆标（logo 位）
+   * nav：顶栏文字+图标；sidebar：侧栏；icon：仅图标；avatar：首字圆标（logo 位）
    */
   variant?: 'nav' | 'sidebar' | 'icon' | 'avatar';
 };
@@ -28,6 +28,26 @@ function avatarChar(label: string): string {
   return Array.from(local)[0]?.toUpperCase() || 'U';
 }
 
+function LoginIcon() {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+      <polyline points="10 17 15 12 10 7" />
+      <line x1="15" x2="3" y1="12" y2="12" />
+    </svg>
+  );
+}
+
 export function AuthAccountButton({
   className,
   variant = 'nav',
@@ -45,7 +65,7 @@ export function AuthAccountButton({
           title="登录"
           aria-label="登录"
         >
-          登录
+          <LoginIcon />
         </a>
       );
     }
@@ -55,7 +75,8 @@ export function AuthAccountButton({
         href="https://auth.acongm.com/login"
         data-variant={variant}
       >
-        登录
+        <LoginIcon />
+        <span>登录</span>
       </a>
     );
   }
@@ -90,21 +111,7 @@ export function AuthAccountButton({
           aria-label="登录"
           onClick={() => login()}
         >
-          <svg
-            width="15"
-            height="15"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden
-          >
-            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-            <polyline points="10 17 15 12 10 7" />
-            <line x1="15" x2="3" y1="12" y2="12" />
-          </svg>
+          <LoginIcon />
         </button>
       );
     }
@@ -115,7 +122,8 @@ export function AuthAccountButton({
         data-variant={variant}
         onClick={() => login()}
       >
-        登录
+        <LoginIcon />
+        <span>登录</span>
       </button>
     );
   }
@@ -123,7 +131,7 @@ export function AuthAccountButton({
   const label = String(displayLabel(session));
   const mark = avatarChar(label);
 
-  if (variant === 'avatar' || variant === 'icon') {
+  if (variant === 'avatar') {
     return (
       <button
         type="button"
@@ -135,6 +143,24 @@ export function AuthAccountButton({
         }}
       >
         {mark}
+      </button>
+    );
+  }
+
+  if (variant === 'icon') {
+    return (
+      <button
+        type="button"
+        className={className ?? 'acongm-auth-icon-btn'}
+        title={`${label} · 点击退出`}
+        aria-label={`${label}，点击退出登录`}
+        onClick={() => {
+          void logout();
+        }}
+      >
+        <span className="acongm-auth-icon-btn__mark" aria-hidden>
+          {mark}
+        </span>
       </button>
     );
   }

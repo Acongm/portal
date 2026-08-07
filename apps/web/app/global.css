@@ -116,6 +116,17 @@ html > body[data-scroll-locked] {
   color: var(--color-fd-accent-foreground);
 }
 
+.acongm-auth-icon-btn__mark {
+  font-size: 0.7rem;
+  font-weight: 650;
+  line-height: 1;
+}
+
+/* 文档侧栏底部：Chat / 登录 / 主题整组靠右 */
+#nd-docs-layout .portal-chrome-actions {
+  margin-inline-start: auto;
+}
+
 .portal-nav-brand__avatar,
 .acongm-auth-avatar {
   display: inline-flex;
