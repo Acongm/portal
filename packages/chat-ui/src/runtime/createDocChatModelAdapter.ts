@@ -3,11 +3,13 @@ import {
   deriveTagOptions,
   modelHistory,
   resolveCallSource,
+  streamChatMessageV2,
   streamChatV1,
   streamThreadMessage,
 } from '@acongm/agent-session-sdk';
 import type { ChatUiMessage, ChatV1Context } from '@acongm/kb-types';
 import type { DocChatContext } from '../types';
+import { resolveChatV2RunIdentity } from './chat-v2-identities';
 
 function textFromMessage(message: ThreadMessage | undefined): string {
   if (!message) return '';
@@ -38,7 +40,6 @@ function yieldParts(thinking: string, text: string) {
   };
 }
 
-/** Omit empty optional strings — Nest `@IsOptional` + `@Length` rejects `""`. */
 function buildRequestContext(
   scope: ChatV1Context['scope'],
   pagePath: string,
@@ -59,15 +60,18 @@ function buildRequestContext(
   return context;
 }
 
-/**
- * 薄 ChatModelAdapter：ChatV1 / Threads SSE（含 thinking）→ reasoning + text parts。
- * chat 站有 threadId（或 ensureThread）时走 Threads 持久化流。
- */
+function newRunId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  throw new Error('当前浏览器不支持安全的 Chat run UUID。');
+}
+
 export function createDocChatModelAdapter(
   getContext: () => DocChatContext,
 ): ChatModelAdapter {
   return {
-    async *run({ messages, abortSignal }) {
+    async *run({ messages, abortSignal, unstable_assistantMessageId }) {
       const ctx = getContext();
       const {
         pagePath,
@@ -79,8 +83,11 @@ export function createDocChatModelAdapter(
         enableThinking = true,
         maxTokens,
         historyMode = 'short',
-        threadsBaseUrl,
+        chatsBaseUrl,
         accessToken,
+        ensureChat,
+        onChatPersisted,
+        threadsBaseUrl,
         ensureThread,
         onThreadPersisted,
       } = ctx;
@@ -99,7 +106,6 @@ export function createDocChatModelAdapter(
         tagOptions.scope,
         tagOptions.enableWebSearch,
       );
-
       const requestContext = buildRequestContext(
         tagOptions.scope,
         pagePath,
@@ -109,46 +115,79 @@ export function createDocChatModelAdapter(
         content,
       );
 
-      let threadId = ctx.threadId?.trim() || '';
-      if (!threadId && ensureThread) {
-        threadId = (
-          await ensureThread({
+      let chatId = ctx.chatId?.trim() || '';
+      if (!chatId && ensureChat) {
+        chatId = (
+          await ensureChat({
             title: question.replace(/\s+/g, ' ').trim().slice(0, 80) || undefined,
           })
         ).trim();
       }
 
-      const events = threadId
-        ? await streamThreadMessage(
-            threadId,
-            {
-              content: question,
-              enableWebSearch: tagOptions.enableWebSearch,
-              enableThinking,
-              maxTokens,
-              context: requestContext,
-            },
-            {
-              signal: abortSignal,
-              accessToken: accessToken ?? undefined,
-              baseUrl: threadsBaseUrl,
-            },
-          )
-        : await streamChatV1(
-            {
-              messages: modelHistory(toUiMessages(messages)),
-              context: requestContext,
-              enableWebSearch: tagOptions.enableWebSearch,
-              enableThinking,
-              maxTokens,
-              historyMode,
-            },
-            { signal: abortSignal, callSource, url: streamUrl },
-          );
+      let events;
+      if (chatId) {
+        const ids = resolveChatV2RunIdentity(
+          messages.map((message) => ({ id: message.id, role: message.role })),
+          unstable_assistantMessageId,
+          newRunId,
+        );
+        if (!ids) throw new Error('无法确定当前用户消息的稳定 id。');
+        events = await streamChatMessageV2(
+          chatId,
+          {
+            content: question,
+            ...ids,
+            enableWebSearch: tagOptions.enableWebSearch,
+            enableThinking,
+            maxTokens,
+            context: requestContext,
+          },
+          {
+            signal: abortSignal,
+            accessToken: accessToken ?? undefined,
+            baseUrl: chatsBaseUrl,
+          },
+        );
+      } else {
+        let threadId = ctx.threadId?.trim() || '';
+        if (!threadId && ensureThread) {
+          threadId = (
+            await ensureThread({
+              title: question.replace(/\s+/g, ' ').trim().slice(0, 80) || undefined,
+            })
+          ).trim();
+        }
+        events = threadId
+          ? await streamThreadMessage(
+              threadId,
+              {
+                content: question,
+                enableWebSearch: tagOptions.enableWebSearch,
+                enableThinking,
+                maxTokens,
+                context: requestContext,
+              },
+              {
+                signal: abortSignal,
+                accessToken: accessToken ?? undefined,
+                baseUrl: threadsBaseUrl,
+              },
+            )
+          : await streamChatV1(
+              {
+                messages: modelHistory(toUiMessages(messages)),
+                context: requestContext,
+                enableWebSearch: tagOptions.enableWebSearch,
+                enableThinking,
+                maxTokens,
+                historyMode,
+              },
+              { signal: abortSignal, callSource, url: streamUrl },
+            );
+      }
 
       let thinking = '';
       let text = '';
-
       for await (const event of events) {
         if (event.type === 'thinking') {
           thinking += event.content || '';
@@ -158,17 +197,16 @@ export function createDocChatModelAdapter(
           text += event.content || '';
           yield yieldParts(thinking, text);
         }
-        if (event.type === 'persisted' && event.threadId) {
-          onThreadPersisted?.(event.threadId);
+        if (event.type === 'persisted') {
+          if ('chatId' in event && event.chatId) onChatPersisted?.(event.chatId);
+          if ('threadId' in event && event.threadId) onThreadPersisted?.(event.threadId);
         }
         if (event.type === 'error') {
           throw new Error(event.message || '回答失败');
         }
       }
 
-      if (!text && thinking) {
-        yield yieldParts(thinking, '');
-      }
+      if (!text && thinking) yield yieldParts(thinking, '');
     },
   };
 }
