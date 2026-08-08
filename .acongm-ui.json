@@ -1,14 +1,15 @@
 {
   "registry": "Acongm/shadcn-ui",
   "ref": "main",
-  "installRef": "c8dc482a1225840b31a66ae9fee86e87288ddd24",
+  "installRef": "8c5b4a3472e3501cab8299229a2eb6320e384118",
+  "workspace": "apps/web",
   "items": [
     {
       "name": "ui-cn",
       "source": "registry/acongm/lib/ui-cn.ts",
       "local": "apps/web/lib/ui-cn.ts",
-      "sourceSha": "e251600ee5ed7704fe3cd9b0eae0de2e394f991c",
-      "localSha": "e251600ee5ed7704fe3cd9b0eae0de2e394f991c",
+      "sourceSha": "38ac1f3368aa52eb62945514ce418f988233f3bc",
+      "localSha": "38ac1f3368aa52eb62945514ce418f988233f3bc",
       "policy": "managed"
     },
     {
@@ -23,24 +24,24 @@
       "name": "button",
       "source": "registry/acongm/ui/button.tsx",
       "local": "apps/web/components/ui/button.tsx",
-      "sourceSha": "e1525d5b2fc17248e8a61b649d350010436571a0",
-      "localSha": "e1525d5b2fc17248e8a61b649d350010436571a0",
+      "sourceSha": "48615129cac55b68c236b1c78f55269e26ee772f",
+      "localSha": "48615129cac55b68c236b1c78f55269e26ee772f",
       "policy": "managed"
     },
     {
       "name": "badge",
       "source": "registry/acongm/ui/badge.tsx",
       "local": "apps/web/components/ui/badge.tsx",
-      "sourceSha": "0c7023be3ddf171cff58f1f2a68be6cfc4cc491d",
-      "localSha": "0c7023be3ddf171cff58f1f2a68be6cfc4cc491d",
+      "sourceSha": "045059e2501487e1df4aa0fa3a1cc62b701ee9cb",
+      "localSha": "045059e2501487e1df4aa0fa3a1cc62b701ee9cb",
       "policy": "managed"
     },
     {
       "name": "card",
       "source": "registry/acongm/ui/card.tsx",
       "local": "apps/web/components/ui/card.tsx",
-      "sourceSha": "e7061c94334c53049d227ae7efd4cfb06b245e00",
-      "localSha": "e7061c94334c53049d227ae7efd4cfb06b245e00",
+      "sourceSha": "b7861ce4547d4cb71bd40f65a9734569d0144686",
+      "localSha": "b7861ce4547d4cb71bd40f65a9734569d0144686",
       "policy": "managed"
     }
   ]
