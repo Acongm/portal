@@ -5,11 +5,9 @@ import {
   resolveCallSource,
   streamChatMessageV2,
   streamChatV1,
-  streamThreadMessage,
 } from '@acongm/agent-session-sdk';
 import type { ChatUiMessage, ChatV1Context } from '@acongm/kb-types';
 import type { DocChatContext } from '../types';
-import { resolveChatV2RunIdentity } from './chat-v2-identities';
 
 function textFromMessage(message: ThreadMessage | undefined): string {
   if (!message) return '';
@@ -60,18 +58,39 @@ function buildRequestContext(
   return context;
 }
 
-function newRunId(): string {
+function findLastUser(messages: readonly ThreadMessage[]) {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (messages[index]?.role === 'user') {
+      return { index, message: messages[index]! };
+    }
+  }
+  return null;
+}
+
+function parentOfCurrentUser(
+  messages: readonly ThreadMessage[],
+  userIndex: number,
+): string | undefined {
+  if (userIndex <= 0) return undefined;
+  return messages[userIndex - 1]?.id || undefined;
+}
+
+function createRunId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }
-  throw new Error('当前浏览器不支持安全的 Chat run UUID。');
+  throw new Error('Chat v2 requires crypto.randomUUID() for durable run ids.');
 }
 
 export function createDocChatModelAdapter(
   getContext: () => DocChatContext,
 ): ChatModelAdapter {
   return {
-    async *run({ messages, abortSignal, unstable_assistantMessageId }) {
+    async *run({
+      messages,
+      abortSignal,
+      unstable_assistantMessageId,
+    }) {
       const ctx = getContext();
       const {
         pagePath,
@@ -87,16 +106,11 @@ export function createDocChatModelAdapter(
         accessToken,
         ensureChat,
         onChatPersisted,
-        threadsBaseUrl,
-        ensureThread,
-        onThreadPersisted,
       } = ctx;
 
-      const lastUser = [...messages]
-        .reverse()
-        .find((message) => message.role === 'user');
-      const question = textFromMessage(lastUser).trim();
-      if (!question) {
+      const currentUser = findLastUser(messages);
+      const question = textFromMessage(currentUser?.message).trim();
+      if (!currentUser || !question) {
         yield { content: [{ type: 'text', text: '' }] };
         return;
       }
@@ -124,67 +138,37 @@ export function createDocChatModelAdapter(
         ).trim();
       }
 
-      let events;
-      if (chatId) {
-        const ids = resolveChatV2RunIdentity(
-          messages.map((message) => ({ id: message.id, role: message.role })),
-          unstable_assistantMessageId,
-          newRunId,
-        );
-        if (!ids) throw new Error('无法确定当前用户消息的稳定 id。');
-        events = await streamChatMessageV2(
-          chatId,
-          {
-            content: question,
-            ...ids,
-            enableWebSearch: tagOptions.enableWebSearch,
-            enableThinking,
-            maxTokens,
-            context: requestContext,
-          },
-          {
-            signal: abortSignal,
-            accessToken: accessToken ?? undefined,
-            baseUrl: chatsBaseUrl,
-          },
-        );
-      } else {
-        let threadId = ctx.threadId?.trim() || '';
-        if (!threadId && ensureThread) {
-          threadId = (
-            await ensureThread({
-              title: question.replace(/\s+/g, ' ').trim().slice(0, 80) || undefined,
-            })
-          ).trim();
-        }
-        events = threadId
-          ? await streamThreadMessage(
-              threadId,
-              {
-                content: question,
-                enableWebSearch: tagOptions.enableWebSearch,
-                enableThinking,
-                maxTokens,
-                context: requestContext,
-              },
-              {
-                signal: abortSignal,
-                accessToken: accessToken ?? undefined,
-                baseUrl: threadsBaseUrl,
-              },
-            )
-          : await streamChatV1(
-              {
-                messages: modelHistory(toUiMessages(messages)),
-                context: requestContext,
-                enableWebSearch: tagOptions.enableWebSearch,
-                enableThinking,
-                maxTokens,
-                historyMode,
-              },
-              { signal: abortSignal, callSource, url: streamUrl },
-            );
-      }
+      const events = chatId
+        ? await streamChatMessageV2(
+            chatId,
+            {
+              content: question,
+              clientMessageId: currentUser.message.id,
+              parentMessageId: parentOfCurrentUser(messages, currentUser.index),
+              assistantMessageId: unstable_assistantMessageId,
+              runId: createRunId(),
+              enableWebSearch: tagOptions.enableWebSearch,
+              enableThinking,
+              maxTokens,
+              context: requestContext,
+            },
+            {
+              signal: abortSignal,
+              accessToken: accessToken ?? undefined,
+              baseUrl: chatsBaseUrl,
+            },
+          )
+        : await streamChatV1(
+            {
+              messages: modelHistory(toUiMessages(messages)),
+              context: requestContext,
+              enableWebSearch: tagOptions.enableWebSearch,
+              enableThinking,
+              maxTokens,
+              historyMode,
+            },
+            { signal: abortSignal, callSource, url: streamUrl },
+          );
 
       let thinking = '';
       let text = '';
@@ -197,16 +181,19 @@ export function createDocChatModelAdapter(
           text += event.content || '';
           yield yieldParts(thinking, text);
         }
-        if (event.type === 'persisted') {
-          if ('chatId' in event && event.chatId) onChatPersisted?.(event.chatId);
-          if ('threadId' in event && event.threadId) onThreadPersisted?.(event.threadId);
+        if (event.type === 'persisted' && 'chatId' in event && event.chatId) {
+          onChatPersisted?.(event.chatId);
         }
         if (event.type === 'error') {
-          throw new Error(event.message || '回答失败');
+          const error = new Error(event.message || '回答失败');
+          if ('code' in event && event.code) error.name = event.code;
+          throw error;
         }
       }
 
-      if (!text && thinking) yield yieldParts(thinking, '');
+      if (!text && thinking) {
+        yield yieldParts(thinking, '');
+      }
     },
   };
 }
