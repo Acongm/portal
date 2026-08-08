@@ -8,6 +8,7 @@ const bff = read('apps/web/app/api/chats/[[...path]]/route.ts');
 const authClient = read('packages/auth-client/src/client.ts');
 const authHooks = read('packages/auth-client/src/hooks.tsx');
 const adapter = read('packages/chat-ui/src/runtime/createDocChatModelAdapter.ts');
+const identities = read('packages/chat-ui/src/runtime/chat-v2-identities.ts');
 const runtime = read('packages/chat-ui/src/runtime/DocChatRuntimeProvider.tsx');
 
 test('Portal guests receive a real Supabase anonymous identity before Chat renders', () => {
@@ -46,7 +47,10 @@ test('Chat v2 adapter sends durable message/run identities when a chat exists', 
   assert.match(adapter, /streamChatMessageV2\(/);
   assert.match(adapter, /resolveChatV2RunIdentity\(/);
   assert.match(adapter, /unstable_assistantMessageId/);
-  assert.match(adapter, /runId: createRunId\(\)/);
+  assert.match(identities, /clientMessageId: currentUser\.id/);
+  assert.match(identities, /parentMessageId:/);
+  assert.match(identities, /assistantMessageId: assistantMessageId \|\| undefined/);
+  assert.match(identities, /runId: createRunId\(\)/);
 });
 
 test('same-origin chats BFF forwards authorization to the API upstream', () => {
