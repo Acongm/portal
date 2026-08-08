@@ -2,6 +2,8 @@ import { RootProvider } from 'fumadocs-ui/provider/next';
 import './global.css';
 import { Inter } from 'next/font/google';
 import type { Metadata } from 'next';
+import { ThemeCookieBridge } from '@/components/theme-cookie-bridge';
+import { ACONGM_THEME_BOOT_SCRIPT } from '@/lib/theme';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -23,13 +25,17 @@ export const metadata: Metadata = {
 export default function Layout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="zh-CN" className={inter.className} suppressHydrationWarning>
-      <body className="flex flex-col min-h-screen">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: ACONGM_THEME_BOOT_SCRIPT }} />
+      </head>
+      <body className="flex min-h-screen flex-col bg-background text-foreground">
         <RootProvider
           theme={{
             defaultTheme: 'system',
             enableSystem: true,
           }}
         >
+          <ThemeCookieBridge />
           {children}
         </RootProvider>
       </body>
