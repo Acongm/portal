@@ -3,8 +3,8 @@ import {
   deriveTagOptions,
   modelHistory,
   resolveCallSource,
+  streamChatMessageV2,
   streamChatV1,
-  streamThreadMessage,
 } from '@acongm/agent-session-sdk';
 import type { ChatUiMessage, ChatV1Context } from '@acongm/kb-types';
 import type { DocChatContext } from '../types';
@@ -38,7 +38,6 @@ function yieldParts(thinking: string, text: string) {
   };
 }
 
-/** Omit empty optional strings — Nest `@IsOptional` + `@Length` rejects `""`. */
 function buildRequestContext(
   scope: ChatV1Context['scope'],
   pagePath: string,
@@ -59,15 +58,39 @@ function buildRequestContext(
   return context;
 }
 
-/**
- * 薄 ChatModelAdapter：ChatV1 / Threads SSE（含 thinking）→ reasoning + text parts。
- * chat 站有 threadId（或 ensureThread）时走 Threads 持久化流。
- */
+function findLastUser(messages: readonly ThreadMessage[]) {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (messages[index]?.role === 'user') {
+      return { index, message: messages[index]! };
+    }
+  }
+  return null;
+}
+
+function parentOfCurrentUser(
+  messages: readonly ThreadMessage[],
+  userIndex: number,
+): string | undefined {
+  if (userIndex <= 0) return undefined;
+  return messages[userIndex - 1]?.id || undefined;
+}
+
+function createRunId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  throw new Error('Chat v2 requires crypto.randomUUID() for durable run ids.');
+}
+
 export function createDocChatModelAdapter(
   getContext: () => DocChatContext,
 ): ChatModelAdapter {
   return {
-    async *run({ messages, abortSignal }) {
+    async *run({
+      messages,
+      abortSignal,
+      unstable_assistantMessageId,
+    }) {
       const ctx = getContext();
       const {
         pagePath,
@@ -79,17 +102,15 @@ export function createDocChatModelAdapter(
         enableThinking = true,
         maxTokens,
         historyMode = 'short',
-        threadsBaseUrl,
+        chatsBaseUrl,
         accessToken,
-        ensureThread,
-        onThreadPersisted,
+        ensureChat,
+        onChatPersisted,
       } = ctx;
 
-      const lastUser = [...messages]
-        .reverse()
-        .find((message) => message.role === 'user');
-      const question = textFromMessage(lastUser).trim();
-      if (!question) {
+      const currentUser = findLastUser(messages);
+      const question = textFromMessage(currentUser?.message).trim();
+      if (!currentUser || !question) {
         yield { content: [{ type: 'text', text: '' }] };
         return;
       }
@@ -99,7 +120,6 @@ export function createDocChatModelAdapter(
         tagOptions.scope,
         tagOptions.enableWebSearch,
       );
-
       const requestContext = buildRequestContext(
         tagOptions.scope,
         pagePath,
@@ -109,20 +129,24 @@ export function createDocChatModelAdapter(
         content,
       );
 
-      let threadId = ctx.threadId?.trim() || '';
-      if (!threadId && ensureThread) {
-        threadId = (
-          await ensureThread({
+      let chatId = ctx.chatId?.trim() || '';
+      if (!chatId && ensureChat) {
+        chatId = (
+          await ensureChat({
             title: question.replace(/\s+/g, ' ').trim().slice(0, 80) || undefined,
           })
         ).trim();
       }
 
-      const events = threadId
-        ? await streamThreadMessage(
-            threadId,
+      const events = chatId
+        ? await streamChatMessageV2(
+            chatId,
             {
               content: question,
+              clientMessageId: currentUser.message.id,
+              parentMessageId: parentOfCurrentUser(messages, currentUser.index),
+              assistantMessageId: unstable_assistantMessageId,
+              runId: createRunId(),
               enableWebSearch: tagOptions.enableWebSearch,
               enableThinking,
               maxTokens,
@@ -131,7 +155,7 @@ export function createDocChatModelAdapter(
             {
               signal: abortSignal,
               accessToken: accessToken ?? undefined,
-              baseUrl: threadsBaseUrl,
+              baseUrl: chatsBaseUrl,
             },
           )
         : await streamChatV1(
@@ -148,7 +172,6 @@ export function createDocChatModelAdapter(
 
       let thinking = '';
       let text = '';
-
       for await (const event of events) {
         if (event.type === 'thinking') {
           thinking += event.content || '';
@@ -158,11 +181,13 @@ export function createDocChatModelAdapter(
           text += event.content || '';
           yield yieldParts(thinking, text);
         }
-        if (event.type === 'persisted' && event.threadId) {
-          onThreadPersisted?.(event.threadId);
+        if (event.type === 'persisted' && 'chatId' in event && event.chatId) {
+          onChatPersisted?.(event.chatId);
         }
         if (event.type === 'error') {
-          throw new Error(event.message || '回答失败');
+          const error = new Error(event.message || '回答失败');
+          if ('code' in event && event.code) error.name = event.code;
+          throw error;
         }
       }
 

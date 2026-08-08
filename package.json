@@ -3,9 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "description": "acongm portal — Next.js + Fumadocs documentation site",
-  "engines": {
-    "node": "22.x"
-  },
+  "engines": { "node": "22.x" },
   "scripts": {
     "dev": "pnpm --filter web dev",
     "build": "pnpm --filter web build",
@@ -17,6 +15,7 @@
     "ui:sync": "node scripts/ui-registry.mjs sync core-ui",
     "ui:diff": "node scripts/ui-registry.mjs diff core-ui",
     "ui:drift": "node scripts/check-ui-drift.mjs",
+    "test:portal-chat-v2": "node --test tests/contracts/portal-chat-v2.test.mjs",
     "test:ai-path": "node scripts/test-ai-chat-path.mjs",
     "test:doc-links": "node scripts/test-doc-links.mjs",
     "fix:doc-links": "node scripts/fix-doc-internal-links.mjs",
@@ -25,7 +24,5 @@
     "sync:module-intros": "node scripts/sync-module-index-intro.mjs",
     "migrate:domains": "node scripts/migrate-to-domains.mjs"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "sharp"]
-  }
+  "pnpm": { "onlyBuiltDependencies": ["esbuild", "sharp"] }
 }
