@@ -10,6 +10,7 @@ const authHooks = read('packages/auth-client/src/hooks.tsx');
 const adapter = read('packages/chat-ui/src/runtime/createDocChatModelAdapter.ts');
 const identities = read('packages/chat-ui/src/runtime/chat-v2-identities.ts');
 const runtime = read('packages/chat-ui/src/runtime/DocChatRuntimeProvider.tsx');
+const sdk = read('packages/agent-session-sdk/src/chats.ts');
 
 test('Portal guests receive a real Supabase anonymous identity before Chat renders', () => {
   assert.match(authClient, /client\.auth\.signInAnonymously\(\)/);
@@ -19,11 +20,38 @@ test('Portal guests receive a real Supabase anonymous identity before Chat rende
 
 test('Portal stores only a user/page chat pointer and restores transcript from Chat v2', () => {
   assert.match(embed, /acongm\.portal\.chat\.v2:\$\{userId\}:\$\{pagePath\}/);
-  assert.match(embed, /getChatV2\(stored/);
-  assert.match(embed, /selectActiveChatBranch\(detail\.messages\)/);
-  assert.match(embed, /setSeedMessages\(/);
+  assert.match(embed, /loadDurableHistory\(stored, accessToken\)/);
+  assert.match(embed, /selectActiveChatBranch\(allMessages\)/);
+  assert.match(embed, /setSeedMessages\(detail\.messages\)/);
   assert.match(embed, /detail\.chat\.userId !== userId/);
   assert.doesNotMatch(embed, /saveChatHistory\(/);
+});
+
+test('Portal restores all durable history pages or fails explicitly instead of silently truncating', () => {
+  assert.match(sdk, /export async function listChatMessagesV2\(/);
+  assert.match(embed, /MAX_RESTORED_MESSAGES = 5000/);
+  assert.match(embed, /while \(cursor\)/);
+  assert.match(embed, /listChatMessagesV2\(/);
+  assert.match(embed, /seenCursors\.has\(cursor\)/);
+  assert.match(embed, /不会静默截断 durable branch/);
+});
+
+test('refresh preserves original assistant-ui client ids for durable Retry and Reload', () => {
+  assert.match(embed, /id: message\.clientMessageId \|\| message\.id/);
+  assert.match(adapter, /clientMessageId/);
+  assert.match(identities, /clientMessageId: currentUser\.id/);
+});
+
+test('history restore failures do not silently delete a valid pointer and fork a new chat', () => {
+  assert.match(embed, /error instanceof ChatStreamError && error\.status === 404/);
+  assert.match(embed, /setRestoreError\(/);
+  assert.match(embed, /if \(restoreError\)/);
+  assert.match(embed, /throw new Error\(`无法恢复已有会话:/);
+  assert.match(embed, /localStorage\.removeItem\(key\)/);
+  assert.doesNotMatch(
+    embed,
+    /\.catch\(\(\) => \{[\s\S]*?localStorage\.removeItem\(key\)[\s\S]*?setChatReady\(true\)/,
+  );
 });
 
 test('Portal lazy-creates a durable chat and never supplies a ChatV1 stream URL', () => {
