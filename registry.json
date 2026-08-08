@@ -58,7 +58,7 @@
       "name": "ui-cn",
       "type": "registry:lib",
       "title": "UI className utility",
-      "dependencies": ["clsx", "tailwind-merge"],
+      "description": "Dependency-free className composition for lightweight Acongm primitives.",
       "files": [
         {
           "path": "registry/acongm/lib/ui-cn.ts",
@@ -68,10 +68,23 @@
       ]
     },
     {
+      "name": "theme-runtime",
+      "type": "registry:lib",
+      "title": "Acongm theme runtime",
+      "description": "Cross-subdomain light/dark/system persistence via localStorage and .acongm.com cookie.",
+      "files": [
+        {
+          "path": "registry/acongm/lib/theme.ts",
+          "type": "registry:lib",
+          "target": "@lib/theme.ts"
+        }
+      ]
+    },
+    {
       "name": "button",
       "type": "registry:ui",
       "title": "Button",
-      "description": "Lightweight semantic button primitive.",
+      "description": "Lightweight semantic button primitive and buttonVariants helper.",
       "registryDependencies": ["Acongm/portal/ui-cn"],
       "files": [
         {
@@ -92,6 +105,34 @@
           "path": "registry/acongm/ui/input.tsx",
           "type": "registry:ui",
           "target": "@ui/input.tsx"
+        }
+      ]
+    },
+    {
+      "name": "textarea",
+      "type": "registry:ui",
+      "title": "Textarea",
+      "description": "Lightweight semantic textarea primitive.",
+      "registryDependencies": ["Acongm/portal/ui-cn"],
+      "files": [
+        {
+          "path": "registry/acongm/ui/textarea.tsx",
+          "type": "registry:ui",
+          "target": "@ui/textarea.tsx"
+        }
+      ]
+    },
+    {
+      "name": "label",
+      "type": "registry:ui",
+      "title": "Label",
+      "description": "Dependency-free form label primitive.",
+      "registryDependencies": ["Acongm/portal/ui-cn"],
+      "files": [
+        {
+          "path": "registry/acongm/ui/label.tsx",
+          "type": "registry:ui",
+          "target": "@ui/label.tsx"
         }
       ]
     },
@@ -124,6 +165,20 @@
       ]
     },
     {
+      "name": "alert",
+      "type": "registry:ui",
+      "title": "Alert",
+      "description": "Semantic default/success/destructive status surface.",
+      "registryDependencies": ["Acongm/portal/ui-cn"],
+      "files": [
+        {
+          "path": "registry/acongm/ui/alert.tsx",
+          "type": "registry:ui",
+          "target": "@ui/alert.tsx"
+        }
+      ]
+    },
+    {
       "name": "separator",
       "type": "registry:ui",
       "title": "Separator",
@@ -152,19 +207,42 @@
       ]
     },
     {
+      "name": "theme-toggle",
+      "type": "registry:ui",
+      "title": "Theme Toggle",
+      "description": "Light/dark/system toggle backed by the shared Acongm theme runtime.",
+      "dependencies": ["lucide-react"],
+      "registryDependencies": [
+        "Acongm/portal/button",
+        "Acongm/portal/theme-runtime"
+      ],
+      "files": [
+        {
+          "path": "registry/acongm/ui/theme-toggle.tsx",
+          "type": "registry:ui",
+          "target": "@ui/theme-toggle.tsx"
+        }
+      ]
+    },
+    {
       "name": "core-ui",
       "type": "registry:base",
       "title": "Acongm Core UI",
-      "description": "Acongm semantic theme and first-party lightweight React UI primitives.",
+      "description": "Acongm semantic theme, cross-subdomain theme runtime and lightweight React UI primitives.",
       "registryDependencies": [
         "Acongm/portal/acongm-theme",
         "Acongm/portal/ui-cn",
+        "Acongm/portal/theme-runtime",
         "Acongm/portal/button",
         "Acongm/portal/input",
+        "Acongm/portal/textarea",
+        "Acongm/portal/label",
         "Acongm/portal/card",
         "Acongm/portal/badge",
+        "Acongm/portal/alert",
         "Acongm/portal/separator",
-        "Acongm/portal/skeleton"
+        "Acongm/portal/skeleton",
+        "Acongm/portal/theme-toggle"
       ]
     }
   ]

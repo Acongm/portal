@@ -1,13 +1,8 @@
 @import 'tailwindcss';
-@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/shadcn.css';
 @import 'fumadocs-ui/css/preset.css';
 @import '@acongm/ui-theme/tokens.css';
 @import '@acongm/ui-theme/auth.css';
-
-@theme {
-  --color-fd-primary: #3eaf7c;
-  --color-fd-ring: #3eaf7c;
-}
 
 /* Docs / Home 全宽布局：侧栏与顶栏贴边，内容区吃满宽度 */
 :root {
@@ -39,11 +34,11 @@
   overflow: visible !important;
 }
 
-/* Fumadocs 原生 menu 卡片：加强层次与 hover（对齐 Soom/Fumadocs 文档站） */
+/* Fumadocs 原生 menu 卡片：只保留布局/交互增强，颜色由 shadcn adapter 接管。 */
 #nd-nav [data-slot='navigation-menu-content'] a[data-slot='navigation-menu-link'],
 #nd-nav [data-radix-navigation-menu-content] > a,
 #nd-nav [data-radix-navigation-menu-content] a {
-  border-radius: 0.75rem;
+  border-radius: var(--radius-lg);
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease,
@@ -53,21 +48,21 @@
 
 #nd-nav [data-radix-navigation-menu-content] a:hover {
   transform: translateY(-1px);
-  border-color: color-mix(in oklab, var(--color-fd-primary) 45%, transparent);
-  box-shadow: 0 4px 14px color-mix(in oklab, var(--color-fd-primary) 12%, transparent);
+  border-color: color-mix(in oklab, var(--primary) 45%, transparent);
+  box-shadow: 0 4px 14px color-mix(in oklab, var(--primary) 12%, transparent);
 }
 
-/* Docs 侧栏领域切换：列表项改为卡片感 */
+/* Docs 侧栏领域切换：列表项保持卡片感，颜色跟随统一 token。 */
 #nd-docs-layout .fd-scroll-container {
   gap: 0.375rem;
   padding: 0.5rem;
 }
 
 #nd-docs-layout .fd-scroll-container > a {
-  border: 1px solid color-mix(in oklab, var(--color-fd-border) 85%, transparent);
-  background: var(--color-fd-card);
+  border: 1px solid var(--border);
+  background: var(--card);
   padding: 0.625rem 0.75rem;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-lg);
   transition:
     border-color 0.15s ease,
     background-color 0.15s ease,
@@ -75,8 +70,9 @@
 }
 
 #nd-docs-layout .fd-scroll-container > a:hover {
-  border-color: color-mix(in oklab, var(--color-fd-primary) 40%, transparent);
-  box-shadow: 0 2px 8px color-mix(in oklab, var(--color-fd-primary) 10%, transparent);
+  border-color: color-mix(in oklab, var(--primary) 40%, transparent);
+  background: var(--accent);
+  box-shadow: 0 2px 8px color-mix(in oklab, var(--primary) 10%, transparent);
 }
 
 html {
@@ -84,36 +80,14 @@ html {
 }
 
 html > body[data-scroll-locked] {
-  margin-right: 0px !important;
+  margin-right: 0 !important;
   --removed-body-scroll-bar-size: 0px !important;
 }
 
-/* Portal-only chrome. Shared AuthAccountButton styles live in @acongm/ui-theme/auth.css. */
+/* Portal-only chrome. Shared interactive controls use registry primitives. */
 .portal-auth-nav {
   display: inline-flex;
   align-items: center;
-}
-
-.portal-chrome-icon-btn {
-  display: inline-flex;
-  width: 2rem;
-  height: 2rem;
-  align-items: center;
-  justify-content: center;
-  border-radius: 9999px;
-  border: 1px solid var(--color-fd-border);
-  color: var(--color-fd-muted-foreground);
-  background: transparent;
-  text-decoration: none;
-  cursor: pointer;
-  transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
-}
-
-.portal-chrome-icon-btn:hover {
-  background: var(--color-fd-accent);
-  color: var(--color-fd-accent-foreground);
 }
 
 /* 文档侧栏底部：Chat / 登录 / 主题整组靠右 */
@@ -128,9 +102,9 @@ html > body[data-scroll-locked] {
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
-  border: 1px solid var(--color-fd-border);
-  background: color-mix(in oklab, var(--color-fd-primary) 16%, transparent);
-  color: inherit;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--primary) 16%, transparent);
+  color: var(--foreground);
   font-size: 0.75rem;
   font-weight: 650;
   line-height: 1;
