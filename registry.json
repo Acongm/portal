@@ -1,0 +1,171 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "acongm-ui",
+  "homepage": "https://github.com/Acongm/portal",
+  "items": [
+    {
+      "name": "acongm-theme",
+      "type": "registry:theme",
+      "title": "Acongm Theme",
+      "description": "Shared semantic light/dark theme for Acongm applications.",
+      "cssVars": {
+        "light": {
+          "background": "#f7f8fa",
+          "foreground": "#1a1d27",
+          "card": "#ffffff",
+          "card-foreground": "#1a1d27",
+          "popover": "#ffffff",
+          "popover-foreground": "#1a1d27",
+          "primary": "#2f6b4f",
+          "primary-foreground": "#ffffff",
+          "secondary": "#eef1f5",
+          "secondary-foreground": "#25283a",
+          "muted": "#eef1f5",
+          "muted-foreground": "#6b7280",
+          "accent": "#e6f3ec",
+          "accent-foreground": "#24543f",
+          "destructive": "#c62828",
+          "destructive-foreground": "#ffffff",
+          "border": "#e4e7ef",
+          "input": "#d4d8e3",
+          "ring": "#2f6b4f",
+          "radius": "0.75rem"
+        },
+        "dark": {
+          "background": "#12141c",
+          "foreground": "#e8eaef",
+          "card": "#1a1d27",
+          "card-foreground": "#e8eaef",
+          "popover": "#1a1d27",
+          "popover-foreground": "#e8eaef",
+          "primary": "#3eaf7c",
+          "primary-foreground": "#0b1f16",
+          "secondary": "#222633",
+          "secondary-foreground": "#e8eaef",
+          "muted": "#222633",
+          "muted-foreground": "#9aa3b5",
+          "accent": "#20392d",
+          "accent-foreground": "#bcebd4",
+          "destructive": "#ef6b6b",
+          "destructive-foreground": "#2a0b0b",
+          "border": "#2c3140",
+          "input": "#3a4052",
+          "ring": "#3eaf7c"
+        }
+      }
+    },
+    {
+      "name": "ui-cn",
+      "type": "registry:lib",
+      "title": "UI className utility",
+      "dependencies": ["clsx", "tailwind-merge"],
+      "files": [
+        {
+          "path": "registry/acongm/lib/ui-cn.ts",
+          "type": "registry:lib",
+          "target": "@lib/ui-cn.ts"
+        }
+      ]
+    },
+    {
+      "name": "button",
+      "type": "registry:ui",
+      "title": "Button",
+      "description": "Lightweight semantic button primitive.",
+      "registryDependencies": ["Acongm/portal/ui-cn"],
+      "files": [
+        {
+          "path": "registry/acongm/ui/button.tsx",
+          "type": "registry:ui",
+          "target": "@ui/button.tsx"
+        }
+      ]
+    },
+    {
+      "name": "input",
+      "type": "registry:ui",
+      "title": "Input",
+      "description": "Lightweight semantic input primitive.",
+      "registryDependencies": ["Acongm/portal/ui-cn"],
+      "files": [
+        {
+          "path": "registry/acongm/ui/input.tsx",
+          "type": "registry:ui",
+          "target": "@ui/input.tsx"
+        }
+      ]
+    },
+    {
+      "name": "card",
+      "type": "registry:ui",
+      "title": "Card",
+      "description": "Semantic card surface primitives.",
+      "registryDependencies": ["Acongm/portal/ui-cn"],
+      "files": [
+        {
+          "path": "registry/acongm/ui/card.tsx",
+          "type": "registry:ui",
+          "target": "@ui/card.tsx"
+        }
+      ]
+    },
+    {
+      "name": "badge",
+      "type": "registry:ui",
+      "title": "Badge",
+      "description": "Semantic status badge primitive.",
+      "registryDependencies": ["Acongm/portal/ui-cn"],
+      "files": [
+        {
+          "path": "registry/acongm/ui/badge.tsx",
+          "type": "registry:ui",
+          "target": "@ui/badge.tsx"
+        }
+      ]
+    },
+    {
+      "name": "separator",
+      "type": "registry:ui",
+      "title": "Separator",
+      "description": "Dependency-free visual separator.",
+      "registryDependencies": ["Acongm/portal/ui-cn"],
+      "files": [
+        {
+          "path": "registry/acongm/ui/separator.tsx",
+          "type": "registry:ui",
+          "target": "@ui/separator.tsx"
+        }
+      ]
+    },
+    {
+      "name": "skeleton",
+      "type": "registry:ui",
+      "title": "Skeleton",
+      "description": "Lightweight loading skeleton.",
+      "registryDependencies": ["Acongm/portal/ui-cn"],
+      "files": [
+        {
+          "path": "registry/acongm/ui/skeleton.tsx",
+          "type": "registry:ui",
+          "target": "@ui/skeleton.tsx"
+        }
+      ]
+    },
+    {
+      "name": "core-ui",
+      "type": "registry:base",
+      "title": "Acongm Core UI",
+      "description": "Acongm semantic theme and first-party lightweight React UI primitives.",
+      "registryDependencies": [
+        "Acongm/portal/acongm-theme",
+        "Acongm/portal/ui-cn",
+        "Acongm/portal/button",
+        "Acongm/portal/input",
+        "Acongm/portal/card",
+        "Acongm/portal/badge",
+        "Acongm/portal/separator",
+        "Acongm/portal/skeleton"
+      ]
+    }
+  ]
+}

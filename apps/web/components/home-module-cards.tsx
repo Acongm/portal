@@ -58,7 +58,7 @@ export function HomeModuleCards() {
     <div className="space-y-16">
       {docDomains.map((domain) => {
         const DomainIcon = iconMap[domain.icon ?? ''] ?? BookOpen;
-        const domainAccent = domain.accent ?? '#3eaf7c';
+        const domainAccent = domain.accent ?? 'var(--primary)';
         const hasModules = (domain.categories ?? []).some((c) => c.modules.length > 0);
 
         return (
@@ -80,7 +80,7 @@ export function HomeModuleCards() {
               </div>
               <Link
                 href={getDomainHref(domain.id)}
-                className="text-sm font-medium text-[#3eaf7c] hover:underline"
+                className="text-sm font-medium text-primary hover:underline"
               >
                 进入领域 →
               </Link>
@@ -106,7 +106,7 @@ export function HomeModuleCards() {
                           <Link
                             key={module.folder}
                             href={getModuleHref(domain.id, module.folder)}
-                            className="group relative overflow-hidden rounded-2xl border border-fd-border bg-fd-card p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#3eaf7c]/40 hover:shadow-md"
+                            className="group relative overflow-hidden rounded-2xl border border-fd-border bg-fd-card p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
                           >
                             <div
                               className="absolute inset-x-0 top-0 h-1 opacity-80"
@@ -118,7 +118,7 @@ export function HomeModuleCards() {
                             >
                               <Icon className="size-5" aria-hidden />
                             </div>
-                            <h4 className="text-base font-semibold text-fd-foreground group-hover:text-[#3eaf7c]">
+                            <h4 className="text-base font-semibold text-fd-foreground group-hover:text-primary">
                               {module.title}
                             </h4>
                             {module.description ? (
@@ -126,7 +126,7 @@ export function HomeModuleCards() {
                                 {module.description}
                               </p>
                             ) : null}
-                            <span className="mt-4 inline-flex text-xs font-medium text-[#3eaf7c]">
+                            <span className="mt-4 inline-flex text-xs font-medium text-primary">
                               进入文档 →
                             </span>
                           </Link>
