@@ -2,6 +2,7 @@
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
 @import '@acongm/ui-theme/tokens.css';
+@import '@acongm/ui-theme/auth.css';
 
 @theme {
   --color-fd-primary: #3eaf7c;
@@ -87,14 +88,13 @@ html > body[data-scroll-locked] {
   --removed-body-scroll-bar-size: 0px !important;
 }
 
-/* Auth 顶栏入口 */
+/* Portal-only chrome. Shared AuthAccountButton styles live in @acongm/ui-theme/auth.css. */
 .portal-auth-nav {
   display: inline-flex;
   align-items: center;
 }
 
-.portal-chrome-icon-btn,
-.acongm-auth-icon-btn {
+.portal-chrome-icon-btn {
   display: inline-flex;
   width: 2rem;
   height: 2rem;
@@ -111,24 +111,9 @@ html > body[data-scroll-locked] {
     color 0.15s ease;
 }
 
-.portal-chrome-icon-btn:hover,
-.acongm-auth-icon-btn:hover {
+.portal-chrome-icon-btn:hover {
   background: var(--color-fd-accent);
   color: var(--color-fd-accent-foreground);
-}
-
-.acongm-auth-icon-btn__mark {
-  font-size: 0.7rem;
-  font-weight: 650;
-  line-height: 1;
-}
-
-.acongm-auth-icon-btn__photo {
-  width: 1.35rem;
-  height: 1.35rem;
-  border-radius: 9999px;
-  object-fit: cover;
-  display: block;
 }
 
 /* 文档侧栏底部：Chat / 登录 / 主题整组靠右 */
@@ -136,8 +121,7 @@ html > body[data-scroll-locked] {
   margin-inline-start: auto;
 }
 
-.portal-nav-brand__avatar,
-.acongm-auth-avatar {
+.portal-nav-brand__avatar {
   display: inline-flex;
   width: 1.75rem;
   height: 1.75rem;
@@ -154,76 +138,4 @@ html > body[data-scroll-locked] {
   flex-shrink: 0;
   object-fit: cover;
   overflow: hidden;
-}
-
-.acongm-auth-avatar img {
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
-  object-fit: cover;
-  display: block;
-}
-
-.acongm-auth-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-height: 32px;
-  padding: 0 0.75rem;
-  border: 1px solid color-mix(in oklab, var(--color-fd-border) 90%, transparent);
-  border-radius: 999px;
-  background: var(--color-fd-card, transparent);
-  color: inherit;
-  font-size: 0.85rem;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.acongm-auth-btn:hover {
-  border-color: color-mix(in oklab, var(--color-fd-primary) 45%, transparent);
-}
-
-.acongm-auth-user {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.acongm-auth-user[data-variant='sidebar'] {
-  width: 100%;
-  justify-content: space-between;
-}
-
-.acongm-auth-user__identity {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  min-width: 0;
-  flex: 1;
-}
-
-.acongm-auth-user__meta {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  gap: 0.1rem;
-}
-
-.acongm-auth-user__name {
-  max-width: 9rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.8rem;
-  font-weight: 600;
-  opacity: 0.9;
-}
-
-.acongm-auth-user__account {
-  max-width: 9rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.68rem;
-  opacity: 0.55;
 }
