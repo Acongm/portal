@@ -19,6 +19,7 @@ export {
   DEFAULT_CHATS_PROXY,
   createChatV2,
   getChatV2,
+  listChatMessagesV2,
   listChatsV2,
   updateChatV2,
   streamChatMessageV2,
