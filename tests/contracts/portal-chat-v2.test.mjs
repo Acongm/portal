@@ -57,7 +57,7 @@ test('history restore failures only discard a confirmed stale pointer and otherw
     'generic restore failure must be handled after the 404-only removal branch',
   );
   assert.ok(ensureGuard >= 0, 'ensureChat must fail closed after restore failure');
-  assert.match(embed, /throw new Error\(`无法恢复已有会话:/);
+  assert.match(embed, /无法恢复已有会话：/);
 });
 
 test('Portal lazy-creates a durable chat and never supplies a ChatV1 stream URL', () => {
