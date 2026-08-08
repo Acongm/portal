@@ -33,10 +33,12 @@ export function ThemeToggle({ showLabel = true, ...buttonProps }: ThemeTogglePro
     const initial = readTheme();
     setCurrentTheme(initial);
     applyTheme(initial);
-    return watchSystemTheme(initial, () => setCurrentTheme((value) => value));
   }, []);
 
-  useEffect(() => watchSystemTheme(theme, () => setCurrentTheme((value) => value)), [theme]);
+  useEffect(
+    () => watchSystemTheme(theme, () => setCurrentTheme((value) => value)),
+    [theme],
+  );
 
   const meta = THEME_META[theme];
   const Icon = meta.icon;
