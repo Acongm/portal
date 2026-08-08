@@ -42,16 +42,22 @@ test('refresh preserves original assistant-ui client ids for durable Retry and R
   assert.match(identities, /clientMessageId: currentUser\.id/);
 });
 
-test('history restore failures do not silently delete a valid pointer and fork a new chat', () => {
-  assert.match(embed, /error instanceof ChatStreamError && error\.status === 404/);
-  assert.match(embed, /setRestoreError\(/);
-  assert.match(embed, /if \(restoreError\)/);
-  assert.match(embed, /throw new Error\(`无法恢复已有会话:/);
-  assert.match(embed, /localStorage\.removeItem\(key\)/);
-  assert.doesNotMatch(
-    embed,
-    /\.catch\(\(\) => \{[\s\S]*?localStorage\.removeItem\(key\)[\s\S]*?setChatReady\(true\)/,
+test('history restore failures only discard a confirmed stale pointer and otherwise fail closed', () => {
+  const guard = embed.indexOf(
+    'if (error instanceof ChatStreamError && error.status === 404)',
   );
+  const remove = embed.indexOf('localStorage.removeItem(key)', guard);
+  const restore = embed.indexOf('setRestoreError(', remove);
+  const ensureGuard = embed.indexOf('if (restoreError)');
+
+  assert.ok(guard >= 0, 'expected explicit 404 stale-pointer guard');
+  assert.ok(remove > guard, 'stale pointer removal must be inside/after 404 guard');
+  assert.ok(
+    restore > remove,
+    'generic restore failure must be handled after the 404-only removal branch',
+  );
+  assert.ok(ensureGuard >= 0, 'ensureChat must fail closed after restore failure');
+  assert.match(embed, /throw new Error\(`无法恢复已有会话:/);
 });
 
 test('Portal lazy-creates a durable chat and never supplies a ChatV1 stream URL', () => {
