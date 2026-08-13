@@ -57,7 +57,7 @@ export function PortalThemeSwitchWithKnowledge(
       >
         <MessagesSquare className="size-3.5" aria-hidden />
       </a>
-      <AuthAccountButton variant="icon" className={iconButtonClass} />
+      <AuthAccountButton variant="icon" className={iconButtonClass} menu />
       <ThemeSwitch
         mode="light-dark-system"
         className={themeClassName}

@@ -4,7 +4,7 @@ import { AuthAccountButton } from '@acongm/auth-client';
 export function PortalAuthNav() {
   return (
     <div className="portal-auth-nav">
-      <AuthAccountButton variant="nav" />
+      <AuthAccountButton variant="nav" menu />
     </div>
   );
 }

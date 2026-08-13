@@ -8,7 +8,7 @@
 |---|------|------|------|
 | **128** | Portal Chat v2（PR） | **已完成 ✅** | merged `a367246` |
 | **127** | Embedded Chat Drawer | **应关闭 ✅** | 与 #128 重复，代码已合入 |
-| **130** | 顶栏 getUserInfo | OPEN Phase 2 | Phase 1：userInfo 展示 ✅ `39d1142` |
+| **130** | 顶栏 getUserInfo | OPEN Phase 2 | Phase 2：`AuthAccountButton menu` ✅ nav + icon |
 | **129** | Portal 产品同步 | OPEN | 依赖 #130 Phase 2、chat#40 |
 | **117** | Stage 1 Supabase migration | OPEN | 1.3 代码完成；剩 E2E |
 
