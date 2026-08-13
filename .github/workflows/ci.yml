@@ -39,7 +39,7 @@ jobs:
         run: pnpm ui:drift
 
       - name: Portal Chat v2 contracts
-        run: pnpm test:portal-chat-v2
+        run: pnpm test:portal-chat-v2 && node --test tests/contracts/getuserinfo-auth-button.test.mjs
 
       - name: Typecheck
         run: pnpm types:check
