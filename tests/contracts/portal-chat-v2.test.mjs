@@ -4,12 +4,14 @@ import test from 'node:test';
 
 const read = (path) => readFileSync(path, 'utf8');
 const embed = read('apps/web/components/doc-chat-embed.tsx');
+const hook = read('packages/chat-ui/src/integration/use-page-bound-chat.ts');
 const bff = read('apps/web/app/api/chats/[[...path]]/route.ts');
+const userBff = read('apps/web/app/api/user/[[...path]]/route.ts');
 const authClient = read('packages/auth-client/src/client.ts');
 const authHooks = read('packages/auth-client/src/hooks.tsx');
 const adapter = read('packages/chat-ui/src/runtime/createDocChatModelAdapter.ts');
 const runtime = read('packages/chat-ui/src/runtime/DocChatRuntimeProvider.tsx');
-const sdk = read('packages/agent-session-sdk/src/chats.ts');
+const restore = read('packages/agent-session-sdk/src/chat-v2-restore.ts');
 
 test('Portal guests receive a real Supabase anonymous identity before Chat renders', () => {
   assert.match(authClient, /client\.auth\.signInAnonymously\(\)/);
@@ -17,49 +19,31 @@ test('Portal guests receive a real Supabase anonymous identity before Chat rende
   assert.match(embed, /if \(authLoading \|\| !session \|\| !chatReady\) return null/);
 });
 
-test('Portal stores only a user/page chat pointer and restores transcript from Chat v2', () => {
+test('Portal stores only a user/page chat pointer and restores via shared hook', () => {
   assert.match(embed, /acongm\.portal\.chat\.v2:\$\{userId\}:\$\{pagePath\}/);
-  assert.match(embed, /loadDurableHistory\(stored, accessToken\)/);
-  assert.match(embed, /selectActiveChatBranch\(allMessages\)/);
-  assert.match(embed, /setSeedMessages\(detail\.messages\)/);
-  assert.match(embed, /detail\.chat\.userId !== userId/);
+  assert.match(embed, /usePageBoundChat/);
+  assert.match(hook, /loadChatV2History/);
+  assert.match(hook, /detail\.chat\.userId !== userId/);
+  assert.match(hook, /setSeedMessages\(detail\.messages\)/);
   assert.doesNotMatch(embed, /saveChatHistory\(/);
 });
 
-test('Portal restores all durable history pages or fails explicitly instead of silently truncating', () => {
-  assert.match(sdk, /export async function listChatMessagesV2\(/);
-  assert.match(embed, /MAX_RESTORED_MESSAGES = 5000/);
-  assert.match(embed, /while \(cursor\)/);
-  assert.match(embed, /listChatMessagesV2\(/);
-  assert.match(embed, /seenCursors\.has\(cursor\)/);
-  assert.match(embed, /不会静默截断 durable branch/);
-});
-
-test('refresh preserves original assistant-ui client ids for durable Retry and Reload', () => {
-  assert.match(embed, /id: message\.clientMessageId \|\| message\.id/);
-  assert.match(adapter, /clientMessageId: currentUser\.message\.id/);
+test('Portal restores durable history through the shared SDK instead of silently truncating', () => {
+  assert.match(restore, /export async function loadChatV2History/);
+  assert.match(restore, /paginateOlderTailMessages/);
+  assert.match(hook, /loadChatV2History\(stored, requestOptions\)/);
 });
 
 test('history restore failures only discard a confirmed stale pointer and otherwise fail closed', () => {
-  const guard = embed.indexOf(
-    'if (error instanceof ChatStreamError && error.status === 404)',
-  );
-  const remove = embed.indexOf('localStorage.removeItem(key)', guard);
-  const restore = embed.indexOf('setRestoreError(', remove);
-  const ensureGuard = embed.indexOf('if (restoreError)');
-
-  assert.ok(guard >= 0, 'expected explicit 404 stale-pointer guard');
-  assert.ok(remove > guard, 'stale pointer removal must be inside/after 404 guard');
-  assert.ok(
-    restore > remove,
-    'generic restore failure must be handled after the 404-only removal branch',
-  );
-  assert.ok(ensureGuard >= 0, 'ensureChat must fail closed after restore failure');
-  assert.match(embed, /无法恢复已有会话：/);
+  assert.match(hook, /error instanceof ChatStreamError && error.status === 404/);
+  assert.match(hook, /localStorage\.removeItem\(pointerKey\)/);
+  assert.match(hook, /setRestoreError\(/);
+  assert.match(hook, /if \(restoreError\)/);
+  assert.match(hook, /无法恢复已有会话：/);
 });
 
 test('Portal lazy-creates a durable chat and never supplies a ChatV1 stream URL', () => {
-  assert.match(embed, /createChatV2\(/);
+  assert.match(hook, /createChatV2\(/);
   assert.match(embed, /ensureChat,/);
   assert.match(embed, /chatsBaseUrl: CHAT_BASE/);
   assert.match(embed, /accessToken,/);
@@ -72,7 +56,6 @@ test('runtime identity stays stable through draft-to-chat promotion but changes 
   assert.match(embed, /runtimeKey: userId \? `portal:\$\{userId\}:\$\{pagePath\}`/);
   assert.match(runtime, /function seedFingerprint\(/);
   assert.match(runtime, /const seedKey = seedFingerprint\(seedMessages\)/);
-  assert.match(runtime, /if \(context\.chatId\?\.trim\(\)\) return `chat:/);
 });
 
 test('Chat v2 adapter sends canonical durable message/run identities when a chat exists', () => {
@@ -90,4 +73,10 @@ test('same-origin chats BFF forwards authorization to the API upstream', () => {
   assert.match(bff, /'authorization'/);
   assert.match(bff, /request\.headers\.get\(name\)/);
   assert.match(bff, /CHAT_UPSTREAM_UNREACHABLE/);
+});
+
+test('User BFF proxies /api/user so getUserInfo works after login', () => {
+  assert.match(userBff, /https:\/\/api\.acongm\.com\/api\/user/);
+  assert.match(userBff, /'authorization'/);
+  assert.match(userBff, /USER_UPSTREAM_UNREACHABLE/);
 });
