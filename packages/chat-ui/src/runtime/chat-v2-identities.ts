@@ -1,4 +1,8 @@
-export type ChatV2RuntimeMessageIdentity = { id: string; role: string };
+export type ChatV2RuntimeMessageIdentity = {
+  id: string;
+  role: string;
+};
+
 export type ChatV2RunIdentity = {
   clientMessageId: string;
   parentMessageId?: string;
@@ -19,10 +23,12 @@ export function resolveChatV2RunIdentity(
     }
   }
   if (userIndex < 0) return null;
+
   const currentUser = messages[userIndex]!;
   return {
     clientMessageId: currentUser.id,
-    parentMessageId: userIndex > 0 ? messages[userIndex - 1]?.id || undefined : undefined,
+    parentMessageId:
+      userIndex > 0 ? messages[userIndex - 1]?.id || undefined : undefined,
     assistantMessageId: assistantMessageId || undefined,
     runId: createRunId(),
   };

@@ -103,7 +103,19 @@ export type ChatV2StreamEvent =
   | ChatV2DoneEvent
   | ChatV2ErrorEvent;
 
-export const CHAT_V2_CAPABILITIES = {
+export type ChatV2Capabilities = {
+  durableSend: true;
+  durableRetry: true;
+  durableReload: true;
+  durableEditBranch: true;
+  durableCancel: true;
+  cursorPagination: true;
+  historyUpdate: false;
+  historyDelete: false;
+  resume: false;
+};
+
+export const CHAT_V2_CAPABILITIES: ChatV2Capabilities = {
   durableSend: true,
   durableRetry: true,
   durableReload: true,
@@ -113,4 +125,4 @@ export const CHAT_V2_CAPABILITIES = {
   historyUpdate: false,
   historyDelete: false,
   resume: false,
-} as const;
+};

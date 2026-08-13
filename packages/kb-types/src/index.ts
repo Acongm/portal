@@ -35,6 +35,7 @@ export {
   type ChatV2DoneEvent,
   type ChatV2ErrorEvent,
   type ChatV2StreamEvent,
+  type ChatV2Capabilities,
 } from './chat-v2';
 
 export type {

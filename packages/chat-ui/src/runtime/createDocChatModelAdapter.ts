@@ -38,6 +38,7 @@ function yieldParts(thinking: string, text: string) {
   };
 }
 
+/** Omit empty optional strings — Nest `@IsOptional` + `@Length` rejects `""`. */
 function buildRequestContext(
   scope: ChatV1Context['scope'],
   pagePath: string,
@@ -67,6 +68,12 @@ function findLastUser(messages: readonly ThreadMessage[]) {
   return null;
 }
 
+/**
+ * assistant-ui LocalRuntime 的 `unstable_parentId` 指向“本次 assistant 的 parent”
+ * （通常就是当前 user），而 Chat v2 `parentMessageId` 表示“当前 user 的 parent”。
+ * 因此从 active message branch 中取当前 user 前一条消息，而不能直接透传
+ * `unstable_parentId`。
+ */
 function parentOfCurrentUser(
   messages: readonly ThreadMessage[],
   userIndex: number,
@@ -82,6 +89,12 @@ function createRunId(): string {
   throw new Error('Chat v2 requires crypto.randomUUID() for durable run ids.');
 }
 
+/**
+ * ChatModelAdapter：
+ * - chatId 存在时走 Chat v2 durable API；
+ * - portal 等无 durable chat 场景继续走 ChatV1 short stream；
+ * - 不从 Chat v2 静默回退到 legacy `/api/chat/threads`。
+ */
 export function createDocChatModelAdapter(
   getContext: () => DocChatContext,
 ): ChatModelAdapter {
@@ -120,6 +133,7 @@ export function createDocChatModelAdapter(
         tagOptions.scope,
         tagOptions.enableWebSearch,
       );
+
       const requestContext = buildRequestContext(
         tagOptions.scope,
         pagePath,
@@ -172,6 +186,7 @@ export function createDocChatModelAdapter(
 
       let thinking = '';
       let text = '';
+
       for await (const event of events) {
         if (event.type === 'thinking') {
           thinking += event.content || '';
