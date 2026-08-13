@@ -40,6 +40,7 @@ test('history restore failures only discard a confirmed stale pointer and otherw
   assert.match(hook, /setRestoreError\(/);
   assert.match(hook, /if \(restoreError\)/);
   assert.match(hook, /无法恢复已有会话：/);
+  assert.doesNotMatch(hook, /setSeedMessages\(\[\]\)/);
 });
 
 test('Portal lazy-creates a durable chat and never supplies a ChatV1 stream URL', () => {
