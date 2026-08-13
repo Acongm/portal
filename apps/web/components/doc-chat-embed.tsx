@@ -134,7 +134,7 @@ export function DocChatEmbed() {
   const pathname = usePathname() || '/';
   const pagePath = toLegacyDocPath(pathname);
   const moduleKey = moduleKeyFromLegacyPath(pagePath);
-  const { session, loading: authLoading } = useSession();
+  const { session, loading: authLoading } = useSession({ ensureAnonymous: true });
   const userId = session?.user.id ?? null;
   const accessToken = session?.access_token ?? null;
 

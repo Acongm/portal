@@ -12,7 +12,13 @@ import {
 } from './client';
 import { getUserInfo, type UserInfoView, type UserMe } from './profile';
 
-export function useSession() {
+export type UseSessionOptions = {
+  /** Chat/Portal: bootstrap a Supabase anonymous session when none exists. */
+  ensureAnonymous?: boolean;
+};
+
+export function useSession(options?: UseSessionOptions) {
+  const ensureAnonymous = options?.ensureAnonymous ?? false;
   const configured = isAuthConfigured();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(configured);
@@ -31,7 +37,9 @@ export function useSession() {
 
     const bootstrap = async () => {
       const currentGeneration = ++generation;
-      const nextSession = await ensureAnonymousSession(client);
+      const nextSession = ensureAnonymous
+        ? await ensureAnonymousSession(client)
+        : (await client.auth.getSession()).data.session;
       if (!mounted || currentGeneration !== generation) return;
       setSession(nextSession);
       setLoading(false);
@@ -50,8 +58,9 @@ export function useSession() {
           setLoading(false);
           return;
         }
+
         setSession(null);
-        if (event === 'SIGNED_OUT') {
+        if (ensureAnonymous && event === 'SIGNED_OUT') {
           setLoading(true);
           void bootstrap();
           return;
@@ -65,7 +74,7 @@ export function useSession() {
       generation += 1;
       subscription.unsubscribe();
     };
-  }, [client]);
+  }, [client, ensureAnonymous]);
 
   return { session, loading, client, configured };
 }
@@ -83,8 +92,10 @@ export function useUser() {
  * Loads server-side getUserInfo for login-state UI.
  * Falls back to null on 401/network errors so buttons can keep session-based UI.
  */
-export function useUserInfo(options?: { baseUrl?: string }) {
-  const { session, loading: sessionLoading, client, configured } = useSession();
+export function useUserInfo(options?: { baseUrl?: string; ensureAnonymous?: boolean }) {
+  const { session, loading: sessionLoading, client, configured } = useSession({
+    ensureAnonymous: options?.ensureAnonymous,
+  });
   const [userMe, setUserMe] = useState<UserMe | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -144,6 +155,7 @@ export function useAuthActions(options?: {
   const sessionHook = useSession();
   const client = options?.client ?? sessionHook.client;
   const configured = sessionHook.configured;
+
   const login = useCallback((returnTo?: string) => {
     const href =
       typeof window !== 'undefined'
@@ -151,16 +163,14 @@ export function useAuthActions(options?: {
         : getOAuthLoginUrl();
     window.location.href = href;
   }, []);
+
   const logout = useCallback(async () => {
     if (!client) return;
     await signOut(client);
   }, [client]);
+
   return { login, logout, client, configured };
 }
 
-export {
-  claimAnonymousThreads,
-  ensureAnonymousSession,
-  getOAuthLoginUrl,
-  isAuthConfigured,
-};
+export { claimAnonymousThreads, ensureAnonymousSession, getOAuthLoginUrl, isAuthConfigured };
+export type { UseSessionOptions };
