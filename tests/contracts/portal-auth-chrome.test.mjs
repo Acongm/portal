@@ -25,6 +25,13 @@ test('Portal embed surfaces restore errors and keeps the composer gated only whi
   assert.match(embed, /retry/);
 });
 
+test('Portal public-config BFF prefers local env then auth then API', () => {
+  const route = readFileSync('apps/web/app/api/auth/public-config/route.ts', 'utf8');
+  assert.match(route, /NEXT_PUBLIC_SUPABASE_ANON_KEY/);
+  assert.match(route, /https:\/\/auth\.acongm\.com\/api\/auth\/public-config/);
+  assert.match(route, /https:\/\/api\.acongm\.com\/api\/auth\/public-config/);
+});
+
 test('Portal auth-client routes anonymous login CTA into signup mode', () => {
   const hooks = readFileSync('packages/auth-client/src/hooks.tsx', 'utf8');
   const button = readFileSync('packages/auth-client/src/AuthAccountButton.tsx', 'utf8');
