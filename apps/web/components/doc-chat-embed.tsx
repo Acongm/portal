@@ -35,9 +35,9 @@ export function DocChatEmbed() {
   const pathname = usePathname() || '/';
   const pagePath = toLegacyDocPath(pathname);
   const moduleKey = moduleKeyFromLegacyPath(pagePath);
-  const { session, status, error, retry } = useSession({ ensureAnonymous: true });
-  const userId = session?.user.id ?? null;
-  const accessToken = session?.access_token ?? null;
+  const { session, status, error, retry, accessToken, userId } = useSession({
+    ensureAnonymous: true,
+  });
 
   const [title, setTitle] = useState('当前文档');
   const [content, setContent] = useState('');

@@ -25,6 +25,13 @@ test('Portal embed surfaces restore errors and keeps the composer gated only whi
   assert.match(embed, /retry/);
 });
 
+test('Portal user and session BFFs forward the shared auth cookie', () => {
+  const user = readFileSync('apps/web/app/api/user/[[...path]]/route.ts', 'utf8');
+  const session = readFileSync('apps/web/app/api/auth/session/route.ts', 'utf8');
+  assert.match(user, /'cookie'/);
+  assert.match(session, /api\/auth\/session/);
+});
+
 test('Portal public-config BFF prefers local env then auth then API', () => {
   const route = readFileSync('apps/web/app/api/auth/public-config/route.ts', 'utf8');
   assert.match(route, /NEXT_PUBLIC_SUPABASE_ANON_KEY/);
