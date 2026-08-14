@@ -84,6 +84,8 @@ test('same-origin chats BFF forwards authorization to the API upstream', () => {
   assert.match(bff, /'cookie'/);
   assert.match(bff, /request\.headers\.get\(name\)/);
   assert.match(bff, /CHAT_UPSTREAM_UNREACHABLE/);
+  assert.match(bff, /function responseHeaders/);
+  assert.doesNotMatch(bff, /headers: upstream\.headers/);
 });
 
 test('User BFF proxies /api/user so getUserInfo works after login', () => {
