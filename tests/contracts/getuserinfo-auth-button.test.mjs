@@ -23,7 +23,8 @@ test('AuthAccountButton prefers server userInfo and keeps portal logout UX', () 
   assert.match(button, /userInfo\.avatarUrl/);
   assert.match(button, /isAnonymous/);
   assert.match(button, /handleLogout/);
-  assert.doesNotMatch(button, /\/account/);
+  assert.match(button, /AuthAccountMenu/);
+  assert.match(button, /getAuthBaseUrl\(\)/);
 });
 
 test('UserMe type includes userInfo and settings from API #62', () => {
