@@ -20,6 +20,7 @@ test('Portal embed surfaces restore errors and keeps the composer gated only whi
   assert.match(embed, /restoreError/);
   assert.match(embed, /composerDisabled/);
   assert.match(embed, /正在准备安全会话/);
+  assert.match(embed, /请先登录后再发送/);
   assert.match(embed, /status === 'error'/);
   assert.match(embed, /retry/);
 });
