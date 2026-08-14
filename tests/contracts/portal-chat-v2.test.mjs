@@ -18,6 +18,7 @@ test('Portal guests receive a real Supabase anonymous identity and Chat stays mo
   assert.match(authHooks, /ensureAnonymousSession\(nextClient\)/);
   assert.match(embed, /useSession\(\{\s*ensureAnonymous: true/);
   assert.match(embed, /composerDisabled/);
+  assert.match(embed, /const composerDisabled = status === 'restoring' \|\| !session/);
   assert.doesNotMatch(
     embed,
     /if \(authLoading \|\| !session \|\| !chatReady\) return null/,

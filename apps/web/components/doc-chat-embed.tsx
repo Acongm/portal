@@ -137,8 +137,7 @@ export function DocChatEmbed() {
     setChips(next);
   }, []);
 
-  const composerDisabled =
-    status === 'restoring' || !session || !chatReady || Boolean(restoreError);
+  const composerDisabled = status === 'restoring' || !session;
   const placeholder = resolveComposerPlaceholder({
     status,
     hasSession: Boolean(session),
