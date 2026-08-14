@@ -13,25 +13,33 @@ const adapter = read('packages/chat-ui/src/runtime/createDocChatModelAdapter.ts'
 const runtime = read('packages/chat-ui/src/runtime/DocChatRuntimeProvider.tsx');
 const restore = read('packages/agent-session-sdk/src/chat-v2-restore.ts');
 
-test('Portal guests receive a real Supabase anonymous identity before Chat renders', () => {
+test('Portal guests receive a real Supabase anonymous identity and Chat stays mounted', () => {
   assert.match(authClient, /client\.auth\.signInAnonymously\(\)/);
   assert.match(authHooks, /ensureAnonymousSession\(client\)/);
-  assert.match(embed, /if \(authLoading \|\| !session \|\| !chatReady\) return null/);
+  assert.match(embed, /useSession\(\{ ensureAnonymous: true \}\)/);
+  assert.match(embed, /composerDisabled/);
+  assert.doesNotMatch(
+    embed,
+    /if \(authLoading \|\| !session \|\| !chatReady\) return null/,
+  );
 });
 
 test('Portal stores only a user/page chat pointer and restores via shared hook', () => {
   assert.match(embed, /acongm\.portal\.chat\.v2:\$\{userId\}:\$\{pagePath\}/);
   assert.match(embed, /usePageBoundChat/);
-  assert.match(hook, /loadChatV2History/);
+  assert.match(hook, /getChatV2/);
   assert.match(hook, /detail\.chat\.userId !== userId/);
-  assert.match(hook, /setSeedMessages\(detail\.messages\)/);
+  assert.match(hook, /mapDurableBranchToUiMessages/);
   assert.doesNotMatch(embed, /saveChatHistory\(/);
 });
 
-test('Portal restores durable history through the shared SDK instead of silently truncating', () => {
+test('Portal restores durable history tail-first instead of paging the full transcript first', () => {
   assert.match(restore, /export async function loadChatV2History/);
   assert.match(restore, /paginateOlderTailMessages/);
-  assert.match(hook, /loadChatV2History\(stored, requestOptions\)/);
+  assert.match(hook, /getChatV2\(stored, requestOptions\)/);
+  assert.match(hook, /loadOlderMessages/);
+  assert.match(embed, /hasOlderMessages/);
+  assert.match(embed, /onLoadOlderMessages/);
 });
 
 test('history restore failures only discard a confirmed stale pointer and otherwise fail closed', () => {

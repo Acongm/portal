@@ -3,7 +3,11 @@
 import type { ComponentProps } from 'react';
 import { MessagesSquare } from 'lucide-react';
 import { ThemeSwitch } from 'fumadocs-ui/layouts/shared/slots/theme-switch';
-import { AuthAccountButton } from '@acongm/auth-client';
+import {
+  AuthAccountButton,
+  getAuthBaseUrl,
+  useSession,
+} from '@acongm/auth-client';
 import { buttonVariants } from '@/components/ui/button';
 
 function splitAlignClass(className?: string): {
@@ -44,7 +48,6 @@ export function PortalThemeSwitchWithKnowledge(
     size: 'icon',
     className: 'size-8 rounded-full text-muted-foreground',
   });
-
   return (
     <div className={`${wrapperClassName} inline-flex items-center gap-1.5`}>
       <a
@@ -57,12 +60,52 @@ export function PortalThemeSwitchWithKnowledge(
       >
         <MessagesSquare className="size-3.5" aria-hidden />
       </a>
-      <AuthAccountButton variant="icon" className={iconButtonClass} menu />
+      <PortalAccountControl iconButtonClass={iconButtonClass} />
       <ThemeSwitch
         mode="light-dark-system"
         className={themeClassName}
         {...rest}
       />
     </div>
+  );
+}
+
+function PortalAccountControl({
+  iconButtonClass,
+}: {
+  iconButtonClass: string;
+}) {
+  const { status, error, retry } = useSession({ ensureAnonymous: true });
+  const settingsHref = `${getAuthBaseUrl().replace(/\/$/, '')}/account#settings`;
+
+  if (status === 'error') {
+    return (
+      <button
+        type="button"
+        className={iconButtonClass}
+        onClick={retry}
+        title={error || '重试登录'}
+        aria-label="重试登录"
+      >
+        重试
+      </button>
+    );
+  }
+
+  return (
+    <AuthAccountButton
+      variant="icon"
+      className={iconButtonClass}
+      menu
+      ensureAnonymous
+      menuFooter={
+        <a
+          href={settingsHref}
+          className="block w-full rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+        >
+          模型与 Prompt
+        </a>
+      }
+    />
   );
 }

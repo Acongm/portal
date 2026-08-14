@@ -35,7 +35,7 @@ export function DocChatEmbed() {
   const pathname = usePathname() || '/';
   const pagePath = toLegacyDocPath(pathname);
   const moduleKey = moduleKeyFromLegacyPath(pagePath);
-  const { session, loading: authLoading } = useSession({ ensureAnonymous: true });
+  const { session, status, error, retry } = useSession({ ensureAnonymous: true });
   const userId = session?.user.id ?? null;
   const accessToken = session?.access_token ?? null;
 
@@ -49,6 +49,10 @@ export function DocChatEmbed() {
     chatId,
     seedMessages,
     ready: chatReady,
+    restoreError,
+    hasOlderMessages,
+    loadingOlder,
+    loadOlderMessages,
     ensureChat,
   } = usePageBoundChat({
     userId,
@@ -133,15 +137,46 @@ export function DocChatEmbed() {
     setChips(next);
   }, []);
 
-  if (authLoading || !session || !chatReady) return null;
+  const composerDisabled = !session || !chatReady || Boolean(restoreError);
+  const placeholder = resolveComposerPlaceholder({
+    hasSession: Boolean(session),
+    chatReady,
+    restoreError,
+  });
 
   return (
-    <DocsChatShell
-      context={context}
-      seedMessages={seedMessages}
-      chips={chips}
-      onChipsChange={onChipsChange}
-      resolveMentionHits={resolveMentionHits}
-    />
+    <>
+      {status === 'error' ? (
+        <div className="portal-chat-auth-error" role="alert">
+          <p>{error || '无法准备访客会话'}</p>
+          <button type="button" onClick={retry}>
+            重试
+          </button>
+        </div>
+      ) : null}
+      <DocsChatShell
+        context={context}
+        seedMessages={seedMessages}
+        chips={chips}
+        onChipsChange={onChipsChange}
+        resolveMentionHits={resolveMentionHits}
+        composerDisabled={composerDisabled}
+        placeholder={placeholder}
+        hasOlderMessages={hasOlderMessages}
+        loadingOlder={loadingOlder}
+        onLoadOlderMessages={loadOlderMessages}
+      />
+    </>
   );
+}
+
+function resolveComposerPlaceholder(input: {
+  hasSession: boolean;
+  chatReady: boolean;
+  restoreError: string | null;
+}): string {
+  if (!input.hasSession) return '正在准备安全会话…';
+  if (input.restoreError) return input.restoreError;
+  if (!input.chatReady) return '正在加载会话历史…';
+  return '有什么可以帮忙的？输入 @ 引用知识…';
 }
