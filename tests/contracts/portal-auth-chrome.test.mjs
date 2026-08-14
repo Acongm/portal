@@ -37,6 +37,7 @@ test('Portal public-config BFF prefers local env then auth then API', () => {
   assert.match(route, /NEXT_PUBLIC_SUPABASE_ANON_KEY/);
   assert.match(route, /https:\/\/auth\.acongm\.com\/api\/auth\/public-config/);
   assert.match(route, /https:\/\/api\.acongm\.com\/api\/auth\/public-config/);
+  assert.match(route, /public, max-age=300/);
 });
 
 test('Portal auth-client routes anonymous login CTA into signup mode', () => {
