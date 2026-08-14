@@ -137,8 +137,10 @@ export function DocChatEmbed() {
     setChips(next);
   }, []);
 
-  const composerDisabled = !session || !chatReady || Boolean(restoreError);
+  const composerDisabled =
+    status === 'restoring' || !session || !chatReady || Boolean(restoreError);
   const placeholder = resolveComposerPlaceholder({
+    status,
     hasSession: Boolean(session),
     chatReady,
     restoreError,
@@ -171,11 +173,14 @@ export function DocChatEmbed() {
 }
 
 function resolveComposerPlaceholder(input: {
+  status: string;
   hasSession: boolean;
   chatReady: boolean;
   restoreError: string | null;
 }): string {
-  if (!input.hasSession) return '正在准备安全会话…';
+  if (input.status === 'restoring') return '正在准备安全会话…';
+  if (input.status === 'error') return '访客会话准备失败，请重试或先登录。';
+  if (!input.hasSession) return '请先登录后再发送。';
   if (input.restoreError) return input.restoreError;
   if (!input.chatReady) return '正在加载会话历史…';
   return '有什么可以帮忙的？输入 @ 引用知识…';
