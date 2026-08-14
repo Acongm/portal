@@ -8,12 +8,12 @@
 |---|------|------|------|
 | **128** | Portal Chat v2（PR） | **已完成 ✅** | merged `a367246` |
 | **127** | Embedded Chat Drawer | **应关闭 ✅** | 与 #128 重复，代码已合入 |
-| **130** | 顶栏 getUserInfo | OPEN Phase 2 | Phase 2：`AuthAccountButton menu` ✅ nav + icon |
-| **129** | Portal 产品同步 | OPEN | 依赖 #130 Phase 2、chat#40 |
+| **130** | 顶栏 getUserInfo | **Phase 2 源码完成** | `AuthAccountButton menu` + `/account#settings` + auth retry；shadcn Avatar 仍可选 |
+| **129** | Portal 产品同步 | OPEN | 依赖 #37 browser smoke |
 | **117** | Stage 1 Supabase migration | OPEN | 1.3 代码完成；剩 E2E |
 
 ## 下一步（portal 仓）
 
-1. **#130 Phase 2** — Shared Avatar/Menu（shadcn #15）+ auth 账号链接
-2. Embedded Chat 非阻塞 — 跟随 chat#40 模式
-3. **#37** — Drawer browser smoke
+1. Embedded Chat 非阻塞 — ✅ `490c773`（FAB 始终挂载，composer 仅准备期禁用）
+2. **#37** — Drawer / 登录态 browser smoke
+3. **#130** shadcn Avatar/Menu 仍可选，不阻塞登录态
