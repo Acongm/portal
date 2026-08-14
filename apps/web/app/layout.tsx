@@ -20,6 +20,9 @@ export const metadata: Metadata = {
     template: '%s | acongm',
   },
   description: '前端常用知识、踩坑记录、软件推荐等',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function Layout({ children }: LayoutProps<'/'>) {
