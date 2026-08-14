@@ -13,6 +13,8 @@ test('auth-client exports getUserInfo and useUserInfo for login-state UI', () =>
   assert.match(index, /useUserInfo/);
   assert.match(index, /UserInfoView/);
   assert.match(profileClient, /export async function getUserInfo/);
+  assert.match(profileClient, /export async function getAuthSession/);
+  assert.match(profileClient, /credentials: 'include'/);
   assert.match(profileClient, /\/info/);
   assert.match(hooks, /export function useUserInfo/);
 });
@@ -24,7 +26,7 @@ test('AuthAccountButton prefers server userInfo and keeps portal logout UX', () 
   assert.match(button, /isAnonymous/);
   assert.match(button, /handleLogout/);
   assert.match(button, /AuthAccountMenu/);
-  assert.match(button, /getAuthBaseUrl\(\)/);
+  assert.match(button, /onLogout=\{handleLogout\}/);
 });
 
 test('UserMe type includes userInfo and settings from API #62', () => {

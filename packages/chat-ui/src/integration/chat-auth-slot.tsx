@@ -25,22 +25,23 @@ export function ChatAuthSlot({
   onSignedOut,
   menuFooter,
 }: ChatAuthSlotProps) {
-  const { session, status, error, retry } = useSession({ ensureAnonymous: true });
+  const { status, error, retry, accessToken, userId, isAnonymous } =
+    useSession({ ensureAnonymous: true });
   const onIdentityRef = useRef(onIdentityChange);
   onIdentityRef.current = onIdentityChange;
 
   useEffect(() => {
-    if (!session?.access_token || !session.user.id) {
+    if (!accessToken || !userId) {
       onIdentityRef.current?.(null);
       return;
     }
 
     onIdentityRef.current?.({
-      userId: session.user.id,
-      accessToken: session.access_token,
-      anonymous: Boolean(session.user.is_anonymous),
+      userId,
+      accessToken,
+      anonymous: isAnonymous,
     });
-  }, [session?.access_token, session?.user.id, session?.user.is_anonymous]);
+  }, [accessToken, userId, isAnonymous]);
 
   if (status === 'error') {
     return (

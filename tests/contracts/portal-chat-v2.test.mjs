@@ -16,7 +16,7 @@ const restore = read('packages/agent-session-sdk/src/chat-v2-restore.ts');
 test('Portal guests receive a real Supabase anonymous identity and Chat stays mounted', () => {
   assert.match(authClient, /client\.auth\.signInAnonymously\(\)/);
   assert.match(authHooks, /ensureAnonymousSession\(nextClient\)/);
-  assert.match(embed, /useSession\(\{ ensureAnonymous: true \}\)/);
+  assert.match(embed, /useSession\(\{\s*ensureAnonymous: true/);
   assert.match(embed, /composerDisabled/);
   assert.doesNotMatch(
     embed,
@@ -80,6 +80,7 @@ test('Chat v2 adapter sends canonical durable message/run identities when a chat
 test('same-origin chats BFF forwards authorization to the API upstream', () => {
   assert.match(bff, /https:\/\/api\.acongm\.com\/api\/chats/);
   assert.match(bff, /'authorization'/);
+  assert.match(bff, /'cookie'/);
   assert.match(bff, /request\.headers\.get\(name\)/);
   assert.match(bff, /CHAT_UPSTREAM_UNREACHABLE/);
 });
