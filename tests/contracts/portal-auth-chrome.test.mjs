@@ -23,3 +23,10 @@ test('Portal embed surfaces restore errors and keeps the composer gated only whi
   assert.match(embed, /status === 'error'/);
   assert.match(embed, /retry/);
 });
+
+test('Portal auth-client routes anonymous login CTA into signup mode', () => {
+  const hooks = readFileSync('packages/auth-client/src/hooks.tsx', 'utf8');
+  const button = readFileSync('packages/auth-client/src/AuthAccountButton.tsx', 'utf8');
+  assert.match(hooks, /resolveOAuthLoginMode\(session\)/);
+  assert.match(button, /useAuthActions\(\{ client, session \}\)/);
+});
