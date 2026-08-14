@@ -15,7 +15,7 @@ const restore = read('packages/agent-session-sdk/src/chat-v2-restore.ts');
 
 test('Portal guests receive a real Supabase anonymous identity and Chat stays mounted', () => {
   assert.match(authClient, /client\.auth\.signInAnonymously\(\)/);
-  assert.match(authHooks, /ensureAnonymousSession\(client\)/);
+  assert.match(authHooks, /ensureAnonymousSession\(nextClient\)/);
   assert.match(embed, /useSession\(\{ ensureAnonymous: true \}\)/);
   assert.match(embed, /composerDisabled/);
   assert.doesNotMatch(
