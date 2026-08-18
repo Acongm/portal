@@ -16,4 +16,6 @@ test('browser quality gate smoke spec exists for #37', () => {
   assert.match(body, /\/docs\/core/);
   assert.match(body, /AI 助手/);
   assert.match(body, /正在准备安全会话|有什么可以帮忙的/);
+  assert.match(body, /restores the durable transcript/);
+  assert.match(body, /重新生成/);
 });
