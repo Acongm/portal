@@ -18,6 +18,7 @@ for (const domain of registry.domains) {
 /** @type {import('next').NextConfig} */
 const config = {
   reactStrictMode: true,
+  allowedDevOrigins: ['127.0.0.1', 'localhost'],
   transpilePackages: [
     '@acongm/chat-ui',
     '@acongm/ui-theme',
