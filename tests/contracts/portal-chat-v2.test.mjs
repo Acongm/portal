@@ -18,7 +18,9 @@ test('Portal guests receive a real Supabase anonymous identity and Chat stays mo
   assert.match(authHooks, /ensureAnonymousSession\(nextClient\)/);
   assert.match(embed, /useSession\(\{\s*ensureAnonymous: true/);
   assert.match(embed, /composerDisabled/);
-  assert.match(embed, /const composerDisabled = status === 'restoring' \|\| !session/);
+  assert.match(embed, /const composerDisabled = status === 'restoring' \|\| !hasUsableIdentity/);
+  assert.match(embed, /const hasUsableIdentity = Boolean\(accessToken\)/);
+  assert.doesNotMatch(embed, /composerDisabled = status === 'restoring' \|\| !session/);
   assert.doesNotMatch(
     embed,
     /if \(authLoading \|\| !session \|\| !chatReady\) return null/,
@@ -92,4 +94,5 @@ test('User BFF proxies /api/user so getUserInfo works after login', () => {
   assert.match(userBff, /https:\/\/api\.acongm\.com\/api\/user/);
   assert.match(userBff, /'authorization'/);
   assert.match(userBff, /USER_UPSTREAM_UNREACHABLE/);
+  assert.doesNotMatch(userBff, /headers: upstream\.headers/);
 });

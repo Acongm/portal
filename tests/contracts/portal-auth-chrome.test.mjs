@@ -19,6 +19,7 @@ test('Portal chrome bootstraps anonymous session and retries failed auth', () =>
 test('Portal embed surfaces restore errors and keeps the composer gated only while preparing', () => {
   assert.match(embed, /restoreError/);
   assert.match(embed, /composerDisabled/);
+  assert.match(embed, /hasUsableIdentity/);
   assert.match(embed, /正在准备安全会话/);
   assert.match(embed, /请先登录后再发送/);
   assert.match(embed, /status === 'error'/);
@@ -29,6 +30,7 @@ test('Portal user and session BFFs forward the shared auth cookie', () => {
   const user = readFileSync('apps/web/app/api/user/[[...path]]/route.ts', 'utf8');
   const session = readFileSync('apps/web/app/api/auth/session/route.ts', 'utf8');
   assert.match(user, /'cookie'/);
+  assert.doesNotMatch(user, /headers: upstream\.headers/);
   assert.match(session, /api\/auth\/session/);
 });
 

@@ -35,7 +35,7 @@ export function DocChatEmbed() {
   const pathname = usePathname() || '/';
   const pagePath = toLegacyDocPath(pathname);
   const moduleKey = moduleKeyFromLegacyPath(pagePath);
-  const { session, status, error, retry, accessToken, userId } = useSession({
+  const { status, error, retry, accessToken, userId } = useSession({
     ensureAnonymous: true,
   });
 
@@ -137,10 +137,11 @@ export function DocChatEmbed() {
     setChips(next);
   }, []);
 
-  const composerDisabled = status === 'restoring' || !session;
+  const hasUsableIdentity = Boolean(accessToken);
+  const composerDisabled = status === 'restoring' || !hasUsableIdentity;
   const placeholder = resolveComposerPlaceholder({
     status,
-    hasSession: Boolean(session),
+    hasSession: hasUsableIdentity,
     chatReady,
     restoreError,
   });
