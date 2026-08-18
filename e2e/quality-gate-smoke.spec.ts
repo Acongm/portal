@@ -1,5 +1,18 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { installQualityGateMocks } from './fixtures/mock-quality-gate';
+
+async function openDocsAssistant(page: Page): Promise<Locator> {
+  await page.goto('/docs/core');
+
+  const fab = page.getByRole('button', { name: /AI 阅读助手|AI 助手/ });
+  await expect(fab).toBeVisible({ timeout: 30_000 });
+  await fab.click();
+  await expect(page.getByRole('heading', { name: 'AI 阅读助手' })).toBeVisible();
+
+  const composer = page.locator('.acongm-gpt-composer__input');
+  await expect(composer).toBeVisible();
+  return composer;
+}
 
 test.describe('Platform v2 quality gate browser smoke (#37)', () => {
   test.beforeEach(async ({ page }) => {
@@ -18,16 +31,7 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
   test('docs embed stays mounted and opens a typable composer', async ({
     page,
   }) => {
-    await page.goto('/docs/core');
-
-    const fab = page.getByRole('button', { name: /AI 阅读助手|AI 助手/ });
-    await expect(fab).toBeVisible({ timeout: 30_000 });
-    await fab.click();
-
-    await expect(page.getByRole('heading', { name: 'AI 阅读助手' })).toBeVisible();
-
-    const composer = page.locator('.acongm-gpt-composer__input');
-    await expect(composer).toBeVisible();
+    const composer = await openDocsAssistant(page);
     await expect(composer).toBeEnabled();
     await expect(composer).toHaveAttribute(
       'placeholder',
@@ -38,10 +42,7 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
   test('docs drawer can send a message and render the streamed reply', async ({
     page,
   }) => {
-    await page.goto('/docs/core');
-
-    await page.getByRole('button', { name: /AI 阅读助手|AI 助手/ }).click();
-    const composer = page.locator('.acongm-gpt-composer__input');
+    const composer = await openDocsAssistant(page);
     await expect(composer).toBeEnabled({ timeout: 30_000 });
 
     await composer.fill('hello quality gate');
