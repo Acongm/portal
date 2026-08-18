@@ -81,7 +81,7 @@ export const vuepressNavbarLinks: LinkItemType[] = [
   menu('进阶专题', [
     docLink('技能提炼', '/mark/'),
     docLink('AI 开发', '/ai/'),
-    docLink('每日资讯', '/daily-news/2026-08-03.md'),
+    docLink('每日资讯', '/daily-news/2026-08-18.md'),
     docLink('踩坑记录', '/issue/h5.md'),
   ]),
   menu('工具箱', [
