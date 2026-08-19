@@ -7,7 +7,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const repoRoot = path.resolve(new URL('../../..', import.meta.url).pathname);
-const taskDir = path.join(repoRoot, 'task/news');
+const taskDir = path.join(repoRoot, 'task/daily-news');
 const sourcesPath = path.join(taskDir, 'sources.json');
 const outPath = process.argv[2] || path.join(taskDir, 'tmp/source-hints.md');
 const maxPerSource = Number(process.env.NEWS_SOURCE_MAX_ITEMS || 3);

@@ -23,7 +23,7 @@ NEWS_COMMIT_PUSH="${NEWS_COMMIT_PUSH:-0}"
 NEWS_RUN_BUILD="${NEWS_RUN_BUILD:-1}"
 NEWS_RUN_DOC_LINKS="${NEWS_RUN_DOC_LINKS:-0}"
 NEWS_RUN_TYPES_CHECK="${NEWS_RUN_TYPES_CHECK:-0}"
-NEWS_TMP_DIR="${NEWS_TMP_DIR:-task/news/tmp}"
+NEWS_TMP_DIR="${NEWS_TMP_DIR:-task/daily-news/tmp}"
 HERMES_CMD="${HERMES_CMD:-hermes}"
 
 if [[ ! "$NEWS_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
@@ -59,7 +59,7 @@ Daily news task prepared.
 EOF
 
 if [[ "$NEWS_DRY_RUN" == "1" ]]; then
-  echo "Dry run only; set NEWS_DRY_RUN=0 in task/news/.env.local to call Hermes."
+  echo "Dry run only; set NEWS_DRY_RUN=0 in task/daily-news/.env.local to call Hermes."
   exit 0
 fi
 

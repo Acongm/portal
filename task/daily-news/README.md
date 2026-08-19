@@ -1,4 +1,4 @@
-# task/news — 每日资讯定时任务源文件
+# task/daily-news — 每日资讯定时任务源文件
 
 这个目录把「每日科技动态」的定时任务输入、来源清单、环境变量和本地脚本从 Hermes cron prompt 中沉淀到仓库内，方便本地复现、调试和后续迭代。
 
@@ -8,7 +8,7 @@
 - `sources.json`：前端 / DevOps / AI 三类来源清单与抓取注意事项。
 - `prompts/daily-news-cron.md`：Hermes 生成日报时使用的主 prompt 模板。
 - `scripts/collect-source-hints.mjs`：轻量抓取 RSS，并生成 source hints，供 prompt 使用。
-- `scripts/generate-daily-news.sh`：入口脚本；加载 `task/news/` 下环境变量，生成 prompt，必要时调用 `hermes chat`。
+- `scripts/generate-daily-news.sh`：入口脚本；加载 `task/daily-news/` 下环境变量，生成 prompt，必要时调用 `hermes chat`。
 - `scripts/apply-daily-news.mjs`：当已有 MDX 草稿时，将草稿写入正式路径并更新 `meta.json` / navbar。
 - `tmp/`：本地生成的 prompt/source hints/草稿目录，已加入忽略规则。
 
@@ -16,21 +16,21 @@
 
 ```bash
 cd /Users/acongm/code/github/portal
-cp task/news/.env.example task/news/.env.local
+cp task/daily-news/.env.example task/daily-news/.env.local
 
 # 先干跑：只生成 prompt 与来源提示，不调用模型、不改正文文件。
-bash task/news/scripts/generate-daily-news.sh
+bash task/daily-news/scripts/generate-daily-news.sh
 
 # 正式本地生成：调用 Hermes，生成日报文件；默认不提交推送。
-NEWS_DRY_RUN=0 NEWS_COMMIT_PUSH=0 bash task/news/scripts/generate-daily-news.sh
+NEWS_DRY_RUN=0 NEWS_COMMIT_PUSH=0 bash task/daily-news/scripts/generate-daily-news.sh
 
 # 正式定时发布模式：允许提交推送，并要求 build。
-NEWS_DRY_RUN=0 NEWS_COMMIT_PUSH=1 NEWS_RUN_BUILD=1 bash task/news/scripts/generate-daily-news.sh
+NEWS_DRY_RUN=0 NEWS_COMMIT_PUSH=1 NEWS_RUN_BUILD=1 bash task/daily-news/scripts/generate-daily-news.sh
 ```
 
 ## 输入参数
 
-主要通过 `task/news/.env.local` 或命令行环境变量传入：
+主要通过 `task/daily-news/.env.local` 或命令行环境变量传入：
 
 - `NEWS_DATE`：目标日期，默认 `date +%F`。
 - `NEWS_DRY_RUN`：`1` 只生成 prompt；`0` 调用 Hermes。
@@ -53,8 +53,8 @@ NEWS_DRY_RUN=0 NEWS_COMMIT_PUSH=1 NEWS_RUN_BUILD=1 bash task/news/scripts/genera
 
 干跑输出：
 
-- `task/news/tmp/source-hints-YYYY-MM-DD.md`
-- `task/news/tmp/prompt-YYYY-MM-DD.md`
+- `task/daily-news/tmp/source-hints-YYYY-MM-DD.md`
+- `task/daily-news/tmp/prompt-YYYY-MM-DD.md`
 
 ## 已有 MDX 草稿的落盘方式
 
@@ -62,8 +62,8 @@ NEWS_DRY_RUN=0 NEWS_COMMIT_PUSH=1 NEWS_RUN_BUILD=1 bash task/news/scripts/genera
 
 ```bash
 NEWS_DATE=2026-08-20 \
-NEWS_INPUT_FILE=task/news/tmp/2026-08-20.mdx \
-node task/news/scripts/apply-daily-news.mjs
+NEWS_INPUT_FILE=task/daily-news/tmp/2026-08-20.mdx \
+node task/daily-news/scripts/apply-daily-news.mjs
 ```
 
 该脚本会做基础结构检查：frontmatter date、`### 前端` / `### DevOps` / `### AI` / `## 简讯`，以及至少 3 个 `[来源](https://...)` 链接。
@@ -74,7 +74,7 @@ node task/news/scripts/apply-daily-news.mjs
 
 ```text
 在 /Users/acongm/code/github/portal 中执行：
-NEWS_DRY_RUN=0 NEWS_COMMIT_PUSH=1 NEWS_RUN_BUILD=1 bash task/news/scripts/generate-daily-news.sh
+NEWS_DRY_RUN=0 NEWS_COMMIT_PUSH=1 NEWS_RUN_BUILD=1 bash task/daily-news/scripts/generate-daily-news.sh
 最终按脚本/Hermes 输出回复站点地址与三行简讯。
 ```
 

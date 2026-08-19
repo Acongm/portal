@@ -2,7 +2,7 @@
 /*
  * Apply a prepared MDX draft to the Portal daily-news location and update indexes.
  * Usage:
- *   NEWS_DATE=2026-08-20 NEWS_INPUT_FILE=task/news/tmp/2026-08-20.mdx node task/news/scripts/apply-daily-news.mjs
+ *   NEWS_DATE=2026-08-20 NEWS_INPUT_FILE=task/daily-news/tmp/2026-08-20.mdx node task/daily-news/scripts/apply-daily-news.mjs
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';

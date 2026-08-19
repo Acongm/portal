@@ -64,7 +64,7 @@ tags:
 ```
 
 ## 本地来源提示
-下面是 `task/news/sources.json` 中维护的来源清单和轻量抓取提示。它只用于 discovery，不代表可直接写事实；正式写作仍需按 skill 中的抓取/核验策略交叉验证。
+下面是 `task/daily-news/sources.json` 中维护的来源清单和轻量抓取提示。它只用于 discovery，不代表可直接写事实；正式写作仍需按 skill 中的抓取/核验策略交叉验证。
 
 {{SOURCE_HINTS}}
 
