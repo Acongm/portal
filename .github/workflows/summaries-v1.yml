@@ -1,0 +1,51 @@
+name: Summaries v1
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  summaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.3
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Restore summaries cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/ai-summaries-v1.json
+          key: ai-summaries-v1-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            ai-summaries-v1-${{ runner.os }}-${{ github.ref_name }}-
+            ai-summaries-v1-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore deployed snapshot fallback
+        run: node scripts/restore-summaries-v1.mjs
+
+      - name: Build summaries v1
+        env:
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          AI_MODEL: ${{ vars.AI_MODEL || 'deepseek-v4-pro' }}
+        run: pnpm build:ai:v1
+
+      - name: AI summary contract tests
+        run: pnpm test:ai-v1 && pnpm test:ai-path

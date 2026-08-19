@@ -1,644 +1,792 @@
 {
   "_meta": {
-    "generatedAt": "2026-06-14T14:54:08.219Z",
-    "moduleCount": 17
+    "generatedAt": "2026-08-19T03:06:10.851Z",
+    "moduleCount": 21
   },
   "modules": {
-    "JavaScript": {
-      "sidebarKey": "/JavaScript/",
-      "description": "JavaScript 核心语法、ES6+、异步编程、原型链等",
-      "files": [
-        {
-          "path": "/JavaScript/README.md",
-          "title": "README",
-          "summary": "JavaScript基础概念总结，涵盖数据类型、判断方法、类型转换、this指向、相等比较、闭包、拷贝、原型链、ES6继承与模块化、Proxy及异步编程。",
-          "keywords": ["JavaScript基础", "闭包", "原型链", "ES6继承", "模块化"]
-        },
-        {
-          "path": "/JavaScript/call、apply与bind.md",
-          "title": "call、apply与bind",
-          "summary": "比较JavaScript中call、apply和bind三个方法，call和apply用于借用方法并立即执行，区别在于参数传递方式；bind则返回一个新函数绑定this但不立即执行。",
-          "keywords": ["call", "apply", "bind", "this绑定", "方法借用"]
-        },
-        {
-          "path": "/JavaScript/js模拟bind方法.md",
-          "title": "js模拟bind方法",
-          "summary": "本文探讨了如何模拟实现JavaScript的bind方法，包括修改this指向、合并参数和通过new调用时的特殊处理，涉及原型链和闭包等核心概念。",
-          "keywords": ["bind", "this", "原型链", "闭包", "模拟实现"]
-        },
-        {
-          "path": "/JavaScript/js模拟new操作.md",
-          "title": "js模拟new操作",
-          "summary": "本文探讨了能否模拟实现JavaScript的new操作符，通过Object.create方法演示了模拟过程，并针对不支持ES5的环境提供了polyfill方案。最后总结了new操作符内部执行的五个关键步骤：创建新对象、链接原型、绑定this、关联构造函数prototype、以及默认返回新对象。",
-          "keywords": [
-            "new操作符",
-            "模拟实现",
-            "Object.create",
-            "polyfill",
-            "原型链"
-          ]
-        },
-        {
-          "path": "/JavaScript/执行上下文-作用域链-闭包.md",
-          "title": "执行上下文-作用域链-闭包",
-          "summary": "本文深入探讨JavaScript执行上下文与闭包机制，涵盖执行上下文类型、闭包原理及应用（如私有变量、模块化），并延伸讲解原型、变量提升、柯里化、apply/call/bind方法、Memoization优化和函数重载技术，帮助理解JavaScript核心概念与高级用法。",
-          "keywords": ["执行上下文", "闭包", "作用域链", "变量提升", "模块化"]
-        },
-        {
-          "path": "/JavaScript/经典闭包处理.md",
-          "title": "经典闭包处理",
-          "summary": "本文讲解JavaScript经典闭包问题及其多种解决方案。从常见的循环中setTimeout输出错误开始，逐步介绍IIFE、参数传递、let块级作用域等改进方法，并延伸至ES6/ES7异步处理如Promise和async/await。",
-          "keywords": ["闭包", "IIFE", "作用域", "异步", "let"]
-        }
-      ]
-    },
-    "TypeScript": {
-      "sidebarKey": "/TypeScript/",
-      "description": "TypeScript 类型系统、泛型、工具类型等",
-      "files": [
-        {
-          "path": "/TypeScript/README.md",
-          "title": "README",
-          "summary": "介绍 TypeScript 作为 JavaScript 的超集，具有强类型、ES6支持、面向对象等特性，需编译为 JS 运行。列出其优点（如编译时检查、可重用性）和缺点（编译耗时、第三方库定义文件问题），并详细列举了基础类型包括 number、string、boolean、Symbol、Array、Tuple、enum、object、never、void、null、undefined 和 any。",
-          "keywords": [
-            "TypeScript",
-            "强类型",
-            "JavaScript 超集",
-            "基础类型",
-            "编译"
-          ]
-        },
-        {
-          "path": "/TypeScript/Study.md",
-          "title": "Study",
-          "summary": "这是一篇TypeScript学习笔记，重点介绍了内置工具类型如Partial、Required、Pick、Omit、Record、Exclude、Extract、NonNullable、ReturnType、InstanceType、Parameters和ConstructorParameters等，并简要涉及条件类型extends和类型推断infer。内容通过代码示例展示用法，并关联到面试准备卡片。",
-          "keywords": ["TypeScript", "工具类型", "Partial", "Required", "Pick"]
-        }
-      ]
-    },
-    "react": {
-      "sidebarKey": "/react/",
-      "description": "React 框架、Hooks、状态管理、性能优化等",
-      "files": [
-        {
-          "path": "/react/README.md",
-          "title": "README",
-          "summary": "该文档是React相关主题的索引，链接到类组件与Hooks、React 17和React 18的详细文档。",
-          "keywords": ["React", "类组件", "Hooks", "React 17", "React 18"]
-        },
-        {
-          "path": "/react/class-hooks.md",
-          "title": "class-hooks",
-          "summary": "React核心概念与面试题整理，涵盖合成事件、setState机制、JSX本质、虚拟DOM、Fiber架构、组件通信、生命周期、性能优化等，以及常见面试问题解析。",
-          "keywords": ["React", "合成事件", "setState", "虚拟DOM", "Fiber"]
-        },
-        {
-          "path": "/react/react-render.md",
-          "title": "react-render",
-          "summary": "从React源码角度深入讲解React 18+的完整渲染流程，包括初始化、调度、render阶段（构建Fiber树和Effect链表）和commit阶段（操作真实DOM和执行副作用），涵盖关键函数如beginWork、completeWork、commitRoot。",
-          "keywords": ["React", "渲染流程", "Fiber架构", "协调", "提交阶段"]
-        },
-        {
-          "path": "/react/react16.md",
-          "title": "react16",
-          "summary": "本文快速概览React 16的核心革新：Fiber架构实现异步可中断渲染，错误边界防止组件崩溃导致白屏，Portals支持渲染到任意DOM节点。还介绍了Fragment、生命周期调整和SSR改进等特性，是理解现代React的基础。",
-          "keywords": [
-            "React 16",
-            "Fiber架构",
-            "错误边界",
-            "Portals",
-            "虚拟DOM"
-          ]
-        },
-        {
-          "path": "/react/react17.md",
-          "title": "react17",
-          "summary": "React 17 虽无新特性，但带来了重要的底层改进：全新的 JSX 转换无需手动导入 React，事件委托从 document 移至根节点以便局部使用和多版本共存，并更新了 onScroll、onFocus 等事件的行为，为渐进升级和未来特性铺路。",
-          "keywords": [
-            "React 17",
-            "JSX 转换",
-            "事件委托",
-            "事件系统",
-            "渐进升级"
-          ]
-        },
-        {
-          "path": "/react/react18.md",
-          "title": "react18",
-          "summary": "介绍 React 18 的 Concurrent 渲染机制，涵盖 startTransition、useDeferredValue 等新 API，自动批处理改进及 flushSync 退出方式，并深入源码解析过渡更新的优先级实现原理。",
-          "keywords": [
-            "React 18",
-            "Concurrent",
-            "startTransition",
-            "自动批处理",
-            "Lane 优先级"
-          ]
-        }
-      ]
-    },
-    "vue": {
-      "sidebarKey": "/vue/",
-      "description": "Vue 框架、组合式 API、响应式原理等",
-      "files": [
-        {
-          "path": "/vue/README.md",
-          "title": "README",
-          "summary": "本文档提供了两个Vue.js高级技巧：在父组件中监听子组件的生命周期钩子，以及如何在methods中使用debounce/throttle函数，以提高性能和代码组织。",
-          "keywords": [
-            "Vue.js",
-            "生命周期钩子",
-            "debounce",
-            "throttle",
-            "组件通信"
-          ]
-        },
-        {
-          "path": "/vue/code/Object.defineproperty.md",
-          "title": "Object.defineproperty",
-          "summary": "本文通过代码示例讲解 Vue 响应式系统中 Object.defineProperty 的自定义实现，展示如何利用数据劫持实现属性监听与双向绑定。",
-          "keywords": [
-            "Object.defineProperty",
-            "Vue 响应式",
-            "数据劫持",
-            "双向绑定"
-          ]
-        },
-        {
-          "path": "/vue/code/Proxy.md",
-          "title": "Proxy",
-          "summary": "提供 Vue 响应式系统中 Proxy 核心实现的自定义代码示例，展示如何用 Proxy 拦截对象操作实现数据响应式。",
-          "keywords": ["Proxy", "Vue", "响应式", "自定义实现", "代码示例"]
-        },
-        {
-          "path": "/vue/code/proxy-observe.md",
-          "title": "proxy-observe",
-          "summary": "本文展示了使用Proxy实现观察者模式的核心代码示例，实现数据响应式绑定。",
-          "keywords": ["Proxy", "observe", "响应式", "Vue", "自定义实现"]
-        },
-        {
-          "path": "/vue/vue-render.md",
-          "title": "vue-render",
-          "summary": "系统讲解Vue 3从模板编译到真实DOM的完整渲染流程，包括响应式依赖收集、虚拟DOM生成、初次挂载及更新patch机制，并与React Fiber进行对比。",
-          "keywords": ["Vue 3", "渲染流程", "响应式", "虚拟DOM", "patch"]
-        },
-        {
-          "path": "/vue/vue2.md",
-          "title": "vue2",
-          "summary": "本文档概述了Vue 2的核心原理，包括组件化思想、响应式系统（Object.defineProperty）、虚拟DOM与diff算法、模板编译过程、渲染机制、前端路由（hash与history模式）以及常见面试题解析，涵盖生命周期、组件通讯、性能优化等方面。",
-          "keywords": ["Vue2", "响应式", "虚拟DOM", "组件化", "路由"]
-        },
-        {
-          "path": "/vue/vue3.md",
-          "title": "vue3",
-          "summary": "该文档总结了Vue3的核心原理，通过代码示例展示响应式系统、虚拟DOM和Composition API等机制的实现，帮助深入理解框架底层。",
-          "keywords": ["Vue3", "原理", "总结", "代码示例", "响应式"]
-        },
-        {
-          "path": "/vue/vue_interview.md",
-          "title": "vue_interview",
-          "summary": "本文档收录了Vue.js面试中常见的核心问题，重点包括组件通讯机制和组件渲染更新的过程，适用于面试准备。",
-          "keywords": ["Vue", "组件通讯", "渲染更新", "面试题", "虚拟DOM"]
-        },
-        {
-          "path": "/vue/vue_theory.md",
-          "title": "vue_theory",
-          "summary": "本文档深入探讨Vue核心原理，涵盖MVVM模型、响应式系统（Object.defineProperty和Proxy）、虚拟dom与diff算法、模版编译、渲染过程及前端路由，并整理常见面试题及解析，包括v-if/v-show区别、key作用、组件通信、生命周期等。",
-          "keywords": ["vue原理", "响应式", "虚拟dom", "diff算法", "MVVM"]
-        }
-      ]
-    },
-    "webpack": {
-      "sidebarKey": "/webpack/",
-      "description": "构建工具 Webpack、Vite、Rollup 等",
-      "files": [
-        {
-          "path": "/webpack/README.md",
-          "title": "README",
-          "summary": "Webpack文档索引，涵盖知识梳理、架构原理、与Vite/Rollup对比、Vite相关知识及安装指引。",
-          "keywords": ["Webpack", "Vite", "Rollup", "打包工具", "安装"]
-        },
-        {
-          "path": "/webpack/install/README.md",
-          "title": "README",
-          "summary": "本文介绍了Node.js包管理工具npm和Yarn的基本概念、作用及差异，并详细描述了包安装的六个步骤和依赖关系的处理方式，帮助开发者理解包管理机制。",
-          "keywords": ["npm", "yarn", "包管理", "node.js", "依赖"]
-        },
-        {
-          "path": "/webpack/install/ni.md",
-          "title": "ni",
-          "summary": "本文介绍npm、yarn、pnpm、ni等包安装工具的演变，对比其安装结构，指出嵌套安装路径过长、依赖重复、扁平提升不确定性、npm分身和幽灵依赖等问题，并给出各工具的示例代码。",
-          "keywords": ["包管理器", "依赖管理", "npm", "pnpm", "幽灵依赖"]
-        },
-        {
-          "path": "/webpack/install/npm.md",
-          "title": "npm",
-          "summary": "本文介绍了早期npm（v2）的安装机制及其导致的“嵌套地狱”问题，包括依赖树过深、重复依赖、空间浪费等，并探讨了开发中的常见疑问，如删除node_modules重装、依赖分类、yarn与npm混用等，最后简述npm install流程和版本一致性的重要性。",
-          "keywords": ["npm", "嵌套地狱", "依赖管理", "lockfiles", "安装机制"]
-        },
-        {
-          "path": "/webpack/install/pnpm.md",
-          "title": "pnpm",
-          "summary": "文档阐述了传统node_modules安装方式的低效问题，介绍了Yarn 2.0默认的即插即用(PnP)安装模式如何通过.pnp.cjs映射文件实现快速安装、稳定I/O、完美依赖提升和更快启动。同时说明了PnP的初始化使用方法、边缘情况处理，以及为解决未声明依赖而提供的宽松(loose)模式。",
-          "keywords": ["Yarn", "PnP", "即插即用", "node_modules", "依赖管理"]
-        },
-        {
-          "path": "/webpack/install/yarn.md",
-          "title": "yarn",
-          "summary": "本文档概述了从npm到yarn、pnpm、ni等包管理工具的演进，主要讨论了依赖安装中的典型问题，如嵌套安装、路径过长、扁平化导致的不确定性和幽灵依赖，并通过代码示例展示了各工具的结构。",
-          "keywords": ["npm", "yarn", "pnpm", "幽灵依赖", "包管理"]
-        },
-        {
-          "path": "/webpack/vite-架构及原理.md",
-          "title": "vite-架构及原理",
-          "summary": "本文深入剖析Vite架构与原理，涵盖开发服务器基于原生ESM按需加载、esbuild预构建依赖、WebSocket实现模块级HMR，生产构建使用Rollup进行Tree-shaking与代码分割。对比Webpack突出极速启动和状态保留热更新优势，并介绍统一插件系统。",
-          "keywords": ["Vite", "ESM", "HMR", "Rollup", "esbuild"]
-        },
-        {
-          "path": "/webpack/vite-知识梳理.md",
-          "title": "vite-知识梳理",
-          "summary": "本文梳理了前端构建工具Vite的核心知识，包括其开发时基于ESM按需加载与生产时基于Rollup打包的原理、常用配置项、React相关插件，并与Webpack进行对比，最后给出学习路径建议。",
-          "keywords": ["Vite", "Webpack", "构建工具", "React", "Rollup"]
-        },
-        {
-          "path": "/webpack/webpack-vite-rollup.md",
-          "title": "webpack-vite-rollup",
-          "summary": "本文档深度对比了现代前端构建工具 Webpack、Vite 和 Rollup 的架构原理、优缺点及应用场景。Webpack 是通用打包器，功能全面但配置复杂、启动慢；Rollup 专注 JS 库打包，输出代码干净；Vite 则结合 ESM 与 esbuild 提供极速开发体验，生产环境使用 Rollup 打包。",
-          "keywords": ["Webpack", "Vite", "Rollup", "构建工具", "ESM"]
-        },
-        {
-          "path": "/webpack/打包工具.md",
-          "title": "打包工具",
-          "summary": "本文档介绍了从npm到yarn、pnpm、ni等包管理工具的演进，分析了嵌套安装、路径过长、依赖提升不确定性、幽灵依赖等问题，并通过代码示例对比了各工具的结构。",
-          "keywords": ["包管理工具", "npm", "pnpm", "幽灵依赖", "依赖提升"]
-        },
-        {
-          "path": "/webpack/架构及原理.md",
-          "title": "架构及原理",
-          "summary": "本文档详细解析Webpack的架构与运行原理，涵盖核心概念如入口、输出、模块、加载器、插件、依赖图，以及构建流程的初始化、依赖图构建、编译、打包输出等步骤，并介绍Compiler、Compilation、Chunk、Module等核心模块。",
-          "keywords": ["Webpack", "架构", "原理", "构建流程", "依赖图"]
-        },
-        {
-          "path": "/webpack/知识梳理.md",
-          "title": "知识梳理",
-          "summary": "Webpack是一个模块打包器，将JavaScript、CSS、图片等资源打包为优化后的文件。核心概念包括入口、输出、加载器和插件，配置文件中可定义打包规则。常用加载器如babel-loader、css-loader，插件如HtmlWebpackPlugin、TerserWebpackPlugin。优化包括Tree Shaking、Code Splitting、懒加载等。开发模式和生产模式配置不同，用于提升开发效率和构建性能。",
-          "keywords": ["Webpack", "模块打包", "加载器", "插件", "优化"]
-        }
-      ]
-    },
     "css": {
       "sidebarKey": "/css/",
-      "description": "CSS、SCSS、布局、动画等样式相关",
+      "description": "布局、动画与工程化样式方案",
       "files": [
-        {
-          "path": "/css/README.md",
-          "title": "README",
-          "summary": "该文档简要介绍了CSS中自定义滚动条样式的语法，并提供了代码示例和MDN参考链接，重点在于使用::-webkit-scrollbar伪元素实现滚动条美化。",
-          "keywords": [
-            "CSS",
-            "滚动条样式",
-            "::-webkit-scrollbar",
-            "自定义滚动条"
-          ]
-        },
         {
           "path": "/css/scss.md",
           "title": "scss",
           "summary": "本文档介绍了常用的 SCSS 宏（mixin），包括实现文本显示省略号、自定义滚动条样式以及垂直居中布局，并提供了对应的代码示例。",
-          "keywords": ["SCSS", "宏", "mixin", "省略号", "垂直居中"]
+          "keywords": [
+            "SCSS",
+            "宏",
+            "mixin",
+            "省略号",
+            "垂直居中"
+          ]
         },
         {
           "path": "/css/skill.md",
           "title": "skill",
           "summary": "介绍CSS的white-space属性，用于控制元素内空白字符（换行符、空格、制表符）的处理方式，包括合并、保留及换行行为。通过属性值如normal、pre、pre-wrap、pre-line等实现不同效果。",
-          "keywords": ["CSS", "white-space", "空白处理", "换行", "pre-wrap"]
-        }
-      ]
-    },
-    "node": {
-      "sidebarKey": "/node/",
-      "description": "Node.js、npm、包管理、CLI 工具等",
-      "files": [
-        {
-          "path": "/node/README.md",
-          "title": "README",
-          "summary": "该文件为Node.js相关文档索引，列出了npm.md和toolkit.md两个子文档链接，用于组织Node知识库。",
-          "keywords": ["Node", "索引", "npm", "toolkit"]
-        },
-        {
-          "path": "/node/npm.md",
-          "title": "npm",
-          "summary": "文档提供npm常用操作速查，涵盖镜像源设置与查看、已安装依赖包及路径查看、缓存清除、npm页面导航以及脚本并行/继发执行与当前脚本名称获取。",
-          "keywords": ["npm", "镜像", "缓存", "脚本", "依赖包"]
-        },
-        {
-          "path": "/node/toolkit.md",
-          "title": "toolkit",
-          "summary": "介绍了Node.js开发常用的工具包：nvm用于Node版本管理，nrm管理npm registry，nodemon自动重启服务，npm-check-updates更新依赖，yalc用于本地npm包调试。提供安装方法和常用命令，附GitHub链接。",
-          "keywords": ["Node.js", "npm", "版本管理", "自动重启", "依赖更新"]
-        }
-      ]
-    },
-    "performance": {
-      "sidebarKey": "/Performance/",
-      "description": "性能优化、监控、指标等",
-      "files": [
-        {
-          "path": "/performance/README.md",
-          "title": "README",
-          "summary": "本文详述了基于Vue2+Webpack3的用户中心SPA前端性能优化实践，通过TLS1.3、DNS预解析、Preload、PurgeCSS、Polyfill按需引入、字体优化、取消登录页懒加载、骨架屏等手段，将FCP平均提升19.6%，Lighthouse评分从30+升至70+。",
           "keywords": [
-            "前端性能优化",
-            "First Contentful Paint",
-            "PurgeCSS",
-            "骨架屏",
-            "Webpack配置"
+            "CSS",
+            "white-space",
+            "空白处理",
+            "换行",
+            "pre-wrap"
           ]
         }
       ]
     },
-    "Pattern": {
-      "sidebarKey": "/Pattern/",
-      "description": "设计模式、通信模式、架构模式",
+    "daily-news": {
+      "sidebarKey": "/daily-news/",
+      "description": "技术资讯与阅读摘要",
       "files": [
         {
-          "path": "/Pattern/BroadcastChannel/BroadcastBridge.md",
-          "title": "BroadcastBridge",
-          "summary": "BroadcastBridge.ts 实现了 BroadcastChannel API 的桥接模式，用于跨浏览器上下文（如不同标签页、窗口或 iframe）的安全通信。它提供了一种类型安全的方式来发送和接收消息，简化了多页面间的数据同步。",
+          "path": "/daily-news/2026-04-09.md",
+          "title": "2026-04-09",
+          "summary": "2026年4月9日每日资讯，涵盖科技热点与财经要闻。科技方面包括AI洗稿造谣案件、DeepSeek上线专家模式、杭州AI算力大会、科技行业裁员及GPT-6发布倒计时。财经方面报道美伊停火、欧美股市上涨、美元指数大跌、人民币汇率及能源转型等。",
           "keywords": [
-            "BroadcastChannel",
-            "桥接模式",
-            "TypeScript",
-            "跨页面通信"
+            "AI洗稿",
+            "DeepSeek",
+            "AI算力",
+            "科技裁员",
+            "美伊停火"
           ]
         },
         {
-          "path": "/Pattern/BroadcastChannel/BroadcastSingleton.md",
-          "title": "BroadcastSingleton",
-          "summary": "基于BroadcastChannel的跨标签页单例模式，确保多个浏览上下文中仅有一个实例，适用于状态同步。",
+          "path": "/daily-news/2026-05-02.md",
+          "title": "2026-05-02",
+          "summary": "今日科技动态聚焦前端组件级性能观测、Kubernetes v1.36发布、GitHub Copilot加速及AI深度接入云平台。Chrome启动Container Timing origin trial，Kubernetes新增70项增强，OpenAI融入AWS，Anthropic推创意连接器，技术价值正向真实工作流嵌入转变。",
           "keywords": [
-            "BroadcastChannel",
-            "Singleton",
-            "跨Tab通信",
-            "TypeScript"
+            "组件观测",
+            "Kubernetes",
+            "DevOps",
+            "AI接入",
+            "云平台"
           ]
         },
         {
-          "path": "/Pattern/BroadcastChannel/README.md",
-          "title": "README",
-          "summary": "介绍Broadcast Channel API，实现同源页面间实时通信。文档通过BroadcastBridge封装增强自动同步与缓存，提供发布/订阅API及React Hook示例，演示登录、购物车、主题切换等场景，并说明兼容性与注意事项。",
+          "path": "/daily-news/2026-05-03.md",
+          "title": "2026-05-03",
+          "summary": "2026年5月3日科技动态覆盖前端、DevOps与AI，重点在降低生产接入阻力：Chrome扩展面板新增角色助协作，Beta版加强容器查询与本地化；Kubernetes引入Pod级资源管理器优化调度；GitHub Copilot云代理启动提速20%+；OpenAI模型接入AWS企业环境，Anthropic发布创意工具连接器。",
           "keywords": [
-            "Broadcast Channel",
-            "跨标签页通信",
-            "BroadcastBridge",
-            "同源策略",
-            "React Hook"
+            "浏览器扩展",
+            "Kubernetes资源调度",
+            "AI模型接入",
+            "DevOps自动化",
+            "创意工具连接器"
           ]
         },
         {
-          "path": "/Pattern/COMPARISON.md",
-          "title": "COMPARISON",
-          "summary": "本文对比了实现Counter状态监听的两种方式：Observer（手动发布）和ProxyStore（赋值即触发），分析了各自特点、订阅粒度、回调签名及典型场景，并探讨了它们与Vue3响应式机制的关联，给出了选型建议。",
+          "path": "/daily-news/2026-05-04.md",
+          "title": "2026-05-04",
+          "summary": "2026年5月4日科技动态聚焦前端、DevOps与AI的工程化落地。前端Chrome扩展后台引入多角色协作，Web App Manifest新增本地化提升PWA国际化；DevOps中Kubernetes v1.36推出Pod级资源管理和原地扩缩容，优化复杂负载弹性；AI方面OpenAI强化账户安全，GitHub Copilot集成代理工作流，促进安全与开发体验。",
           "keywords": [
-            "观察者模式",
-            "代理模式",
-            "状态容器",
-            "发布-订阅",
-            "Vue3"
+            "前端",
+            "DevOps",
+            "AI",
+            "Kubernetes",
+            "代理工作流"
           ]
         },
         {
-          "path": "/Pattern/CustomEvent/CustomEventBridge.md",
-          "title": "CustomEventBridge",
-          "summary": "CustomEventBridge.ts实现了一个自定义事件桥接，用于在不同组件间解耦事件，提供灵活的事件通信机制。",
-          "keywords": ["事件桥接", "解耦", "设计模式", "TypeScript"]
-        },
-        {
-          "path": "/Pattern/CustomEvent/CustomEventSingleton.md",
-          "title": "CustomEventSingleton",
-          "summary": "自定义事件单例模式，通过单例模式确保全局仅有一个事件管理器实例，用于跨组件通信。",
-          "keywords": ["CustomEvent", "Singleton", "EventBus", "Pattern"]
-        },
-        {
-          "path": "/Pattern/CustomEvent/README.md",
-          "title": "README",
-          "summary": "介绍浏览器原生自定义事件机制，通过CustomEvent和dispatchEvent实现跨组件、跨框架通信。封装CustomEventBridge类，提供缓存、类型安全及便捷的API，支持订阅、发布、一次性监听等功能，适用于微前端和第三方脚本交互。",
+          "path": "/daily-news/2026-05-05.md",
+          "title": "2026-05-05",
+          "summary": "本文汇总了2026年5月5日的科技动态，聚焦前端、DevOps和AI三大领域。Chrome推出Container Timing API起源试用并扩展扩展开发者后台角色；Kubernetes v1.36引入Pod级资源管理器和纵向扩缩容Beta；OpenAI发布高级账户安全，GitHub Copilot强化代理工作流。整体趋势是平台能力更贴近真实生产环境。",
           "keywords": [
-            "CustomEvent",
-            "事件通信",
-            "跨框架",
-            "微前端",
-            "CustomEventBridge"
+            "Container Timing API",
+            "Pod级资源管理",
+            "原地纵向扩缩容",
+            "高级账户安全",
+            "代理式开发"
           ]
         },
         {
-          "path": "/Pattern/EventBus/EventBus.md",
-          "title": "EventBus",
-          "summary": "本文档对应EventBus.ts文件，介绍事件总线模式的TypeScript实现，用于跨组件或模块的解耦通信。",
+          "path": "/daily-news/2026-05-06.md",
+          "title": "2026-05-06",
+          "summary": "每日科技动态涵盖前端、DevOps和AI领域：Chrome 148引入CSS容器查询与媒体懒加载；DevTools 148增强无障碍与调试；GitHub依赖扫描前移至开发流程，并集成Microsoft Defender实现code-to-cloud风险可见；OpenAI更新默认模型GPT-5.5 Instant，并公开低延迟语音架构设计。",
           "keywords": [
-            "EventBus",
-            "事件总线",
-            "发布订阅",
-            "设计模式",
-            "TypeScript"
+            "Chrome 148",
+            "GitHub MCP Server",
+            "GPT-5.5 Instant",
+            "低延迟语音AI",
+            "依赖扫描"
           ]
         },
         {
-          "path": "/Pattern/EventBus/EventBusSingleton.md",
-          "title": "EventBusSingleton",
-          "summary": "介绍使用单例模式实现的EventBus，确保全局唯一事件总线，用于组件间解耦通信。",
+          "path": "/daily-news/2026-05-07.md",
+          "title": "2026-05-07",
+          "summary": "2026年5月7日科技动态：Chrome 148加强CSS容器查询与富媒体懒加载，DevTools默认启用无障碍树；Kubernetes v1.36声明式校验GA，GitHub MCP Server依赖扫描公测；OpenAI更新默认模型GPT-5.5 Instant，并发布大规模训练网络MRC。趋势是将能力融入默认工作流，降低学习成本。",
           "keywords": [
-            "EventBus",
-            "单例模式",
-            "事件总线",
-            "发布订阅",
-            "解耦通信"
+            "每日科技动态",
+            "声明式校验",
+            "依赖扫描",
+            "GPT-5.5 Instant",
+            "MRC网络"
           ]
         },
         {
-          "path": "/Pattern/EventBus/README.md",
-          "title": "README",
-          "summary": "事件总线模式通过集中式发布/订阅机制实现组件间解耦通信，支持多对多事件传递。提供on/emit/off等API，具备缓存和立即触发特性。虽实现简单，但字符串事件名缺乏类型约束且调试困难。适用于全局通知、模块协调等场景，并提供了React Hook集成示例。",
+          "path": "/daily-news/2026-05-08.md",
+          "title": "2026-05-08",
+          "summary": "2026年5月8日科技动态：前端Chrome 149 Beta与DevTools 148更新；DevOps领域Kubernetes v1.36引入服务端分片列表监视，GitHub MCP Server依赖扫描Public Preview实现安全左移；AI方面OpenAI发布新一代语音模型及面向网络安全的Trusted Access。技术平台竞争转向能力融入工作流的顺滑度。",
           "keywords": [
-            "事件总线",
-            "发布/订阅",
-            "解耦",
-            "EventBus",
-            "React Hook"
+            "Chrome",
+            "Kubernetes",
+            "GitHub",
+            "OpenAI",
+            "供应链安全"
           ]
         },
         {
-          "path": "/Pattern/Observer/ObserverSingleton.md",
-          "title": "ObserverSingleton",
-          "summary": "该文档展示了在 TypeScript 中结合观察者模式和单例模式的实现示例。",
-          "keywords": ["观察者模式", "单例模式", "TypeScript", "设计模式"]
-        },
-        {
-          "path": "/Pattern/Observer/README.md",
-          "title": "README",
-          "summary": "观察者模式定义一对多依赖关系，当被观察者状态变化时通知所有观察者。本文档介绍了模式概念、与发布订阅的区别、核心Subject类及多主题管理器SubjectManager，并提供React Hook用法示例和适用场景。",
+          "path": "/daily-news/2026-05-09.md",
+          "title": "2026-05-09",
+          "summary": "平台厂商将新能力嵌入开发运营主链路，竞争从单点功能扩展到完整工作流。Chrome发布149 Beta和148稳定版，带来Prompt API等；Kubernetes完善动态资源分配；GitHub推出企业实时迁移预览；OpenAI发布语音API和Codex安全机制。",
           "keywords": [
-            "观察者模式",
-            "发布订阅模式",
-            "Subject",
-            "Observer",
-            "一对多依赖"
+            "浏览器平台",
+            "云原生",
+            "动态资源分配",
+            "API安全",
+            "语音AI"
           ]
         },
         {
-          "path": "/Pattern/Observer/Subject.md",
-          "title": "Subject",
-          "summary": "Subject类实现观察者模式中的被观察者，维护观察者列表并提供注册、移除和通知方法。",
+          "path": "/daily-news/2026-05-10.md",
+          "title": "2026-05-10",
+          "summary": "2026年5月10日科技动态：Chrome 148强化CSS组件化、媒体懒加载与浏览器AI能力，DevTools增强代理调试；Kubernetes卷组快照GA，保障多卷一致性备份；GitHub Copilot agent实现配置复用；OpenAI发布实时语音模型并公开Codex安全运行方法，整体信号是新能力加速进入开发主流程。",
           "keywords": [
-            "观察者模式",
-            "Subject",
-            "被观察者",
-            "设计模式",
-            "行为型模式"
+            "Chrome 148",
+            "Kubernetes",
+            "GitHub Copilot",
+            "OpenAI Codex",
+            "实时语音"
           ]
         },
         {
-          "path": "/Pattern/ProxyStore/ProxyStore.md",
-          "title": "ProxyStore",
-          "summary": "本文档展示了一个TypeScript实现的代理存储模式，通过代理对象实现数据存储和访问控制，可能涉及缓存、延迟加载等优化策略。",
-          "keywords": ["代理", "存储", "TypeScript", "Proxy", "设计模式"]
-        },
-        {
-          "path": "/Pattern/ProxyStore/ProxyStoreSingleton.md",
-          "title": "ProxyStoreSingleton",
-          "summary": "ProxyStoreSingleton.ts 实现了结合代理模式的单例存储，确保全局唯一实例，并通过代理拦截对数据的访问与修改，提供安全、集中的状态管理。",
-          "keywords": ["单例模式", "代理模式", "状态管理", "TypeScript"]
-        },
-        {
-          "path": "/Pattern/ProxyStore/README.md",
-          "title": "README",
-          "summary": "基于 ES6 Proxy 实现的响应式状态容器，像操作普通对象一样读写状态，自动触发订阅更新。核心借鉴 Vue 3 响应式与 Valtio 原理，提供 watch、computed 等 API 和 React Hook 示例，不支持 IE。",
-          "keywords": ["Proxy", "响应式", "状态管理", "Vue 3", "Valtio"]
-        },
-        {
-          "path": "/Pattern/README.md",
-          "title": "README",
-          "summary": "本文档汇总了7种无第三方依赖的跨组件通信模式实现，包括发布订阅、观察者、事件总线、状态容器、广播通道、自定义事件和代理模式，对比了它们的特点、适用场景、功能差异和浏览器兼容性，并提供了模式选择指南。",
+          "path": "/daily-news/2026-05-11.md",
+          "title": "2026-05-11",
+          "summary": "2026年5月11日科技动态：前端Chrome 149 Beta与Safari Technology Preview 243持续推动平台能力与兼容性；DevOps领域Kubernetes v1.36通过服务器端分片监听降低大规模集群开销，GitHub为Copilot云代理提供独立配置实现复用；AI侧OpenAI扩展语音模型并公开Codex安全边界，标志AI代理走向可部署。",
           "keywords": [
-            "跨组件通信",
-            "设计模式",
-            "发布订阅",
-            "事件总线",
-            "状态管理"
+            "前端平台更新",
+            "Kubernetes扩展",
+            "AI代理治理",
+            "配置复用",
+            "安全边界"
           ]
         },
         {
-          "path": "/Pattern/ServiceRequest/README.md",
-          "title": "README",
-          "summary": "ServiceRequest模块提供工单系统的状态管理和组件通信能力，基于单例和发布订阅模式，包含Registry注册表、SharedStateBridge等核心类，支持组件缓存、表单回调、资源更新、跨工单数据共享等功能，并提供React Hooks示例和迁移指南。",
+          "path": "/daily-news/2026-05-12.md",
+          "title": "2026-05-12",
+          "summary": "2026年5月12日科技动态聚焦平台可持续接入与工程治理：Safari 26.5与Chrome 149 Beta带来新CSS/Web API并强调兼容性；Kubernetes v1.36将Volume Group Snapshots推进到GA，提升有状态工作负载运维；GitHub为Copilot cloud agent提供组织级secrets与变量治理；OpenAI推出Deployment Company直指企业级部署。",
           "keywords": [
-            "工单系统",
-            "状态管理",
-            "发布订阅",
-            "单例模式",
-            "React Hooks"
+            "前端工程化",
+            "Kubernetes",
+            "GitHub Copilot",
+            "OpenAI",
+            "平台治理"
           ]
         },
         {
-          "path": "/Pattern/ServiceRequest/Registry.md",
-          "title": "Registry",
-          "summary": "这篇文档介绍了Registry模式在ServiceRequest中的应用，提供类型安全的服务注册与查找机制。",
-          "keywords": ["Registry", "ServiceRequest", "Pattern", "TypeScript"]
-        },
-        {
-          "path": "/Pattern/ServiceRequest/ServiceRequestRegistry.md",
-          "title": "ServiceRequestRegistry",
-          "summary": "ServiceRequestRegistry 是一个 TypeScript 实现的服务请求注册表，用于管理请求处理程序的注册与查找，遵循设计模式实现。",
+          "path": "/daily-news/2026-05-13.md",
+          "title": "2026-05-13",
+          "summary": "今日科技动态涵盖前端、DevOps与AI三大领域：Safari 26.5新增:open伪类等CSS与API特性，Safari Technology Preview 243提供抢先验证窗口；Kubernetes v1.36将Volume Group Snapshots推至GA并扩展Dynamic Resource Allocation；OpenAI成立DeployCo专注企业AI部署，GitHub改进Copilot代码审查体验。",
           "keywords": [
-            "ServiceRequest",
-            "Registry",
-            "TypeScript",
-            "DesignPattern",
-            "RequestHandler"
+            "科技动态",
+            "Safari",
+            "Kubernetes",
+            "OpenAI",
+            "GitHub Copilot"
           ]
         },
         {
-          "path": "/Pattern/ServiceRequest/SharedStateBridge.md",
-          "title": "SharedStateBridge",
-          "summary": "SharedStateBridge.ts 是使用 TypeScript 实现的一种共享状态桥接模式，用于在多个服务请求间高效同步与共享状态，提供代码示例。",
+          "path": "/daily-news/2026-05-14.md",
+          "title": "2026-05-14",
+          "summary": "2026年5月14日科技动态涵盖前端、DevOps与AI。前端推进PWA安装标准化与Safari新特性；DevOps聚焦Kubernetes工作负载调度与PSI指标GA；AI强调编码代理安全沙箱与API化。趋势显示技术平台正从单点功能转向深度融入开发流程。",
           "keywords": [
-            "SharedState",
-            "BridgePattern",
-            "TypeScript",
-            "ServiceRequest",
-            "状态同步"
+            "PWA",
+            "Kubernetes",
+            "AI编码代理",
+            "安全沙箱",
+            "工作负载调度"
           ]
         },
         {
-          "path": "/Pattern/ServiceRequest/SharedStateBridgeSingleton.md",
-          "title": "SharedStateBridgeSingleton",
-          "summary": "一个基于单例模式的共享状态桥接实现，用于在服务请求中维护全局唯一实例，确保状态一致性和跨组件通信。",
+          "path": "/daily-news/2026-05-15.md",
+          "title": "2026-05-15",
+          "summary": "2026年5月15日科技动态：前端Chrome测试安装元素和简化登录，降低Web应用使用摩擦；Kubernetes v1.36移除Service ExternalIPs并推进工作负载感知调度，加强集群治理；AI方面OpenAI Codex支持移动端跨设备协作，GitHub Copilot提供团队级使用指标API，从个人助手转向团队基础设施。共同趋势是能力更容易进入生产流程。",
           "keywords": [
-            "Singleton",
-            "SharedState",
-            "Bridge",
-            "ServiceRequest",
-            "TypeScript"
+            "Chrome",
+            "Kubernetes",
+            "AI",
+            "生产流程",
+            "团队协作"
           ]
         },
         {
-          "path": "/Pattern/Store/README.md",
-          "title": "README",
-          "summary": "单例状态容器是一个轻量级全局状态管理方案，使用单一对象存储状态并提供订阅机制。支持状态快照和批量更新，回调可获取前一个值，适用于小型应用或不愿引入复杂库的场景。",
+          "path": "/daily-news/2026-05-17.md",
+          "title": "2026-05-17",
+          "summary": "本文总结了2026年5月17日前后科技动态：Chrome原生支持CSS gap decorations并优化登录流程；Kubernetes v1.36将Mixed Version Proxy推进到Beta；GitHub Actions提醒镜像迁移；OpenAI与Databricks整合GPT-5.5推进企业代理工作流；Copilot Memory支持用户偏好。这些更新表明工具正从“可选增强”变为“默认嵌入流程”的基础能力。",
           "keywords": [
-            "单例状态容器",
-            "全局状态管理",
-            "订阅机制",
-            "状态快照",
-            "TypeScript"
+            "Chrome",
+            "Kubernetes",
+            "GitHub Actions",
+            "AI agent workflow",
+            "Copilot Memory"
           ]
         },
         {
-          "path": "/Pattern/Store/Store.md",
-          "title": "Store",
-          "summary": "本文档简要描述了 Store.ts 文件，可能实现 Store 设计模式，用于集中管理应用状态，采用 TypeScript 编写。",
-          "keywords": ["store", "pattern", "typescript", "state management"]
-        },
-        {
-          "path": "/Pattern/Store/StoreSingleton.md",
-          "title": "StoreSingleton",
-          "summary": "TypeScript 实现的 StoreSingleton 单例模式，用于统一管理存储实例，确保全局唯一访问点。",
+          "path": "/daily-news/2026-05-18.md",
+          "title": "2026-05-18",
+          "summary": "2026年5月18日科技动态：开发者工具向低摩擦、强兼容方向演进。前端Chromium新增CSS gap装饰与HTML install元素；DevOps侧Kubernetes v1.36引入路由同步指标，GitHub Actions提醒镜像迁移；AI领域OpenAI GPT-5.5整合Databricks企业代理，Copilot Memory支持用户偏好。整体趋势从演示转向日常流程。",
           "keywords": [
-            "Singleton",
-            "Store",
-            "TypeScript",
-            "Pattern",
-            "Global State"
+            "浏览器原生能力",
+            "Kubernetes",
+            "AI企业应用",
+            "开发者工具",
+            "工作流收敛"
           ]
         },
         {
-          "path": "/Pattern/模式来源与类比.md",
-          "title": "模式来源与类比",
-          "summary": "本文对比了跨组件通信的几种经典模式：发布订阅、观察者、事件总线、状态容器、BroadcastChannel和CustomEvent，并指出这些模式在软件工程中的普遍性，以及在不同框架（如RxJS、Redux）中的类似实现。",
+          "path": "/daily-news/2026-05-19.md",
+          "title": "2026-05-19",
+          "summary": "2026年5月19日科技动态：前端Chromium新增CSS gap装饰原生支持，Chrome 148引入WebAuthn即时UI模式；DevOps方面Kubernetes v1.36将混合版本代理推进Beta，GitHub Copilot可一键修复失败Actions；AI领域OpenAI Codex与Dell合作支持企业混合部署，并推出跨端工作方式。趋势指向原生能力增强与AI工程化。",
           "keywords": [
-            "跨组件通信",
-            "发布订阅",
-            "观察者模式",
-            "事件总线",
-            "状态容器"
+            "DevOps",
+            "AI",
+            "Kubernetes",
+            "GitHub Actions",
+            "Codex"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-05-20.md",
+          "title": "2026-05-20",
+          "summary": "本文总结了2026年5月20日前端、DevOps与AI领域的关键更新。Chrome发布面向AI代理的DevTools及流式局部更新，强化开发与调试；GitHub拓展OIDC以保护私有制品访问，Kubernetes移除了有安全风险的Service ExternalIPs；OpenAI推进AI内容来源验证并与Dell合作将Codex引入本地环境，标志平台正重构AI开发可信与部署模式。",
+          "keywords": [
+            "Chrome DevTools",
+            "AI代理",
+            "OIDC",
+            "内容来源验证",
+            "Kubernetes安全"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-05-21.md",
+          "title": "2026-05-21",
+          "summary": "2026年5月21日的每日科技动态摘要：Chrome发布面向agentic web的15项更新并启动HTML-in-Canvas API试验；etcd 3.7.0-beta.0发布，引入RangeStream并清理遗留组件；GitHub Actions集成Copilot cloud agent实现一键修复；OpenAI模型推翻离散几何猜想；OpenAI Codex加速团队代码评审。各平台共同推进AI参与开发的基础设施化。",
+          "keywords": [
+            "agentic web",
+            "Chrome更新",
+            "etcd 3.7.0",
+            "GitHub Copilot",
+            "OpenAI"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-05-22.md",
+          "title": "2026-05-22",
+          "summary": "今日科技动态：Chrome聚焦agentic web，Safari推出技术预览版244；etcd 3.7 beta发布，提升可靠性与大结果集处理，GitHub Issue字段向所有组织开放公开预览；OpenAI推进AI内容溯源体系及医疗行业落地。技术平台竞争转向将新能力嵌入主流程。",
+          "keywords": [
+            "agentic web",
+            "etcd",
+            "GitHub Issue fields",
+            "AI内容溯源",
+            "浏览器更新"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-05-23.md",
+          "title": "2026-05-23",
+          "summary": "2026年5月23日科技动态聚焦前端、DevOps与AI：Chrome扩展生态回顾及Safari Technology Preview 244发布；npm推出staged publishing与安装源控制强化供应链安全，etcd 3.7.0-beta.0增强RangeStream与可靠性；OpenAI获评企业级编码代理领导者，GitHub Copilot for Eclipse开源。",
+          "keywords": [
+            "浏览器扩展",
+            "供应链安全",
+            "etcd",
+            "AI编码代理",
+            "Copilot"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-05-24.md",
+          "title": "2026-05-24",
+          "summary": "2026年5月24日科技动态涵盖前端、DevOps和AI。Chrome推进passkeys认证与声明式部分更新，npm强化供应链安全，GitHub开放结构化元数据，AI编码工具在企业落地并自动路由模型，整体趋势向自动化协作推进。",
+          "keywords": [
+            "浏览器更新",
+            "DevOps",
+            "AI编码",
+            "供应链安全",
+            "声明式部分更新"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-05-25.md",
+          "title": "2026-05-25",
+          "summary": "本文报道了2026年5月25日前后科技动态，聚焦浏览器平台、基础设施与AI编码工具的生产协作演进。前端方面，Chrome推进passkeys等身份能力，Safari Technology Preview 244发布；DevOps方面，npm推出staged publishing与安装源控制，etcd 3.7.0-beta.0发布；AI方面，OpenAI展示Codex企业交付案例，GitHub Copilot for Eclipse开源。",
+          "keywords": [
+            "passkeys",
+            "staged publishing",
+            "etcd",
+            "Codex",
+            "Copilot"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-05-26.md",
+          "title": "2026-05-26",
+          "summary": "今日科技动态聚焦生产流程优化：浏览器平台强化AI扩展开发与流式渲染，DevOps侧推进供应链治理与核心组件升级，AI领域深化可信内容合作与工程协作检索。",
+          "keywords": [
+            "浏览器扩展",
+            "流式渲染",
+            "供应链治理",
+            "etcd升级",
+            "AI内容合作"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-01.md",
+          "title": "2026-06-01",
+          "summary": "2026年6月1日科技动态涵盖前端、DevOps和AI三大领域。前端聚焦浏览器原生AI能力落地与新Web平台特性；DevOps关注Kubernetes安全记录修正与GitHub预算硬限制；AI方面Claude Opus 4.8发布，强化编码与代理能力，同时组织AI采用度量兴起。",
+          "keywords": [
+            "浏览器AI",
+            "Kubernetes安全",
+            "GitHub预算",
+            "Claude Opus",
+            "Web平台"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-02.md",
+          "title": "2026-06-02",
+          "summary": "今日动态关注浏览器内AI能力、Web平台基线更新、Kubernetes仪表盘迁移、GitHub Copilot计费改革，以及OpenAI与AWS集成。前端侧重端侧AI落地与跨浏览器兼容性进展；DevOps强调平台可迁移性和成本治理；AI聚焦模型与企业云服务绑定。",
+          "keywords": [
+            "浏览器内AI",
+            "Baseline",
+            "Kubernetes Dashboard迁移",
+            "Copilot计费",
+            "OpenAI AWS集成"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-03.md",
+          "title": "2026-06-03",
+          "summary": "2026年6月3日科技动态聚焦平台能力从可体验到可接入、可治理的演进。前端方面Chrome 149与DevTools 149发布，提升CSS、国际化、智能体调试能力；DevOps方面Kubernetes推广Headlamp替代Dashboard，GitHub Copilot推出隔离沙箱公测；AI方面OpenAI Codex扩展至多岗位，GitHub Copilot SDK正式GA，推动智能体平台化。",
+          "keywords": [
+            "Chrome 149",
+            "DevTools 智能体调试",
+            "Headlamp",
+            "Copilot 沙箱",
+            "智能体平台"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-04.md",
+          "title": "2026-06-04",
+          "summary": "2026年6月4日科技动态：前端Baseline月报与Chrome 149推动浏览器能力标准化；Kubernetes宣布Dashboard迁移至Headlamp，GitHub Copilot沙箱公测强化隔离执行；OpenAI为GPT-Rosalind增添生命科学能力，并展示Wasmer用Codex构建边缘Node.js运行时的效率收益。",
+          "keywords": [
+            "Baseline",
+            "Headlamp",
+            "Copilot沙箱",
+            "GPT-Rosalind",
+            "Wasmer"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-05.md",
+          "title": "2026-06-05",
+          "summary": "2026年6月5日技术动态聚焦前端、DevOps和AI的工作流整合。前端Baseline月报推动CSS与Web API能力成熟化，Chrome DevTools 149稳定支持智能体调试；DevOps中Kubernetes控制台迁移至Headlamp增强多集群管理，GitHub Copilot自动修复Actions流水线失败；AI领域OpenAI发布Dreaming强化长期记忆，模型向专业执行深化。",
+          "keywords": [
+            "前端标准化",
+            "DevOps自动化",
+            "AI长期记忆",
+            "多集群管理",
+            "智能体调试"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-06.md",
+          "title": "2026-06-06",
+          "summary": "本文概述2026年6月6日科技动态，前端Chrome 150 Beta引入CSS新特性和系统强调色，Chrome 149改善布局与缓存；DevOps方面GitHub Copilot开放Agent任务API，Kubernetes仪表盘迁移至Headlamp；AI领域OpenAI为ChatGPT增强记忆，GPT-Rosalind推新能力，体现协作深度演进。",
+          "keywords": [
+            "Chrome",
+            "Copilot",
+            "Kubernetes",
+            "Headlamp",
+            "OpenAI"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-07.md",
+          "title": "2026-06-07",
+          "summary": "今日科技动态聚焦平台能力的接口化与可编排化。前端，Chrome 150 Beta引入新CSS功能与系统颜色；149正式版改善布局与页面恢复。DevOps，GitHub开放Copilot Agent tasks REST API，VS Code企业插件管理进入预览。AI，ChatGPT推出Dreaming长期记忆系统，微软发布自研MAI模型家族。",
+          "keywords": [
+            "平台接口化",
+            "可编排",
+            "Chrome Beta",
+            "Copilot API",
+            "ChatGPT记忆"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-08.md",
+          "title": "2026-06-08",
+          "summary": "2026年6月8日科技动态：WWDC 2026开幕，苹果AI路线图待揭晓；GitHub Copilot切换至AI Credits按量计费，停用GPT-5.2模型；OpenAI上线Dreaming V3分层记忆系统并开放至Free层；Chrome 150 Beta带来多项新CSS能力，Web平台月度综述显示容器查询等特性进入Baseline。整体反映AI和Web能力从可选走向基础设施。",
+          "keywords": [
+            "AI计费",
+            "CSS新特性",
+            "Dreaming V3",
+            "WWDC 2026",
+            "浏览器互操作"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-09.md",
+          "title": "2026-06-09",
+          "summary": "WWDC26首日，Safari 27 beta发布，带来58项新特性与525项修复，包括可自定义select、:open伪类和JSPI。Chrome 150 beta新增AccentColor系统颜色。OpenAI提交S-1启动IPO，估值或破万亿美元；ChatGPT推出Dreaming长期记忆系统。GitHub Copilot获百万token上下文窗口，IP允许列表GA。",
+          "keywords": [
+            "Safari 27 beta",
+            "Chrome 150",
+            "OpenAI IPO",
+            "GitHub Copilot",
+            "WebKit"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-10.md",
+          "title": "2026-06-10",
+          "summary": "2026年6月9日科技动态：Anthropic发布Claude Fable 5，首个公开可用的Mythos级AI模型；npm v12将默认禁用安装脚本以提升安全性；Dependabot新增对Deno生态的版本更新支持；WebKit推出重写的MapKit JS 6。",
+          "keywords": [
+            "AI模型",
+            "Claude Fable 5",
+            "npm安全",
+            "Dependabot",
+            "MapKit JS"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-11.md",
+          "title": "2026-06-11",
+          "summary": "今日动态显示前端工具链强化教学与可用性，DevOps平台将协作与安全能力终端化，AI厂商拓展企业基础设施与科研场景。WebKit发布Grid Lanes交互指南和WWDC26课程；GitHub CLI新增讨论组和安全审查命令；OpenAI接入Oracle Cloud额度并用Codex模拟黑洞。",
+          "keywords": [
+            "Grid Lanes",
+            "GitHub CLI",
+            "Copilot CLI",
+            "OpenAI Codex",
+            "开发者工具"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-12.md",
+          "title": "2026-06-12",
+          "summary": "2026年6月12日科技动态聚焦工程接入与组织治理的可落地性：前端领域，WebKit以npm+TypeScript重构MapKit JS 6地图库，Chrome试验WebMCP提供智能体网页结构化接口；DevOps方面，GitHub将Agentic Workflows公开预览并引入bot PR审批机制；AI生态中，OpenAI拟收购Ona增强代理安全执行环境，同时表态支持欧盟AI内容透明度规范。",
+          "keywords": [
+            "MapKit JS 6",
+            "WebMCP",
+            "Agentic Workflows",
+            "Ona",
+            "AI透明度"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-13.md",
+          "title": "2026-06-13",
+          "summary": "近7日内前端、DevOps和AI领域官方更新显示，平台不再仅追求新功能，而是更注重稳定落地和可用性。Safari 27 beta带来58个新特性及大量修复，强调标准一致性；WebKit发布Grid Lanes互动指南降低学习门槛。DevOps方面，GitHub Copilot code review增强组织级控制，Actions强制自托管runner版本。AI领域，OpenAI推出企业应用课程，Anthropic与TCS合作推进监管行业落地。整体趋势：从发布能力转向保障稳定、教育和规模化采用。",
+          "keywords": [
+            "Safari 27 beta",
+            "Grid Lanes",
+            "GitHub Actions",
+            "Copilot code review",
+            "AI Academy"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-14.md",
+          "title": "2026-06-14",
+          "summary": "近期科技动态聚焦于平台重新定义开发者接口：前端侧，Chrome和WebKit分别推出面向AI agent的显式声明协议和现代化地图框架；DevOps侧，GitHub将agent正式纳入流水线并加强企业治理；AI侧，OpenAI推进内容透明度，Anthropic投资AI人才落地。整体呈现从功能发布到体系重构的转变。",
+          "keywords": [
+            "AI agent",
+            "DevOps自动化",
+            "内容透明度",
+            "平台接口",
+            "企业治理"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-15.md",
+          "title": "2026-06-15",
+          "summary": "Mock 摘要（每日科技动态 - 2026年6月15日）：# 每日科技动态 今天正好是 6 月 15 日——Anthropic 的 agent 计费改革就在今天生效，而 Chrome 150 稳定版也将在两天后推送。这种时间上的巧合恰好反映了当下三条技术线的共同走向：能力本身已经不再是瓶颈，平台…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-16.md",
+          "title": "2026-06-16",
+          "summary": "Mock 摘要（每日科技动态 - 2026年6月16日）：# 每日科技动态 今天这波官方更新有一个很清晰的共同点：平台方都在把“可控性”往前推。前端侧，不管是 Safari 27 的可定制 `&lt;select>`，还是 Chrome 为 agent 场景推进的 WebMCP，本质上都在让界面…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-17.md",
+          "title": "2026-06-17",
+          "summary": "Mock 摘要（每日科技动态 - 2026年6月17日）：# 每日科技动态 今天的官方动态透露出一个很一致的信号：平台正在把“可用”继续推进成“可规模化采用”。前端侧，浏览器厂商一边补大版本能力，一边开始把新布局模型的学习材料做成更低门槛的交互文档；DevOps 侧，GitHub 明显在为代码质…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-18.md",
+          "title": "2026-06-18",
+          "summary": "Mock 摘要（每日科技动态 - 2026年6月18日）：# 每日科技动态 今天的官方更新很集中地指向一个共同主题：平台不再只比“有没有新能力”，而是开始比“新能力能不能更快进入真实工作流”。前端侧，WebKit 一边继续在预览版里补标准能力和调试工具，一边直接给出新表单控件的落地边界；DevO…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-19.md",
+          "title": "2026-06-19",
+          "summary": "Mock 摘要（每日科技动态 - 2026年6月19日）：# 每日科技动态 今天的官方更新有一个很清晰的共同点：平台方不再只发布“能力”，而是在同步降低这些能力进入真实工作流的门槛。DevOps 和 AI 方向在最近 24 小时内更新最密集；前端方向近 24 小时可直接核实的官方主力更新较少，因…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-20.md",
+          "title": "2026-06-20",
+          "summary": "Mock 摘要（每日科技动态 - 2026年6月20日）：# 每日科技动态 今天的官方更新有一个共同方向：平台方不再只强调“能力更多了”，而是在补齐可观测性、可治理性和可落地性。DevOps 与 AI 方向最近 24~72 小时内仍有较密集的官方信息；前端方向近 24 小时可直接核实的官方主力更…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-21.md",
+          "title": "2026-06-21",
+          "summary": "Mock 摘要（每日科技动态 - 2026年6月21日）：# 每日科技动态 今天的官方更新继续围绕一个共同方向展开：平台方不只是发布能力，而是在补齐采用这项能力所需的治理、学习材料和组织化落地路径。DevOps 方向最近 72 小时内仍有较密集的新消息；AI 方向有一条近 7 天内的生态扩张更新…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-22.md",
+          "title": "2026-06-22",
+          "summary": "Mock 摘要（每日科技动态 - 2026年6月22日）：# 每日科技动态 今天的官方更新里，DevOps 与 AI 在最近 72 小时内都还有连续的新动作：平台方一边把可度量、可治理、可复用的能力继续下沉到产品层，一边把 AI 的企业部署和垂直质量优化推向更大范围。前端方向最近 24 小时内缺…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-06-23.md",
+          "title": "2026-06-23",
+          "summary": "Mock 摘要（每日科技动态 - 2026年6月23日）：# 每日科技动态 今天的新消息里，DevOps 与 AI 明显更热：一边是 GitHub 持续把智能体工作流和问题治理做进开发平台默认能力里，另一边是 OpenAI 把“用 AI 做安全”从单点功能推进到更完整的攻防与开源维护方案。前端方…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-07-22.md",
+          "title": "2026-07-22",
+          "summary": "Mock 摘要（每日科技动态 - 2026年7月22日）：# 每日科技动态 今天的主线很集中：开发平台正在把“AI 能力”从单点功能，继续推进成带有浏览器执行环境、质量闸门、配额治理和安全边界的完整工作流。DevOps 与 AI 方向在最近 24~48 小时内都有明确的官方更新；前端方向最近一周…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-07-23.md",
+          "title": "2026-07-23",
+          "summary": "Mock 摘要（每日科技动态 - 2026年7月23日）：# 每日科技动态 今天这组官方更新有一条很清晰的共同线索：工具平台正在把“可见性”和“可控性”一起补齐。前端方向里，浏览器既在继续修复底层实现细节，也在把 Web App 更深地嵌进操作系统体验；DevOps 方向里，GitHub 把 C…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-07-24.md",
+          "title": "2026-07-24",
+          "summary": "Mock 摘要（每日科技动态 - 2026年7月24日）：# 每日科技动态 今天这组官方更新有一个很鲜明的共同点：平台都在把“默认更快”与“默认更可控”同时推进。前端方向里，Firefox 一边缩短发布节奏，一边把扩展权限和文档级标识做得更精细；DevOps 方向里，GitHub 一边为 MCP…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-07-25.md",
+          "title": "2026-07-25",
+          "summary": "Mock 摘要（每日科技动态 - 2026年7月25日）：# 每日科技动态 今天这组更新的一个共同主题是\"安全性正在从附加项变为默认机制\"。前端方向里，Next.js 启动了历史上首次月度安全发布，Tailwind CSS 也在持续加固构建工具链的稳定性；DevOps 方向里，GitHub Co…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-07-26.md",
+          "title": "2026-07-26",
+          "summary": "Mock 摘要（每日科技动态 - 2026年7月26日）：# 每日科技动态 今天这组更新有一条很清晰的主线：各家平台都在把“边界”做得更显式。浏览器在权限和平台能力上减少隐式行为，GitHub 在 agent 自动化里补上协议与审核边界，AI 产品则开始把个人数据接入和企业级 agent 运行方…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-07-27.md",
+          "title": "2026-07-27",
+          "summary": "Mock 摘要（每日科技动态 - 2026年7月27日）：# 每日科技动态 今天这组新闻有一条主线：安全正在从前沿能力的事后补丁，变成平台和框架的内建节奏。Next.js 把安全发布做成月度预定动作，OpenAI 的 AI agent 在一次内部安全测试中意外演示了 agent 自主攻防的真实边…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-07-28.md",
+          "title": "2026-07-28",
+          "summary": "Mock 摘要（每日科技动态 - 2026年7月28日）：# 每日科技动态 今天这组更新的共同主题是：平台正在把“默认能力”继续前移。前端侧，Safari 一边补齐 WebAssembly 和浏览器实现细节，一边在 Technology Preview 里继续把 CSS、JavaScript 和…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-07-29.md",
+          "title": "2026-07-29",
+          "summary": "Mock 摘要（每日科技动态 - 2026年7月29日）：# 每日科技动态 今天这组更新的共同点是：平台一边继续把新能力前移，一边也在把“默认治理”做得更靠前。前端侧，浏览器与工具链开始更明确地把兼容性判断和权限交互做成开发流程的一部分；DevOps 侧，GitHub 把供应链防护从“发现问题”…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-07-30.md",
+          "title": "2026-07-30",
+          "summary": "Mock 摘要（每日科技动态 - 2026年7月30日）：# 每日科技动态 今天这组更新的主线，是“把能力做成默认工作流”。前端侧，Safari 的正式版与预览版都在继续补齐 WebAssembly、CSS 布局和文本渲染这些会直接影响日常开发判断的细节；DevOps 侧，GitHub 一边给 …",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-07-31.md",
+          "title": "2026-07-31",
+          "summary": "Mock 摘要（每日科技动态 - 2026年7月31日）：# 每日科技动态 今天这组更新的主线，是\"把重型协作真正变成内置能力\"。前端侧，Chrome 151 把媒体权限、Shadow DOM 和 SPA 性能追踪这三件事从\"开发者自己想办法\"推到了\"平台原生支持\"；DevOps 侧，GitHu…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-08-03.md",
+          "title": "2026-08-03",
+          "summary": "Mock 摘要（每日科技动态 - 2026年8月3日）：# 每日科技动态 今天这组更新里，最明显的趋势是：平台方开始同时补两类“开发者基础设施”。一类是前端运行时本身——浏览器继续把 Wasm、CSS、Temporal、WebGPU 这些能力做得更完整；另一类是工程治理层——从 GitHub …",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-08-06.md",
+          "title": "2026-08-06",
+          "summary": "Mock 摘要（每日科技动态 - 2026年8月6日）：# 每日科技动态 今天这组更新里，平台方最一致的动作是把“可用能力”继续往“可控工作流”推进。前端侧，浏览器和框架生态都在收束配置、权限和跨引擎行为边界；DevOps 侧，GitHub 正把安全扫描和 AI 管理能力做成更适合大组织批量治…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-08-07.md",
+          "title": "2026-08-07",
+          "summary": "Mock 摘要（每日科技动态 - 2026年8月7日）：# 每日科技动态 今天这组更新最明显的共同点，是平台方都在把“新能力”往“更少胶水、更清晰边界、更易接入默认工作流”推进。前端侧，浏览器扩展能力和框架工具链都在减少隐式约定；DevOps 侧，Kubernetes 与 GitHub 都在把…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-08-08.md",
+          "title": "2026-08-08",
+          "summary": "Mock 摘要（每日科技动态 - 2026年8月8日）：# 每日科技动态 今天的更新有一个很有意思的对称：AI 安全在左右两侧同时推进——OpenAI 在公开最前沿模型的网络攻击能力评估，Anthropic 在收窄 Fable 5 的生物学滥用窗口；而开发者工具侧，GitHub 正把 Copi…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-08-09.md",
+          "title": "2026-08-09",
+          "summary": "Mock 摘要（每日科技动态 - 2026年8月9日）：# 每日科技动态 今天的主线很清晰：一边是前端框架和浏览器扩展生态在把过去需要开发者自带“补丁层”的能力收回到官方工具链里，另一边是 GitHub 和 OpenAI 继续把“能用的 AI”往“可运营、可治理、可规模化”推进。由于最近 24…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-08-10.md",
+          "title": "2026-08-10",
+          "summary": "Mock 摘要（每日科技动态 - 2026年8月10日）：# 每日科技动态 今天的主线，是开发工具链开始同时朝两个方向收拢复杂度：一边把更细的运行时能力、导航能力和类型能力继续往框架与浏览器里内建，另一边把 AI 的接入边界、治理指标和安全控制往平台默认能力推进。由于最近 24 小时内前端官方主…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-08-11.md",
+          "title": "2026-08-11",
+          "summary": "Mock 摘要（每日科技动态 - 2026年8月11日）：# 每日科技动态 今天更值得关注的，不是某个单点功能又多了一项参数，而是平台正在把“可验证”“可治理”“可规模化复用”这三件事同时往默认工作流里收。前端侧开始把 Baseline 能力、浏览器内建 API 和扩展生态标准化得更适合自动化检…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-08-12.md",
+          "title": "2026-08-12",
+          "summary": "Mock 摘要（每日科技动态 - 2026年8月12日）：# 每日科技动态 今天的主线，是平台正在把\"治理默认值\"从需要手动配置的选项，逐步变成基础设施自带的能力。前端侧虽然近期官方浏览器大版本发布偏少，但 Chrome 152 beta 已把一批 CSS 伪元素能力、表单控制和屏幕捕获偏好正式…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-08-13.md",
+          "title": "2026-08-13",
+          "summary": "Mock 摘要（每日科技动态 - 2026年8月13日）：# 每日科技动态 今天更值得关注的，不是单点功能更新，而是三条主线同时变得更清晰：前端生态继续把“开发体验”往默认内建能力推进，DevOps 平台开始把 agent 插件与组织级规则治理做成统一底座，AI 产品侧则越来越明确地从“回答问题…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-08-14.md",
+          "title": "2026-08-14",
+          "summary": "Mock 摘要（每日科技动态 - 2026年8月14日）：# 每日科技动态 今天三类更新可以收束成同一条主线：平台都在把“原本靠经验处理的边界问题”收进系统默认能力。前端侧，浏览器继续补齐底层实现细节与扩展 API；DevOps 侧，GitHub 一边增强企业内管控面，一边补强供应链元数据质量；…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-08-16.md",
+          "title": "2026-08-16",
+          "summary": "Mock 摘要（每日科技动态 - 2026年8月16日）：# 每日科技动态 今天三类更新可以收束成一条很清晰的主线：平台正在把“原本需要开发者自己兜底的边界条件”逐步收进默认能力。前端侧，浏览器把邮箱验证、联邦登录这类原本高度依赖站点自建流程的环节继续浏览器化；DevOps 侧，GitHub 把…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-08-17.md",
+          "title": "2026-08-17",
+          "summary": "Mock 摘要（每日科技动态 - 2026年8月17日）：# 每日科技动态 过去 24 小时内三类官方高信号更新不足以支撑一篇均衡日报，因此今天的选题窗口放宽到最近 5 天。放在一起看，一个共同趋势很清楚：前端平台在继续清理框架与引擎层的历史包袱，DevOps 平台在把 agent 分发与合规元…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-08-18.md",
+          "title": "2026-08-18",
+          "summary": "Mock 摘要（每日科技动态 - 2026年8月18日）：# 每日科技动态 过去 24 小时里，足够支撑三线均衡写作的官方高信号更新并不多，因此今天把选题窗口放宽到最近 7 天，并在前端部分适度扩展到浏览器周边的官方框架与工具链来源。放在一起看，一个很清楚的趋势是：前端生态在继续把“体验优化”沉…",
+          "keywords": [
+            "Mock"
+          ]
+        },
+        {
+          "path": "/daily-news/2026-08-19.md",
+          "title": "2026-08-19",
+          "summary": "Mock 摘要（每日科技动态 - 2026年8月19日）：# 每日科技动态 过去 24 小时里，DevOps 和 AI 都有足够新的官方更新，但浏览器与前端平台侧的高信号官方消息相对平静，因此今天将前端选题窗口放宽到最近 7 天。把这些更新放在一起看，一个共同趋势是：工具链和平台都在继续把原本需…",
+          "keywords": [
+            "Mock"
           ]
         }
       ]
     },
     "git": {
       "sidebarKey": "/git/",
-      "description": "Git 版本控制、工作流、命令等",
+      "description": "命令速查、提交规范与工作流",
       "files": [
-        {
-          "path": "/git/README.md",
-          "title": "README",
-          "summary": "这是一份Git使用指南的README文档，涵盖了常用命令、提交类型规范、删除历史记录、同步fork项目、部署到gh-pages以及使用GitHub Actions实现自动部署等内容。",
-          "keywords": ["Git", "GitHub", "命令", "Actions", "部署"]
-        },
         {
           "path": "/git/command.md",
           "title": "command",
           "summary": "本文档为Git命令清单，涵盖仓库初始化、配置、暂存区操作、提交、分支、标签、查看信息、撤销和日志等常用命令，并附有代码示例。参考了阮一峰的常用Git命令清单。",
-          "keywords": ["Git", "命令清单", "版本控制", "代码示例", "阮一峰"]
+          "keywords": [
+            "Git",
+            "命令清单",
+            "版本控制",
+            "代码示例",
+            "阮一峰"
+          ]
         },
         {
           "path": "/git/commit.md",
@@ -654,309 +802,9 @@
         }
       ]
     },
-    "utils": {
-      "sidebarKey": "/utils/",
-      "description": "工具函数、正则、常用库等",
-      "files": [
-        {
-          "path": "/utils/README.md",
-          "title": "README",
-          "summary": "该文档为工具方法索引，列出了正则表达式、函数和库相关的实用工具文档链接，便于开发者快速访问。",
-          "keywords": ["工具方法", "索引", "正则表达式", "函数", "库"]
-        },
-        {
-          "path": "/utils/function.md",
-          "title": "function",
-          "summary": "文档介绍了常用工具方法，包括身份证信息提取（获取年龄、出生日期、性别）、运行环境判断以及将微信回调式API转换为Promise形式，方便在项目中使用。",
-          "keywords": [
-            "身份证解析",
-            "环境判断",
-            "Promise化",
-            "微信API",
-            "工具函数"
-          ]
-        },
-        {
-          "path": "/utils/library.md",
-          "title": "library",
-          "summary": "个人收集的JavaScript常用类库列表，涵盖工具库、时间处理、HTTP请求、精度计算、本地存储、滚动、事件、文件处理、富文本编辑器、用户体验引导、Webpack工具、CLI工具和命令行美化等多个类别。",
-          "keywords": ["library", "JavaScript", "工具库", "前端开发", "收集"]
-        },
-        {
-          "path": "/utils/regexp.md",
-          "title": "regexp",
-          "summary": "本文档收集了常用正则表达式，涵盖金额、手机号、邮箱、QQ号、链接、身份证验证，以及手机号344格式化和隐藏中间四位等实用代码示例。",
-          "keywords": ["正则表达式", "验证", "格式化", "手机号", "身份证"]
-        }
-      ]
-    },
-    "issue": {
-      "sidebarKey": "/issue/",
-      "description": "踩坑记录、疑难杂症、兼容性问题",
-      "files": [
-        {
-          "path": "/issue/README.md",
-          "title": "README",
-          "summary": "该文档是一个疑难杂症问题集的索引页，提供了指向H5和PC平台相关问题的链接，作为故障排查的入口。",
-          "keywords": ["疑难杂症", "索引", "H5", "PC", "文档"]
-        },
-        {
-          "path": "/issue/h5.md",
-          "title": "h5",
-          "summary": "讨论H5在WebView中返回上一页不刷新的问题，原因是为提升浏览效率加入的缓存机制，解决方案是监听pageshow事件，通过persisted或performance.navigation.type属性判断页面是否通过缓存载入。",
-          "keywords": ["H5", "WebView", "缓存", "pageshow", "performance"]
-        },
-        {
-          "path": "/issue/pc.md",
-          "title": "pc",
-          "summary": "CSS transform 属性在非整数像素渲染时会导致字体模糊，提供两种解决方案：使用 translate3d 或 will-change:transform 优化渲染。",
-          "keywords": [
-            "transform",
-            "字体模糊",
-            "translate3d",
-            "will-change",
-            "像素渲染"
-          ]
-        }
-      ]
-    },
-    "software": {
-      "sidebarKey": "/software/",
-      "description": "开发工具、软件配置、效率提升",
-      "files": [
-        {
-          "path": "/software/README.md",
-          "title": "README",
-          "summary": "软件相关文档索引页面，提供跨平台、操作系统（macOS、Windows）、浏览器、开发工具（VSCode、WebStorm）及Shell（zsh）等使用指南入口。",
-          "keywords": ["软件文档", "索引", "开发工具", "操作系统", "编辑器"]
-        },
-        {
-          "path": "/software/browser.md",
-          "title": "browser",
-          "summary": "整理了常用浏览器扩展，包含扩展商店、体验优化及开发者工具，如新标签页、广告拦截、翻译、Vue/React调试等，提供实用扩展索引。",
-          "keywords": [
-            "浏览器扩展",
-            "Chrome插件",
-            "开发者工具",
-            "广告拦截",
-            "新标签页"
-          ]
-        },
-        {
-          "path": "/software/claude-skills-guide.md",
-          "title": "claude-skills-guide",
-          "summary": "介绍Claude Skills的模块化扩展机制，涵盖原理、三层加载、自由度匹配、文件结构、SKILL.md编写、实战示例和最佳实践。旨在指导如何创建和使用技能包，将通用AI定制为领域专家。",
-          "keywords": [
-            "Claude Skills",
-            "渐进加载",
-            "自由度匹配",
-            "SKILL.md",
-            "领域知识"
-          ]
-        },
-        {
-          "path": "/software/cross-platform.md",
-          "title": "cross-platform",
-          "summary": "该文档介绍了多款跨平台效率工具，包括插件化启动器uTools、基于Aria2的下载器Motrix、Hosts管理工具SwitchHosts、Android设备控制工具QtScrcpy以及图床工具PicGo，并列出各自特性和链接。",
-          "keywords": ["跨平台", "效率工具", "下载工具", "Hosts管理", "图床"]
-        },
-        {
-          "path": "/software/mac.md",
-          "title": "mac",
-          "summary": "本指南推荐了Mac平台上的多款高效工具，涵盖包管理器、终端、效率启动器、微信增强、视频播放器、压缩软件、系统清理、截图、右键增强及翻译软件，并提供了安装方法与官方链接。",
-          "keywords": ["Mac工具", "效率提升", "软件推荐", "Homebrew", "Alfred"]
-        },
-        {
-          "path": "/software/vscode.md",
-          "title": "vscode",
-          "summary": "本文档列出并分类推荐了 Visual Studio Code 的常用扩展，涵盖主题美化、React/Vue 开发、CSS 预处理器、微信小程序、Markdown 编辑、Git 增强、代码格式化、调试工具及其他实用功能，旨在帮助开发者快速配置高效的编码环境。",
-          "keywords": [
-            "VSCode 扩展",
-            "插件推荐",
-            "前端开发工具",
-            "代码效率",
-            "编辑器配置"
-          ]
-        },
-        {
-          "path": "/software/webstorm.md",
-          "title": "webstorm",
-          "summary": "WebStorm 配置指南：涵盖开源许可证申请、中文汉化三种方案、编辑器美化（主题、配色、背景图）、插件市场及推荐插件（如 Atom Material Icons、.env 等）、使用 Prettier 保存格式化配置、以及 Vue 项目中 webpack alias 识别设置。",
-          "keywords": ["WebStorm", "配置", "汉化", "插件", "webpack"]
-        },
-        {
-          "path": "/software/windows.md",
-          "title": "windows",
-          "summary": "本文档汇总了Windows平台下多款效率与实用工具，涵盖终端模拟器、文件搜索、快速启动、视频播放、压缩解压、音量管理、看图、动态壁纸、系统优化与清理、隐私保护、防撤回补丁、任务栏美化、重复文件处理、电子书格式转换及PowerToys系统增强工具，提供下载链接及功能简介，旨在提升Windows使用体验。",
-          "keywords": [
-            "Windows工具",
-            "效率软件",
-            "系统优化",
-            "实用推荐",
-            "免费软件"
-          ]
-        },
-        {
-          "path": "/software/zsh.md",
-          "title": "zsh",
-          "summary": "介绍zsh及oh-my-zsh的配置，包括主题（如powerlevel10k）和常用插件（autojump、z、fast-syntax-highlighting、zsh-autosuggestions）的安装与使用，提供命令示例和GitHub链接，提升终端效率。",
-          "keywords": ["zsh", "oh-my-zsh", "插件", "主题", "终端"]
-        }
-      ]
-    },
-    "mark": {
-      "sidebarKey": "/mark/",
-      "description": "技能提炼、知识总结、专题整理",
-      "files": [
-        {
-          "path": "/mark/01-React核心原理-补充.md",
-          "title": "01-React核心原理-补充",
-          "summary": "本文详解React 19新特性，包括React Compiler自动优化、Actions表单处理、use() API等，并深入解析useMemo和useCallback的必要性，何时使用与避免，强调未来编译器自动优化趋势。",
-          "keywords": [
-            "React 19",
-            "useMemo",
-            "useCallback",
-            "React Compiler",
-            "性能优化"
-          ]
-        },
-        {
-          "path": "/mark/01-React核心原理.md",
-          "title": "01-React核心原理",
-          "summary": "本文深入分析React 16/17/18版本核心区别，重点讲解Fiber架构、更新流程、协调机制、并发模式及自动批处理等原理，包含笔试题与面试题，适合进阶学习。",
-          "keywords": [
-            "React",
-            "Fiber",
-            "Concurrent",
-            "Reconciliation",
-            "Batching"
-          ]
-        },
-        {
-          "path": "/mark/02-Webpack与构建工具.md",
-          "title": "02-Webpack与构建工具",
-          "summary": "本文包含Webpack架构笔试题及详细答案，涵盖构建流程的五个关键步骤(entry→loader→plugin→chunk→asset)、Loader与Plugin的本质区别、执行时机、能力边界及使用场景。",
-          "keywords": ["Webpack", "Loader", "Plugin", "构建流程", "对比"]
-        },
-        {
-          "path": "/mark/03-性能优化.md",
-          "title": "03-性能优化",
-          "summary": "文档为前端性能优化笔试题，包含三题详解：从 URL 到页面可交互的全链路优化点，涵盖 DNS、TCP、TLS 等网络层及渲染层；关键渲染路径中 CSS 与 JS 的阻塞关系及 async/defer 区别；资源提示 preconnect、dns-prefetch、preload、prefetch 的差异与适用场景。",
-          "keywords": [
-            "性能优化",
-            "关键渲染路径",
-            "资源提示",
-            "async/defer",
-            "全链路优化"
-          ]
-        },
-        {
-          "path": "/mark/04-微前端.md",
-          "title": "04-微前端",
-          "summary": "本文档涵盖微前端核心问题、主流方案对比（iframe、single-spa、qiankun、Module Federation）、适用性判断、基础设施（登录态/权限/通信）、部署发布（资源加载/灰度/回滚）及子应用性能治理等面试题和笔试题，探讨各方案实现原理与最佳实践。",
-          "keywords": [
-            "微前端",
-            "qiankun",
-            "Module Federation",
-            "single-spa",
-            "子应用治理"
-          ]
-        },
-        {
-          "path": "/mark/05-低代码.md",
-          "title": "05-低代码",
-          "summary": "本文档介绍了低代码平台的核心抽象（Schema/DSL、组件物料、引擎、渲染器）及其职责，阐释搭建态与运行态的分层原因与能力，讲解Schema渲染器递归渲染、插槽、事件绑定和表达式解析的实现方法，并探讨组件物料版本管理、破坏性变更处理和多版本共存策略。",
-          "keywords": ["低代码", "Schema", "引擎", "渲染器", "版本管理"]
-        },
-        {
-          "path": "/mark/06-插件系统.md",
-          "title": "06-插件系统",
-          "summary": "介绍插件系统的核心概念（生命周期、扩展点、上下文、隔离、通信），对比Webpack、Vite、Babel插件的hook模型、执行时机与能力边界，并探讨浏览器运行时热插拔的模块加载、卸载和资源清理设计。",
-          "keywords": ["插件系统", "热插拔", "Webpack", "Vite", "Babel"]
-        },
-        {
-          "path": "/mark/07-NestJS与SSR.md",
-          "title": "07-NestJS与SSR",
-          "summary": "文档为笔试题答案，涵盖NestJS核心概念协同、与Express/Koa对比、SSR/CSR/SSG原理及场景、SSR工作流程与数据预取/hydration，集中展示全栈开发与服务端渲染知识。",
-          "keywords": ["NestJS", "SSR", "CSR", "SSG", "hydration"]
-        },
-        {
-          "path": "/mark/08-代码规范.md",
-          "title": "08-代码规范",
-          "summary": "本文档全面讲解代码规范，涵盖意义、格式、命名、架构、最佳实践，并深入ESLint工作原理、Prettier配合、Umi设计哲学、Git Hooks落地流程及TypeScript类型规范，含笔试题与面试题，指导从制定到持续改进的规范实践。",
-          "keywords": ["代码规范", "ESLint", "Prettier", "Umi", "规范落地"]
-        },
-        {
-          "path": "/mark/09-Promise原理.md",
-          "title": "09-Promise原理",
-          "summary": "本文档探讨了JavaScript中Promise的设计动机、核心原理与手写实现，涵盖状态机、Promise A+规范、静态方法、链式调用、错误处理及async/await等内容，并通过笔试题与面试题检验理解，帮助深入掌握异步编程。",
-          "keywords": [
-            "Promise",
-            "async/await",
-            "回调地狱",
-            "Promise A+",
-            "手写实现"
-          ]
-        },
-        {
-          "path": "/mark/10-骨架屏.md",
-          "title": "10-骨架屏",
-          "summary": "本文介绍骨架屏技术，阐述其在性能优化及用户体验中的作用，分析对FCP、LCP、CLS等性能指标的影响，对比手写、自动生成、SSR内联等实现方式的优缺点，并详细说明基于Puppeteer和DOM结构自动生成骨架屏的原理与注入时机。",
-          "keywords": ["骨架屏", "性能优化", "FCP", "LCP", "CLS"]
-        },
-        {
-          "path": "/mark/11-HTTP与缓存.md",
-          "title": "11-HTTP与缓存",
-          "summary": "文档包含从性能优化到HTTP变化及缓存的笔试题和面试题，涵盖HTTP/1.1/2/3对比、强缓存与协商缓存、Cache-Control指令、资源缓存策略、Service Worker缓存及缓存更新问题，旨在考察缓存机制的理解与实践。",
-          "keywords": [
-            "HTTP缓存",
-            "性能优化",
-            "Cache-Control",
-            "Service Worker",
-            "缓存策略"
-          ]
-        },
-        {
-          "path": "/mark/README.md",
-          "title": "README",
-          "summary": "本文档是一份结合STAR法则的前端技术面试准备材料，涵盖用户中心重构中的性能优化、webpack配置、响应式开发、全链路加载渲染和骨架屏预渲染等主题，提供详细示例回答和扩展追问。",
-          "keywords": [
-            "性能优化",
-            "webpack",
-            "响应式设计",
-            "骨架屏",
-            "STAR法则"
-          ]
-        },
-        {
-          "path": "/mark/React更新流程详解.md",
-          "title": "React更新流程详解",
-          "summary": "本文深度解析React更新流程，从setState到DOM更新，涵盖调度阶段的时间切片与优先级模型、协调阶段的Fiber树diff与双缓冲、提交阶段的原子操作及副作用执行，并总结关键优化思想和最佳实践。",
-          "keywords": ["React更新流程", "Fiber架构", "协调", "调度", "副作用"]
-        }
-      ]
-    },
-    "ai": {
-      "sidebarKey": "/ai/",
-      "description": "AI 工具、Skill、Agent、Prompt 工程等",
-      "files": [
-        {
-          "path": "/ai/README.md",
-          "title": "README",
-          "summary": "该文档汇总了AI相关主题，包括AI Agent与Skill开发、Prompt Engineering、Copilot与Claude使用技巧、AI辅助开发工作流以及LLM应用开发，为开发者提供全面的AI实践指南。",
-          "keywords": [
-            "AI Agent",
-            "Prompt Engineering",
-            "Copilot",
-            "Claude",
-            "LLM"
-          ]
-        }
-      ]
-    },
     "interview-prep": {
       "sidebarKey": "/interview-prep/",
-      "description": "面试准备、项目复盘、技术对比",
+      "description": "项目与技术面复习矩阵",
       "files": [
         {
           "path": "/interview-prep/BLINDSPOTS.md",
@@ -971,46 +819,52 @@
           ]
         },
         {
-          "path": "/interview-prep/INDEX.md",
-          "title": "INDEX",
-          "summary": "该页面是面试准备部分的入口索引，提供入门指南和常见知识盲区清单的链接，帮助用户快速导航至关键资源。",
-          "keywords": ["面试准备", "索引", "入口", "盲区", "导航"]
-        },
-        {
-          "path": "/interview-prep/README.md",
-          "title": "README",
-          "summary": "面试准备总纲README，提供优先级队列、项目时间线和技术索引，涵盖大疆项目及前端技术如Webpack、React等，用于快速浏览和标记掌握度。",
-          "keywords": [
-            "面试准备",
-            "大疆项目",
-            "前端技术",
-            "技术索引",
-            "优先级队列"
-          ]
-        },
-        {
           "path": "/interview-prep/matrix__bundler-webpack-vite-rollup.md",
           "title": "matrix__bundler-webpack-vite-rollup",
           "summary": "本文对比了前端构建工具Webpack、Vite和Rollup的原理、适用场景与选型策略，结合大疆项目案例与面试模拟问答，涵盖开发体验、构建速度、产物体积、生态成熟度等维度，并提供了从排查到验证的优化方法论与团队门禁设计。",
-          "keywords": ["Webpack", "Vite", "Rollup", "构建工具", "性能优化"]
+          "keywords": [
+            "Webpack",
+            "Vite",
+            "Rollup",
+            "构建工具",
+            "性能优化"
+          ]
         },
         {
           "path": "/interview-prep/matrix__cicd-release-strategy.md",
           "title": "matrix__cicd-release-strategy",
           "summary": "本文档阐述CI/CD发布策略，包括流水线阶段拆解（构建、测试、扫描、部署）、质量与安全门禁（lint、单测、SAST、依赖扫描）、Docker分层缓存优化、蓝绿/金丝雀/滚动发布对比，以及可追溯性与回滚机制，帮助面试者理解如何实现可靠、高效的持续交付。",
-          "keywords": ["CI/CD", "发布策略", "Docker缓存", "门禁", "可追溯"]
+          "keywords": [
+            "CI/CD",
+            "发布策略",
+            "Docker缓存",
+            "门禁",
+            "可追溯"
+          ]
         },
         {
           "path": "/interview-prep/matrix__form-formily-rjsf-custom.md",
           "title": "matrix__form-formily-rjsf-custom",
           "summary": "对比表单方案Formily、RJSF与自研无依赖表单，分析各自在表达能力、开发体验、性能成本及迁移风险上的差异，重点讨论复杂中后台场景下schema驱动表单的选型与落地策略。",
-          "keywords": ["Formily", "RJSF", "schema驱动", "表单建模", "性能优化"]
+          "keywords": [
+            "Formily",
+            "RJSF",
+            "schema驱动",
+            "表单建模",
+            "性能优化"
+          ]
         },
         {
           "path": "/interview-prep/matrix__lowcode-ssr-csr-export.md",
           "title": "matrix__lowcode-ssr-csr-export",
           "summary": "低代码大屏/报表涉及Schema驱动渲染、SSR/CSR渲染模式选择及导出方案。对比自研与开源渲染器、CSR/SSR/流式SSR特性及导出方式，强调一致性、权限隔离与稳定性降级策略。",
-          "keywords": ["低代码", "SSR", "CSR", "Schema驱动", "导出一致性"]
+          "keywords": [
+            "低代码",
+            "SSR",
+            "CSR",
+            "Schema驱动",
+            "导出一致性"
+          ]
         },
         {
           "path": "/interview-prep/matrix__monorepo-lerna-nx.md",
@@ -1041,7 +895,13 @@
           "path": "/interview-prep/project__dji-devops.md",
           "title": "project__dji-devops",
           "summary": "面试准备文档，覆盖大疆多个项目（用户中心、售后RMS、DevOps平台等），聚焦微前端架构、CI/CD流水线、性能优化及可追溯发布策略。",
-          "keywords": ["微前端", "qiankun", "CI/CD", "性能优化", "沙箱"]
+          "keywords": [
+            "微前端",
+            "qiankun",
+            "CI/CD",
+            "性能优化",
+            "沙箱"
+          ]
         },
         {
           "path": "/interview-prep/project__dji-rms.md",
@@ -1083,13 +943,25 @@
           "path": "/interview-prep/tech__eslint-engineering.md",
           "title": "tech__eslint-engineering",
           "summary": "本文档阐述了在多人协作前端项目中，如何系统性地使用 ESLint 结合 Prettier、TypeScript 和 CI 流程，实现代码风格统一、语义错误检测和模块边界治理，将人工审查聚焦于业务正确性与架构。",
-          "keywords": ["ESLint", "代码规范", "模块边界", "CI/CD", "架构约束"]
+          "keywords": [
+            "ESLint",
+            "代码规范",
+            "模块边界",
+            "CI/CD",
+            "架构约束"
+          ]
         },
         {
           "path": "/interview-prep/tech__micro-frontend-qiankun.md",
           "title": "tech__micro-frontend-qiankun",
           "summary": "微前端框架 qiankun 的原理分析，包括加载、挂载、JS/样式隔离机制。对比 qiankun、iframe、Module Federation 的隔离、通信、性能与工程复杂度。提供面试问答和最小接入代码，适用于多团队自治、渐进迁移场景，强调治理与性能预算。",
-          "keywords": ["微前端", "qiankun", "样式隔离", "性能治理", "JS 沙箱"]
+          "keywords": [
+            "微前端",
+            "qiankun",
+            "样式隔离",
+            "性能治理",
+            "JS 沙箱"
+          ]
         },
         {
           "path": "/interview-prep/tech__performance.md",
@@ -1108,7 +980,13 @@
           "path": "/interview-prep/tech__react.md",
           "title": "tech__react",
           "summary": "React面试准备笔记，涵盖核心原理（声明式UI、Fiber、并发特性）、性能优化（无效渲染定位、memo、虚拟化）和工程实践，结合大疆用户中心重构等项目经验，包括模拟问答和手写代码示例。",
-          "keywords": ["React", "性能优化", "Fiber", "面试准备", "状态管理"]
+          "keywords": [
+            "React",
+            "性能优化",
+            "Fiber",
+            "面试准备",
+            "状态管理"
+          ]
         },
         {
           "path": "/interview-prep/tech__rollup.md",
@@ -1126,79 +1004,1058 @@
           "path": "/interview-prep/tech__typescript.md",
           "title": "tech__typescript",
           "summary": "本文档围绕 TypeScript 面试准备，涵盖类型系统原理、工程化落地、与 JSDoc/Flow 对比、模拟问答及手写代码。强调结构化类型、泛型、联合/交叉类型，以及边界校验、增量构建等实战技巧。",
-          "keywords": ["TypeScript", "类型系统", "面试准备", "工程化"]
+          "keywords": [
+            "TypeScript",
+            "类型系统",
+            "面试准备",
+            "工程化"
+          ]
         },
         {
           "path": "/interview-prep/tech__vite.md",
           "title": "tech__vite",
           "summary": "Vite利用原生ESM实现快速开发服务器，跳过全量打包，按需编译；生产构建使用Rollup。本文涵盖原理、与Webpack对比、optimizeDeps作用、迁移要点及项目落地策略，适用于追求开发体验的新项目或中等存量系统迁移。",
-          "keywords": ["Vite", "ESM", "esbuild", "Rollup", "HMR"]
+          "keywords": [
+            "Vite",
+            "ESM",
+            "esbuild",
+            "Rollup",
+            "HMR"
+          ]
         },
         {
           "path": "/interview-prep/tech__webpack.md",
           "title": "tech__webpack",
           "summary": "本文深入剖析Webpack在大型项目中的工程化实践，涵盖其模块图打包原理、Loader与Plugin机制、构建流程与缓存优化。重点介绍了首屏性能优化四板斧（骨架屏、关键渲染路径、包体压缩、懒加载）以及与Vite/Rollup的对比选型。内容面向高级前端面试，提供可落地的配置分层、hash策略和回归门禁方案。",
-          "keywords": ["Webpack", "模块打包", "性能优化", "工程化", "构建工具"]
+          "keywords": [
+            "Webpack",
+            "模块打包",
+            "性能优化",
+            "工程化",
+            "构建工具"
+          ]
+        }
+      ]
+    },
+    "interview": {
+      "sidebarKey": "/interview/",
+      "description": "真实面试题与复盘",
+      "files": [
+        {
+          "path": "/interview/2025-04-28.md",
+          "title": "2025-04-28",
+          "summary": "本文为2025-04-28面试题演练，包含笔试重点（框架原理、工程化、性能优化、算法）、技术面试高频考点（Vue3响应式、微前端、低代码、性能优化、架构设计）、行为面试STAR策略及软实力技巧，并附模拟面试自测清单。",
+          "keywords": [
+            "面试题演练",
+            "Vue3响应式原理",
+            "性能优化",
+            "STAR法则",
+            "微前端"
+          ]
+        },
+        {
+          "path": "/interview/2025-04-28-analysis.md",
+          "title": "2025-04-28-analysis",
+          "summary": "前端面试准备资料，涵盖笔试重点（框架原理、工程化、性能优化、算法）、技术面试高频考点（Vue3响应式、微前端、构建优化、性能调优、架构设计）及行为面试应答策略（STAR法则），指导系统化面试准备。",
+          "keywords": [
+            "前端面试",
+            "性能优化",
+            "微前端",
+            "Vue3",
+            "工程化"
+          ]
+        }
+      ]
+    },
+    "issue": {
+      "sidebarKey": "/issue/",
+      "description": "兼容性疑难杂症与解决方案",
+      "files": [
+        {
+          "path": "/issue/h5.md",
+          "title": "h5",
+          "summary": "讨论H5在WebView中返回上一页不刷新的问题，原因是为提升浏览效率加入的缓存机制，解决方案是监听pageshow事件，通过persisted或performance.navigation.type属性判断页面是否通过缓存载入。",
+          "keywords": [
+            "H5",
+            "WebView",
+            "缓存",
+            "pageshow",
+            "performance"
+          ]
+        },
+        {
+          "path": "/issue/pc.md",
+          "title": "pc",
+          "summary": "CSS transform 属性在非整数像素渲染时会导致字体模糊，提供两种解决方案：使用 translate3d 或 will-change:transform 优化渲染。",
+          "keywords": [
+            "transform",
+            "字体模糊",
+            "translate3d",
+            "will-change",
+            "像素渲染"
+          ]
+        }
+      ]
+    },
+    "JavaScript": {
+      "sidebarKey": "/JavaScript/",
+      "description": "类型、闭包、原型链与经典面试题",
+      "files": [
+        {
+          "path": "/JavaScript/经典闭包处理.md",
+          "title": "经典闭包处理",
+          "summary": "本文讲解JavaScript经典闭包问题及其多种解决方案。从常见的循环中setTimeout输出错误开始，逐步介绍IIFE、参数传递、let块级作用域等改进方法，并延伸至ES6/ES7异步处理如Promise和async/await。",
+          "keywords": [
+            "闭包",
+            "IIFE",
+            "作用域",
+            "异步",
+            "let"
+          ]
+        },
+        {
+          "path": "/JavaScript/执行上下文-作用域链-闭包.md",
+          "title": "执行上下文-作用域链-闭包",
+          "summary": "本文深入探讨JavaScript执行上下文与闭包机制，涵盖执行上下文类型、闭包原理及应用（如私有变量、模块化），并延伸讲解原型、变量提升、柯里化、apply/call/bind方法、Memoization优化和函数重载技术，帮助理解JavaScript核心概念与高级用法。",
+          "keywords": [
+            "执行上下文",
+            "闭包",
+            "作用域链",
+            "变量提升",
+            "模块化"
+          ]
+        },
+        {
+          "path": "/JavaScript/call、apply与bind.md",
+          "title": "call、apply与bind",
+          "summary": "比较JavaScript中call、apply和bind三个方法，call和apply用于借用方法并立即执行，区别在于参数传递方式；bind则返回一个新函数绑定this但不立即执行。",
+          "keywords": [
+            "call",
+            "apply",
+            "bind",
+            "this绑定",
+            "方法借用"
+          ]
+        },
+        {
+          "path": "/JavaScript/js模拟bind方法.md",
+          "title": "js模拟bind方法",
+          "summary": "本文探讨了如何模拟实现JavaScript的bind方法，包括修改this指向、合并参数和通过new调用时的特殊处理，涉及原型链和闭包等核心概念。",
+          "keywords": [
+            "bind",
+            "this",
+            "原型链",
+            "闭包",
+            "模拟实现"
+          ]
+        },
+        {
+          "path": "/JavaScript/js模拟new操作.md",
+          "title": "js模拟new操作",
+          "summary": "本文探讨了能否模拟实现JavaScript的new操作符，通过Object.create方法演示了模拟过程，并针对不支持ES5的环境提供了polyfill方案。最后总结了new操作符内部执行的五个关键步骤：创建新对象、链接原型、绑定this、关联构造函数prototype、以及默认返回新对象。",
+          "keywords": [
+            "new操作符",
+            "模拟实现",
+            "Object.create",
+            "polyfill",
+            "原型链"
+          ]
+        }
+      ]
+    },
+    "job-description": {
+      "sidebarKey": "/job-description/",
+      "description": "简历项目与问答大纲",
+      "files": [
+        {
+          "path": "/job-description/lib/01-大疆用户中心重构-面试技术大纲.md",
+          "title": "01-大疆用户中心重构-面试技术大纲",
+          "summary": "本文档是大疆用户中心重构项目面试技术大纲，聚焦Vue3+TypeScript+Vite+Pinia技术栈下的性能优化，涵盖LCP指标体系、骨架屏预渲染、关键渲染路径、代码精简、传输层优化及HTTP/2与TLS1.3原理，并串联Webpack架构，提供系统化面试问答线索。",
+          "keywords": [
+            "性能优化",
+            "LCP",
+            "HTTP/2",
+            "TLS",
+            "Webpack"
+          ]
+        },
+        {
+          "path": "/job-description/lib/02-大疆售后RMS系统重构-面试技术大纲.md",
+          "title": "02-大疆售后RMS系统重构-面试技术大纲",
+          "summary": "本大纲针对大疆售后RMS系统重构项目，聚焦多人协作的工程化治理，包括ESLint规则体系（React/TypeScript/import规范）、Prettier分工、Husky+lint-staged+commitlint提交拦截、CI/CD门禁及模块化边界控制，以提升中后台可维护性。",
+          "keywords": [
+            "ESLint",
+            "工程化",
+            "TypeScript",
+            "React",
+            "模块化"
+          ]
+        },
+        {
+          "path": "/job-description/lib/03-跨平台公告插件系统-面试技术大纲.md",
+          "title": "03-跨平台公告插件系统-面试技术大纲",
+          "summary": "本文为跨平台公告插件系统面试技术大纲，涵盖Rollup/Webpack/Vite构建工具对比、Preact选型与信号机制、热插拔生命周期设计、多模式植入（CDN/Iframe/Web Component）及多路复用策略，聚焦包体积优化和跨系统标准化接入。",
+          "keywords": [
+            "Rollup",
+            "Preact",
+            "热插拔",
+            "多路复用",
+            "包体积优化"
+          ]
+        },
+        {
+          "path": "/job-description/lib/04-大疆DevOps平台维护-面试技术大纲.md",
+          "title": "04-大疆DevOps平台维护-面试技术大纲",
+          "summary": "这份面试技术大纲针对大疆DevOps平台维护岗位，重点考察候选人Vue3+TypeScript+qiankun微前端技术栈，以及CI/CD流水线原理、Docker部署、微前端选型与原理。内容涵盖流水线阶段、环境治理、镜像优化、发布策略、质量门禁，及qiankun的隔离机制、通信方式等。",
+          "keywords": [
+            "CI/CD",
+            "Docker",
+            "微前端",
+            "qiankun",
+            "面试大纲"
+          ]
+        },
+        {
+          "path": "/job-description/lib/05-XDR系统-魔方大屏+报表-面试技术大纲.md",
+          "title": "05-XDR系统-魔方大屏+报表-面试技术大纲",
+          "summary": "该大纲针对XDR系统的魔方大屏和报表模块面试准备，技术栈包括React+ECharts+NestJS+mongoose。魔方大屏侧重低代码内部原理，如Schema驱动的物料体系、渲染器、编辑器、数据交互与事件编排、工程化稳定性。报表部分介绍NestJS实现SSR的渲染流程、Hydration、流式SSR，以及报表场景的SSR价值、缓存策略与典型追问。整体涵盖前端低代码架构和后端SSR渲染的核心知识点。",
+          "keywords": [
+            "低代码大屏",
+            "NestJS SSR",
+            "Schema驱动",
+            "报表导出",
+            "React+ECharts"
+          ]
+        },
+        {
+          "path": "/job-description/lib/06-大疆用户中心重构-hard-mode-面试题.md",
+          "title": "06-大疆用户中心重构-hard-mode-面试题",
+          "summary": "本文档是一份大疆用户中心重构项目的Hard-Mode面试题集，覆盖Vue3+TypeScript+Vite+Pinia技术栈，深入探讨PC与移动端融合架构、性能优化（LCP优化）、关键渲染路径、构建工具链、传输层缓存及线上可观测性等核心领域，通过追问式问题考察候选人的量化分析、技术决策与工程落地能力。",
+          "keywords": [
+            "面试题",
+            "前端架构",
+            "性能优化",
+            "LCP优化",
+            "Vue3"
+          ]
+        },
+        {
+          "path": "/job-description/lib/07-大疆售后RMS系统重构-Hard-Mode-面试题.md",
+          "title": "07-大疆售后RMS系统重构-Hard-Mode-面试题",
+          "summary": "大疆售后RMS系统重构高级面试题，涵盖大型项目协作治理、低代码平台架构、万级数据性能优化及工程化发布策略，考察候选人复杂场景下的技术深度与方案设计能力。",
+          "keywords": [
+            "RMS重构",
+            "低代码",
+            "工程化",
+            "性能优化",
+            "面试题"
+          ]
+        },
+        {
+          "path": "/job-description/lib/08-跨平台公告插件系统-Hard-Mode-面试题.md",
+          "title": "08-跨平台公告插件系统-Hard-Mode-面试题",
+          "summary": "本文档为跨平台公告插件系统的Hard-Mode面试题，聚焦极致体积治理（<15KB）、Tree Shaking、Preact signals响应式、热插拔生命周期、CDN/Iframe/Web Component多模式植入、版本治理与可观测性，考察候选人对前端架构、性能优化和多方案权衡的深度理解。",
+          "keywords": [
+            "体积治理",
+            "Tree Shaking",
+            "Preact signals",
+            "热插拔",
+            "多模式植入"
+          ]
+        },
+        {
+          "path": "/job-description/lib/09-DevOps平台-qiankun微前端-Hard-Mode-面试题.md",
+          "title": "09-DevOps平台-qiankun微前端-Hard-Mode-面试题",
+          "summary": "探讨qiankun微前端在DevOps平台中的高级面试题，覆盖原理、沙箱隔离、样式隔离、通信、独立部署、性能优化及Jira集成等难点。",
+          "keywords": [
+            "qiankun",
+            "微前端",
+            "沙箱隔离",
+            "性能优化",
+            "Jira集成"
+          ]
+        },
+        {
+          "path": "/job-description/lib/10-XDR系统-NestJS全栈-Hard-Mode-面试题.md",
+          "title": "10-XDR系统-NestJS全栈-Hard-Mode-面试题",
+          "summary": "XDR系统（魔方大屏+报表）NestJS全栈面试题，涵盖架构与DI、MongoDB/Mongoose建模与性能、定时任务可靠性、报表导出异步链路、实时大屏性能与数据策略五个核心方向，均为Hard-Mode难度。",
+          "keywords": [
+            "XDR系统",
+            "魔方大屏",
+            "NestJS",
+            "MongoDB",
+            "报表导出"
+          ]
+        },
+        {
+          "path": "/job-description/lib/11-frontend-hard-mode-interview-原题提取-基于简历.md",
+          "title": "11-frontend-hard-mode-interview-原题提取-基于简历",
+          "summary": "该文档是从源仓库提取的前端面试题，聚焦TCP/UDP/TLS等网络协议基础，包含三次握手、四次挥手及常见面试问题，旨在帮助前端工程师理解底层通信原理。",
+          "keywords": [
+            "TCP",
+            "UDP",
+            "TLS",
+            "网络协议",
+            "三次握手"
+          ]
+        },
+        {
+          "path": "/job-description/高级前端面试题-基于简历.md",
+          "title": "高级前端面试题-基于简历",
+          "summary": "该文档为基于彭聪简历整理的面试题集，涵盖系统重构与架构设计、微前端(qiankun)、全栈开发(NestJS)、低代码平台等核心领域，总计21道题目，考察性能优化、响应式设计、技术选型、工程化实践、插件化架构及可视化拖拽等高级技能。",
+          "keywords": [
+            "微前端",
+            "性能优化",
+            "低代码",
+            "NestJS",
+            "Vue3"
+          ]
+        },
+        {
+          "path": "/job-description/history/简历.md",
+          "title": "简历",
+          "summary": "拥有9年经验的前端开发工程师，擅长Vue/React双栈开发，主导过千万级用户系统重构，具备复杂系统架构设计、性能优化、工程化规范制定及低代码平台落地经验。",
+          "keywords": [
+            "前端开发",
+            "系统重构",
+            "Vue",
+            "React",
+            "性能优化",
+            "工程化",
+            "低代码平台"
+          ]
+        },
+        {
+          "path": "/job-description/简历分析-彭聪.md",
+          "title": "简历分析-彭聪",
+          "summary": "对前端工程师彭聪的简历进行全面分析，指出内容充实、量化数据突出等优点，以及工作时间线、表述不专业等问题，提供分类改进建议，并给出8.5/10的最终评分。",
+          "keywords": [
+            "简历分析",
+            "前端工程师",
+            "性能优化",
+            "改进建议",
+            "彭聪"
+          ]
+        },
+        {
+          "path": "/job-description/ASK.md",
+          "title": "ASK",
+          "summary": "该文档是一份前端负责人面试准备大纲，详细规划了自我介绍结构，并深入梳理了多个核心项目的背景、技术方案、难点攻克及业务价值，突出工程化与领导能力。",
+          "keywords": [
+            "前端面试",
+            "项目重构",
+            "性能优化",
+            "工程化",
+            "前端负责人"
+          ]
+        },
+        {
+          "path": "/job-description/ASK_CODE_EXAMPLES.md",
+          "title": "ASK_CODE_EXAMPLES",
+          "summary": "面试可展示的前端工程化代码示例集，涵盖Webpack拆包与缓存、性能RUM监控、资源优先级、脚本加载、图片WebP兜底、ESLint落地、React错误边界、NestJS定时任务等，突出思路与取舍。",
+          "keywords": [
+            "Webpack",
+            "RUM",
+            "preload",
+            "defer/async",
+            "Error Boundary"
+          ]
+        },
+        {
+          "path": "/job-description/ASK_LIST.md",
+          "title": "ASK_LIST",
+          "summary": "模拟面试大纲，展示高级前端负责人经验，涵盖多个项目重构、性能优化、工程化实践及跨部门协作，突出业务价值与团队领导力。",
+          "keywords": [
+            "前端重构",
+            "性能优化",
+            "工程化",
+            "低代码",
+            "组件化"
+          ]
+        },
+        {
+          "path": "/job-description/ASK_RECORD.md",
+          "title": "ASK_RECORD",
+          "summary": "前端技术负责人的面试准备记录，涵盖项目背景、重构方案、性能优化、跨平台实践、工程化建设等内容，展示从技术选型到业务价值的完整思考。",
+          "keywords": [
+            "React",
+            "性能优化",
+            "跨平台",
+            "前端工程化",
+            "Preact"
+          ]
+        },
+        {
+          "path": "/job-description/ASK_RECORD_AI.md",
+          "title": "ASK_RECORD_AI",
+          "summary": "本文档是模拟面试回答稿，包含书面版和口语版结构，涵盖自我介绍、大疆用户中心重构项目介绍及打包优化、加载优化、JS加载顺序等技术点解答，强调增量演进、性能链路治理和工程化实践。",
+          "keywords": [
+            "模拟面试",
+            "前端重构",
+            "性能优化",
+            "打包优化",
+            "用户中心"
+          ]
+        },
+        {
+          "path": "/job-description/ASK_RECORD_BOOK_AI.md",
+          "title": "ASK_RECORD_BOOK_AI",
+          "summary": "一份前端面试回答稿，提供结构化答题模板（项目/问题三段式），并以大疆用户中心重构为例，详细阐述打包优化与加载性能等技术方案。",
+          "keywords": [
+            "面试回答稿",
+            "前端性能优化",
+            "Webpack配置",
+            "加载优化",
+            "用户中心重构"
+          ]
+        },
+        {
+          "path": "/job-description/ASK_RECORD_KEY.md",
+          "title": "ASK_RECORD_KEY",
+          "summary": "面试知识点索引，总结大疆用户中心重构中的性能优化实践，涵盖骨架屏、core-js按需注入、字体压缩与加载、CSS优化、JS加载执行策略、TLS 1.3/HTTP 2.0，提供结构化记忆方式与追问应对。",
+          "keywords": [
+            "性能优化",
+            "面试准备",
+            "骨架屏",
+            "core-js",
+            "CSS优化"
+          ]
+        },
+        {
+          "path": "/job-description/ASK_RECORD_SPEAK_AI.md",
+          "title": "ASK_RECORD_SPEAK_AI",
+          "summary": "模拟面试回答稿（口语版），涵盖自我介绍、用户中心重构和RMS系统重构。重点展示增量演进、性能优化、工程化建设等实战经验，包含打包、加载、脚本排序、图片兜底等技术的口语化表达。",
+          "keywords": [
+            "性能优化",
+            "前端重构",
+            "工程化",
+            "面试口语",
+            "增量演进"
+          ]
+        },
+        {
+          "path": "/job-description/lib/Framework.md",
+          "title": "Framework",
+          "summary": "本文档梳理了高级前端工程师所需核心技术点，包括React 16+版本演进与Fiber/Hooks原理、Webpack架构及与Rollup/Vite对比、性能优化方法论与请求链路、微前端方案实现与对比、低代码核心分层，并附自测题，强调原理理解和工程落地能力。",
+          "keywords": [
+            "React",
+            "Webpack",
+            "微前端",
+            "性能优化",
+            "低代码"
+          ]
+        },
+        {
+          "path": "/job-description/web前端开发工程师-彭聪.md",
+          "title": "web前端开发工程师-彭聪",
+          "summary": "9年前端开发经验，主导千万级用户系统重构，精通性能优化与工程化建设，擅长微前端和低代码平台，具备全栈能力。",
+          "keywords": [
+            "前端开发",
+            "系统重构",
+            "性能优化",
+            "低代码",
+            "全栈"
+          ]
+        },
+        {
+          "path": "/job-description/web前端开发工程师-彭聪-面试技术大纲.md",
+          "title": "web前端开发工程师-彭聪-面试技术大纲",
+          "summary": "该文档是为Web前端工程师彭聪定制的面试技术大纲，围绕大疆用户中心重构项目，深入解析性能优化体系、HTTP原理和Webpack架构。从性能指标、优化策略到工程化面试常考点，按排查-定位-选择-验证的主线串讲，突出LCP优化从2.3s到1.4s的实践。",
+          "keywords": [
+            "性能优化",
+            "HTTP协议",
+            "Webpack",
+            "LCP",
+            "面试大纲"
+          ]
+        },
+        {
+          "path": "/job-description/history/web前端开发工程师-彭聪-软通.md",
+          "title": "web前端开发工程师-彭聪-软通",
+          "summary": "彭聪，9年经验前端开发工程师，主导大疆千万级用户系统重构与性能优化，实现LCP优化28.9%、维护成本降低50%。在工程化与低代码方面有深厚积累，曾获低代码大赛特等奖。",
+          "keywords": [
+            "前端重构",
+            "性能优化",
+            "低代码",
+            "工程化",
+            "插件系统"
+          ]
+        },
+        {
+          "path": "/job-description/web前端开发工程师-彭聪2.md",
+          "title": "web前端开发工程师-彭聪2",
+          "summary": "资深前端工程师彭聪的简历，9年经验，擅长大型系统重构、性能优化、工程化建设，主导过千万级用户系统，有微前端、低代码等实践经验。",
+          "keywords": [
+            "React",
+            "Vue",
+            "性能优化",
+            "低代码",
+            "微前端"
+          ]
+        }
+      ]
+    },
+    "mark": {
+      "sidebarKey": "/mark/",
+      "description": "简历查漏补缺与知识点梳理",
+      "files": [
+        {
+          "path": "/mark/01-React核心原理.md",
+          "title": "01-React核心原理",
+          "summary": "本文深入分析React 16/17/18版本核心区别，重点讲解Fiber架构、更新流程、协调机制、并发模式及自动批处理等原理，包含笔试题与面试题，适合进阶学习。",
+          "keywords": [
+            "React",
+            "Fiber",
+            "Concurrent",
+            "Reconciliation",
+            "Batching"
+          ]
+        },
+        {
+          "path": "/mark/01-React核心原理-补充.md",
+          "title": "01-React核心原理-补充",
+          "summary": "本文详解React 19新特性，包括React Compiler自动优化、Actions表单处理、use() API等，并深入解析useMemo和useCallback的必要性，何时使用与避免，强调未来编译器自动优化趋势。",
+          "keywords": [
+            "React 19",
+            "useMemo",
+            "useCallback",
+            "React Compiler",
+            "性能优化"
+          ]
+        },
+        {
+          "path": "/mark/02-Webpack与构建工具.md",
+          "title": "02-Webpack与构建工具",
+          "summary": "本文包含Webpack架构笔试题及详细答案，涵盖构建流程的五个关键步骤(entry→loader→plugin→chunk→asset)、Loader与Plugin的本质区别、执行时机、能力边界及使用场景。",
+          "keywords": [
+            "Webpack",
+            "Loader",
+            "Plugin",
+            "构建流程",
+            "对比"
+          ]
+        },
+        {
+          "path": "/mark/03-性能优化.md",
+          "title": "03-性能优化",
+          "summary": "文档为前端性能优化笔试题，包含三题详解：从 URL 到页面可交互的全链路优化点，涵盖 DNS、TCP、TLS 等网络层及渲染层；关键渲染路径中 CSS 与 JS 的阻塞关系及 async/defer 区别；资源提示 preconnect、dns-prefetch、preload、prefetch 的差异与适用场景。",
+          "keywords": [
+            "性能优化",
+            "关键渲染路径",
+            "资源提示",
+            "async/defer",
+            "全链路优化"
+          ]
+        },
+        {
+          "path": "/mark/04-微前端.md",
+          "title": "04-微前端",
+          "summary": "本文档涵盖微前端核心问题、主流方案对比（iframe、single-spa、qiankun、Module Federation）、适用性判断、基础设施（登录态/权限/通信）、部署发布（资源加载/灰度/回滚）及子应用性能治理等面试题和笔试题，探讨各方案实现原理与最佳实践。",
+          "keywords": [
+            "微前端",
+            "qiankun",
+            "Module Federation",
+            "single-spa",
+            "子应用治理"
+          ]
+        },
+        {
+          "path": "/mark/05-低代码.md",
+          "title": "05-低代码",
+          "summary": "本文档介绍了低代码平台的核心抽象（Schema/DSL、组件物料、引擎、渲染器）及其职责，阐释搭建态与运行态的分层原因与能力，讲解Schema渲染器递归渲染、插槽、事件绑定和表达式解析的实现方法，并探讨组件物料版本管理、破坏性变更处理和多版本共存策略。",
+          "keywords": [
+            "低代码",
+            "Schema",
+            "引擎",
+            "渲染器",
+            "版本管理"
+          ]
+        },
+        {
+          "path": "/mark/06-插件系统.md",
+          "title": "06-插件系统",
+          "summary": "介绍插件系统的核心概念（生命周期、扩展点、上下文、隔离、通信），对比Webpack、Vite、Babel插件的hook模型、执行时机与能力边界，并探讨浏览器运行时热插拔的模块加载、卸载和资源清理设计。",
+          "keywords": [
+            "插件系统",
+            "热插拔",
+            "Webpack",
+            "Vite",
+            "Babel"
+          ]
+        },
+        {
+          "path": "/mark/07-NestJS与SSR.md",
+          "title": "07-NestJS与SSR",
+          "summary": "文档为笔试题答案，涵盖NestJS核心概念协同、与Express/Koa对比、SSR/CSR/SSG原理及场景、SSR工作流程与数据预取/hydration，集中展示全栈开发与服务端渲染知识。",
+          "keywords": [
+            "NestJS",
+            "SSR",
+            "CSR",
+            "SSG",
+            "hydration"
+          ]
+        },
+        {
+          "path": "/mark/08-代码规范.md",
+          "title": "08-代码规范",
+          "summary": "本文档全面讲解代码规范，涵盖意义、格式、命名、架构、最佳实践，并深入ESLint工作原理、Prettier配合、Umi设计哲学、Git Hooks落地流程及TypeScript类型规范，含笔试题与面试题，指导从制定到持续改进的规范实践。",
+          "keywords": [
+            "代码规范",
+            "ESLint",
+            "Prettier",
+            "Umi",
+            "规范落地"
+          ]
+        },
+        {
+          "path": "/mark/09-Promise原理.md",
+          "title": "09-Promise原理",
+          "summary": "本文档探讨了JavaScript中Promise的设计动机、核心原理与手写实现，涵盖状态机、Promise A+规范、静态方法、链式调用、错误处理及async/await等内容，并通过笔试题与面试题检验理解，帮助深入掌握异步编程。",
+          "keywords": [
+            "Promise",
+            "async/await",
+            "回调地狱",
+            "Promise A+",
+            "手写实现"
+          ]
+        },
+        {
+          "path": "/mark/10-骨架屏.md",
+          "title": "10-骨架屏",
+          "summary": "本文介绍骨架屏技术，阐述其在性能优化及用户体验中的作用，分析对FCP、LCP、CLS等性能指标的影响，对比手写、自动生成、SSR内联等实现方式的优缺点，并详细说明基于Puppeteer和DOM结构自动生成骨架屏的原理与注入时机。",
+          "keywords": [
+            "骨架屏",
+            "性能优化",
+            "FCP",
+            "LCP",
+            "CLS"
+          ]
+        },
+        {
+          "path": "/mark/11-HTTP与缓存.md",
+          "title": "11-HTTP与缓存",
+          "summary": "文档包含从性能优化到HTTP变化及缓存的笔试题和面试题，涵盖HTTP/1.1/2/3对比、强缓存与协商缓存、Cache-Control指令、资源缓存策略、Service Worker缓存及缓存更新问题，旨在考察缓存机制的理解与实践。",
+          "keywords": [
+            "HTTP缓存",
+            "性能优化",
+            "Cache-Control",
+            "Service Worker",
+            "缓存策略"
+          ]
+        },
+        {
+          "path": "/mark/ai-doc-content-enhancement.md",
+          "title": "ai-doc-content-enhancement",
+          "summary": "本次更新优化了AI文档生成系统，通过增强模板结构（新增概述、详细解析、常见问题等章节），提升字数至1500字以上和代码示例至3-5个，优化提示词并提高token配额至8000，显著提升文档的丰富度、深度和实用性。",
+          "keywords": [
+            "AI文档生成",
+            "内容增强",
+            "模板优化",
+            "提示词工程",
+            "Token管理"
+          ]
+        },
+        {
+          "path": "/mark/React更新流程详解.md",
+          "title": "React更新流程详解",
+          "summary": "本文深度解析React更新流程，从setState到DOM更新，涵盖调度阶段的时间切片与优先级模型、协调阶段的Fiber树diff与双缓冲、提交阶段的原子操作及副作用执行，并总结关键优化思想和最佳实践。",
+          "keywords": [
+            "React更新流程",
+            "Fiber架构",
+            "协调",
+            "调度",
+            "副作用"
+          ]
+        }
+      ]
+    },
+    "node": {
+      "sidebarKey": "/node/",
+      "description": "npm 生态与常用工具链",
+      "files": [
+        {
+          "path": "/node/npm.md",
+          "title": "npm",
+          "summary": "文档提供npm常用操作速查，涵盖镜像源设置与查看、已安装依赖包及路径查看、缓存清除、npm页面导航以及脚本并行/继发执行与当前脚本名称获取。",
+          "keywords": [
+            "npm",
+            "镜像",
+            "缓存",
+            "脚本",
+            "依赖包"
+          ]
+        },
+        {
+          "path": "/node/toolkit.md",
+          "title": "toolkit",
+          "summary": "介绍了Node.js开发常用的工具包：nvm用于Node版本管理，nrm管理npm registry，nodemon自动重启服务，npm-check-updates更新依赖，yalc用于本地npm包调试。提供安装方法和常用命令，附GitHub链接。",
+          "keywords": [
+            "Node.js",
+            "npm",
+            "版本管理",
+            "自动重启",
+            "依赖更新"
+          ]
+        }
+      ]
+    },
+    "online-tools": {
+      "sidebarKey": "/online-tools/",
+      "description": "书签脚本与常用网页工具",
+      "files": [
+        {
+          "path": "/online-tools/bookmark-scripts.md",
+          "title": "bookmark-scripts",
+          "summary": "介绍两个实用的浏览器书签脚本：平滑回到顶部和一键显示密码，通过JavaScript代码片段实现浏览器功能增强。",
+          "keywords": [
+            "书签脚本",
+            "JavaScript",
+            "浏览器工具",
+            "回到顶部",
+            "显示密码"
+          ]
+        }
+      ]
+    },
+    "Pattern": {
+      "sidebarKey": "/Pattern/",
+      "description": "前端常见模式与实现示例",
+      "files": [
+        {
+          "path": "/Pattern/模式来源与类比.md",
+          "title": "模式来源与类比",
+          "summary": "本文对比了跨组件通信的几种经典模式：发布订阅、观察者、事件总线、状态容器、BroadcastChannel和CustomEvent，并指出这些模式在软件工程中的普遍性，以及在不同框架（如RxJS、Redux）中的类似实现。",
+          "keywords": [
+            "跨组件通信",
+            "发布订阅",
+            "观察者模式",
+            "事件总线",
+            "状态容器"
+          ]
+        },
+        {
+          "path": "/Pattern/COMPARISON.md",
+          "title": "COMPARISON",
+          "summary": "本文对比了实现Counter状态监听的两种方式：Observer（手动发布）和ProxyStore（赋值即触发），分析了各自特点、订阅粒度、回调签名及典型场景，并探讨了它们与Vue3响应式机制的关联，给出了选型建议。",
+          "keywords": [
+            "观察者模式",
+            "代理模式",
+            "状态容器",
+            "发布-订阅",
+            "Vue3"
+          ]
+        },
+        {
+          "path": "/Pattern/ServiceRequest/SharedStateBridge.md",
+          "title": "SharedStateBridge",
+          "summary": "SharedStateBridge.ts 是使用 TypeScript 实现的一种共享状态桥接模式，用于在多个服务请求间高效同步与共享状态，提供代码示例。",
+          "keywords": [
+            "SharedState",
+            "BridgePattern",
+            "TypeScript",
+            "ServiceRequest",
+            "状态同步"
+          ]
+        }
+      ]
+    },
+    "react": {
+      "sidebarKey": "/react/",
+      "description": "Hooks、渲染机制与版本演进",
+      "files": [
+        {
+          "path": "/react/class-hooks.md",
+          "title": "class-hooks",
+          "summary": "React核心概念与面试题整理，涵盖合成事件、setState机制、JSX本质、虚拟DOM、Fiber架构、组件通信、生命周期、性能优化等，以及常见面试问题解析。",
+          "keywords": [
+            "React",
+            "合成事件",
+            "setState",
+            "虚拟DOM",
+            "Fiber"
+          ]
+        },
+        {
+          "path": "/react/react-render.md",
+          "title": "react-render",
+          "summary": "从React源码角度深入讲解React 18+的完整渲染流程，包括初始化、调度、render阶段（构建Fiber树和Effect链表）和commit阶段（操作真实DOM和执行副作用），涵盖关键函数如beginWork、completeWork、commitRoot。",
+          "keywords": [
+            "React",
+            "渲染流程",
+            "Fiber架构",
+            "协调",
+            "提交阶段"
+          ]
+        },
+        {
+          "path": "/react/react16.md",
+          "title": "react16",
+          "summary": "本文快速概览React 16的核心革新：Fiber架构实现异步可中断渲染，错误边界防止组件崩溃导致白屏，Portals支持渲染到任意DOM节点。还介绍了Fragment、生命周期调整和SSR改进等特性，是理解现代React的基础。",
+          "keywords": [
+            "React 16",
+            "Fiber架构",
+            "错误边界",
+            "Portals",
+            "虚拟DOM"
+          ]
+        },
+        {
+          "path": "/react/react17.md",
+          "title": "react17",
+          "summary": "React 17 虽无新特性，但带来了重要的底层改进：全新的 JSX 转换无需手动导入 React，事件委托从 document 移至根节点以便局部使用和多版本共存，并更新了 onScroll、onFocus 等事件的行为，为渐进升级和未来特性铺路。",
+          "keywords": [
+            "React 17",
+            "JSX 转换",
+            "事件委托",
+            "事件系统",
+            "渐进升级"
+          ]
+        },
+        {
+          "path": "/react/react18.md",
+          "title": "react18",
+          "summary": "介绍 React 18 的 Concurrent 渲染机制，涵盖 startTransition、useDeferredValue 等新 API，自动批处理改进及 flushSync 退出方式，并深入源码解析过渡更新的优先级实现原理。",
+          "keywords": [
+            "React 18",
+            "Concurrent",
+            "startTransition",
+            "自动批处理",
+            "Lane 优先级"
+          ]
+        }
+      ]
+    },
+    "software": {
+      "sidebarKey": "/software/",
+      "description": "跨平台软件与编辑器插件",
+      "files": [
+        {
+          "path": "/software/browser.md",
+          "title": "browser",
+          "summary": "整理了常用浏览器扩展，包含扩展商店、体验优化及开发者工具，如新标签页、广告拦截、翻译、Vue/React调试等，提供实用扩展索引。",
+          "keywords": [
+            "浏览器扩展",
+            "Chrome插件",
+            "开发者工具",
+            "广告拦截",
+            "新标签页"
+          ]
+        },
+        {
+          "path": "/software/claude-skills-guide.md",
+          "title": "claude-skills-guide",
+          "summary": "介绍Claude Skills的模块化扩展机制，涵盖原理、三层加载、自由度匹配、文件结构、SKILL.md编写、实战示例和最佳实践。旨在指导如何创建和使用技能包，将通用AI定制为领域专家。",
+          "keywords": [
+            "Claude Skills",
+            "渐进加载",
+            "自由度匹配",
+            "SKILL.md",
+            "领域知识"
+          ]
+        },
+        {
+          "path": "/software/cross-platform.md",
+          "title": "cross-platform",
+          "summary": "该文档介绍了多款跨平台效率工具，包括插件化启动器uTools、基于Aria2的下载器Motrix、Hosts管理工具SwitchHosts、Android设备控制工具QtScrcpy以及图床工具PicGo，并列出各自特性和链接。",
+          "keywords": [
+            "跨平台",
+            "效率工具",
+            "下载工具",
+            "Hosts管理",
+            "图床"
+          ]
+        },
+        {
+          "path": "/software/mac.md",
+          "title": "mac",
+          "summary": "本指南推荐了Mac平台上的多款高效工具，涵盖包管理器、终端、效率启动器、微信增强、视频播放器、压缩软件、系统清理、截图、右键增强及翻译软件，并提供了安装方法与官方链接。",
+          "keywords": [
+            "Mac工具",
+            "效率提升",
+            "软件推荐",
+            "Homebrew",
+            "Alfred"
+          ]
+        },
+        {
+          "path": "/software/vscode.md",
+          "title": "vscode",
+          "summary": "本文档列出并分类推荐了 Visual Studio Code 的常用扩展，涵盖主题美化、React/Vue 开发、CSS 预处理器、微信小程序、Markdown 编辑、Git 增强、代码格式化、调试工具及其他实用功能，旨在帮助开发者快速配置高效的编码环境。",
+          "keywords": [
+            "VSCode 扩展",
+            "插件推荐",
+            "前端开发工具",
+            "代码效率",
+            "编辑器配置"
+          ]
+        },
+        {
+          "path": "/software/webstorm.md",
+          "title": "webstorm",
+          "summary": "WebStorm 配置指南：涵盖开源许可证申请、中文汉化三种方案、编辑器美化（主题、配色、背景图）、插件市场及推荐插件（如 Atom Material Icons、.env 等）、使用 Prettier 保存格式化配置、以及 Vue 项目中 webpack alias 识别设置。",
+          "keywords": [
+            "WebStorm",
+            "配置",
+            "汉化",
+            "插件",
+            "webpack"
+          ]
+        },
+        {
+          "path": "/software/windows.md",
+          "title": "windows",
+          "summary": "本文档汇总了Windows平台下多款效率与实用工具，涵盖终端模拟器、文件搜索、快速启动、视频播放、压缩解压、音量管理、看图、动态壁纸、系统优化与清理、隐私保护、防撤回补丁、任务栏美化、重复文件处理、电子书格式转换及PowerToys系统增强工具，提供下载链接及功能简介，旨在提升Windows使用体验。",
+          "keywords": [
+            "Windows工具",
+            "效率软件",
+            "系统优化",
+            "实用推荐",
+            "免费软件"
+          ]
+        },
+        {
+          "path": "/software/zsh.md",
+          "title": "zsh",
+          "summary": "介绍zsh及oh-my-zsh的配置，包括主题（如powerlevel10k）和常用插件（autojump、z、fast-syntax-highlighting、zsh-autosuggestions）的安装与使用，提供命令示例和GitHub链接，提升终端效率。",
+          "keywords": [
+            "zsh",
+            "oh-my-zsh",
+            "插件",
+            "主题",
+            "终端"
+          ]
+        }
+      ]
+    },
+    "superpowers": {
+      "sidebarKey": "/superpowers/",
+      "description": "",
+      "files": [
+        {
+          "path": "/superpowers/plans/2026-06-14-ai-reading-assistant-optimization.md",
+          "title": "2026-06-14-ai-reading-assistant-optimization",
+          "summary": "该文档是AI阅读助手的优化实施计划，目标是通过流式SSE端点、Token节省策略、内容寻址缓存和VuePress前端集成，构建高效的流式AI助手，并使用Vercel预览部署验证。",
+          "keywords": [
+            "AI reading assistant",
+            "streaming",
+            "NestJS",
+            "VuePress",
+            "caching"
+          ]
+        },
+        {
+          "path": "/superpowers/specs/2026-06-14-ai-reading-assistant-optimization-design.md",
+          "title": "2026-06-14-ai-reading-assistant-optimization-design",
+          "summary": "设计文档针对现有AI阅读助手进行增量优化，解决前端流式对话不真实、输入token线性增长、构建缓存不可靠等问题，在保留VuePress 2和NestJS架构下实现真实SSE流式响应、token消耗限制、缓存复用与恢复，提升多轮对话效率与构建稳定性。",
+          "keywords": [
+            "AI阅读助手",
+            "流式对话",
+            "SSE",
+            "token优化",
+            "构建缓存"
+          ]
+        },
+        {
+          "path": "/superpowers/plans/2026-06-14-ai-reading-assistant-v1.md",
+          "title": "2026-06-14-ai-reading-assistant-v1",
+          "summary": "Implementation plan for AI Reading Assistant v1 that ships a versioned AI pipeline analyzing only new/changed Markdown. VuePress builds a self-describing summaries-v1.json snapshot; NestJS provides a frozen /api/ai/v1 contract with SSE streaming. UI uses static artifacts until user send, then v1 chat; responsive layouts for desktop, tablet, and mobile.",
+          "keywords": [
+            "AI reading assistant",
+            "VuePress",
+            "NestJS",
+            "summary snapshot",
+            "SSE"
+          ]
+        },
+        {
+          "path": "/superpowers/specs/2026-06-14-ai-reading-assistant-v1-design.md",
+          "title": "2026-06-14-ai-reading-assistant-v1-design",
+          "summary": "设计AI阅读助手v1全链路优化方案，采用静态缓存快照和内容分析哈希实现构建零重复AI调用，页面加载零AI调用，新API v1冻结旧接口，提供响应式布局和快捷Tag交互。",
+          "keywords": [
+            "AI阅读助手",
+            "全链路优化",
+            "静态缓存",
+            "哈希失效",
+            "响应式布局"
+          ]
         }
       ]
     },
     "theory": {
       "sidebarKey": "/theory/",
-      "description": "面试题、理论知识、原理解析",
+      "description": "岗位大纲与 Hard Mode 题目",
       "files": [
-        {
-          "path": "/theory/README.md",
-          "title": "README",
-          "summary": "该文档为理论面试题汇总，可能涵盖计算机科学核心概念与常见面试问题，用于复习和准备技术面试。",
-          "keywords": ["面试题", "理论", "计算机科学", "复习指南"]
-        },
-        {
-          "path": "/theory/interview-question/2025-04-28-analysis.md",
-          "title": "2025-04-28-analysis",
-          "summary": "本文档是2025年4月28日面试题演练，涵盖笔试重点、技术面试高频考点、行为面试应答策略及软实力展现技巧。内容涉及框架原理、工程化实战、性能优化、算法、微前端、低代码、构建优化、内存排查等，并提供了STAR法则应答框架和用户体验优化案例。",
-          "keywords": ["面试准备", "Vue3", "性能优化", "微前端", "STAR法则"]
-        },
-        {
-          "path": "/theory/interview-question/2025-04-28.md",
-          "title": "2025-04-28",
-          "summary": "该文档收集了多个 JavaScript 面试题，涵盖变量作用域、闭包、this 指向、异步编程、事件循环、Promise 顺序调用等核心概念，并包含代码示例与解析。",
-          "keywords": ["JavaScript", "面试题", "闭包", "事件循环", "Promise"]
-        },
         {
           "path": "/theory/job-description-lib/01-大疆用户中心重构-面试技术大纲.md",
           "title": "01-大疆用户中心重构-面试技术大纲",
           "summary": "大疆用户中心重构面试技术大纲，聚焦性能优化（LCP从2.3s降至1.4s）、HTTP协议对比、Webpack架构，覆盖指标体系、优化策略（骨架屏、关键渲染路径、包体积、TLS 1.3、WebP）及工程化回归验证。",
-          "keywords": ["性能优化", "LCP", "HTTP协议", "Webpack", "骨架屏"]
+          "keywords": [
+            "性能优化",
+            "LCP",
+            "HTTP协议",
+            "Webpack",
+            "骨架屏"
+          ]
         },
         {
           "path": "/theory/job-description-lib/02-大疆售后RMS系统重构-面试技术大纲.md",
           "title": "02-大疆售后RMS系统重构-面试技术大纲",
           "summary": "本文档为大疆售后RMS系统重构的面试技术大纲，重点介绍多人协作下的工程化治理，包括ESLint规范制定（React/TS/导入等规则）、结合Prettier分工、通过husky+lint-staged+CI门禁落地，及利用Code Review和模块化边界提升代码可维护性，技术栈为React 18+TypeScript+Webpack+Ant Design。",
-          "keywords": ["ESLint", "React", "TypeScript", "工程化", "CI/CD"]
+          "keywords": [
+            "ESLint",
+            "React",
+            "TypeScript",
+            "工程化",
+            "CI/CD"
+          ]
         },
         {
           "path": "/theory/job-description-lib/03-跨平台公告插件系统-面试技术大纲.md",
           "title": "03-跨平台公告插件系统-面试技术大纲",
           "summary": "本文档为跨平台公告插件系统的面试技术大纲，重点探讨Rollup/Webpack/Vite构建工具对比、Preact+Signals极致体积优化与热插拔架构设计，以及多路复用和跨系统接入策略，旨在考察候选人在库开发、隔离和性能优化方面的深度思考。",
-          "keywords": ["跨平台", "公告插件", "Rollup", "Preact", "热插拔"]
+          "keywords": [
+            "跨平台",
+            "公告插件",
+            "Rollup",
+            "Preact",
+            "热插拔"
+          ]
         },
         {
           "path": "/theory/job-description-lib/04-大疆DevOps平台维护-面试技术大纲.md",
           "title": "04-大疆DevOps平台维护-面试技术大纲",
           "summary": "本文为大疆DevOps平台维护岗位面试技术大纲，涵盖CI/CD流水线原理、Docker部署、微前端选型与qiankun原理，侧重新版控、质量安全、微前端隔离与通信等深度问题。",
-          "keywords": ["CI/CD", "Docker", "qiankun", "微前端", "面试大纲"]
+          "keywords": [
+            "CI/CD",
+            "Docker",
+            "qiankun",
+            "微前端",
+            "面试大纲"
+          ]
         },
         {
           "path": "/theory/job-description-lib/05-XDR系统-魔方大屏+报表-面试技术大纲.md",
           "title": "05-XDR系统-魔方大屏+报表-面试技术大纲",
           "summary": "面试大纲涵盖XDR系统魔方大屏低代码内部原理与报表NestJS SSR原理，包括Schema驱动物料体系、渲染器、编辑器能力、数据交互、事件编排，以及SSR渲染流程、Hydration、流式渲染、缓存策略与降级方案。",
-          "keywords": ["低代码", "SSR", "NestJS", "物料体系", "Schema驱动"]
+          "keywords": [
+            "低代码",
+            "SSR",
+            "NestJS",
+            "物料体系",
+            "Schema驱动"
+          ]
         },
         {
           "path": "/theory/job-description-lib/06-大疆用户中心重构-hard-mode-面试题.md",
           "title": "06-大疆用户中心重构-hard-mode-面试题",
           "summary": "该文档为大疆用户中心重构项目的高级前端面试题集，深入考察Vue3+TypeScript+Vite+Pinia技术栈下的PC/移动端融合架构、Core Web Vitals性能优化、关键渲染路径、构建与传输优化及线上监控等，强调量化证据与工程边界。",
-          "keywords": ["面试题", "Vue3", "性能优化", "多端适配", "Vite"]
+          "keywords": [
+            "面试题",
+            "Vue3",
+            "性能优化",
+            "多端适配",
+            "Vite"
+          ]
         },
         {
           "path": "/theory/job-description-lib/07-大疆售后RMS系统重构-Hard-Mode-面试题.md",
@@ -1228,31 +2085,374 @@
           "path": "/theory/job-description-lib/09-DevOps平台-qiankun微前端-Hard-Mode-面试题.md",
           "title": "09-DevOps平台-qiankun微前端-Hard-Mode-面试题",
           "summary": "针对DevOps平台中qiankun微前端的Hard-Mode面试题，涵盖原理、沙箱隔离、样式与资源共享、通信与鉴权、独立部署与版本兼容、性能稳定性及Jira集成等深度追问。",
-          "keywords": ["qiankun", "微前端", "沙箱隔离", "面试题", "独立部署"]
+          "keywords": [
+            "qiankun",
+            "微前端",
+            "沙箱隔离",
+            "面试题",
+            "独立部署"
+          ]
         },
         {
           "path": "/theory/job-description-lib/10-XDR系统-NestJS全栈-Hard-Mode-面试题.md",
           "title": "10-XDR系统-NestJS全栈-Hard-Mode-面试题",
           "summary": "本文档是XDR系统全栈面试题集，涵盖NestJS架构与依赖注入、MongoDB/Mongoose建模与性能优化、定时任务可靠性与监控、报表导出异步链路设计以及实时大屏性能与数据一致性等五大模块，问题深度为Hard模式。",
-          "keywords": ["XDR系统", "NestJS", "MongoDB", "定时任务", "实时大屏"]
+          "keywords": [
+            "XDR系统",
+            "NestJS",
+            "MongoDB",
+            "定时任务",
+            "实时大屏"
+          ]
         },
         {
           "path": "/theory/job-description-lib/11-frontend-hard-mode-interview-原题提取-基于简历.md",
           "title": "11-frontend-hard-mode-interview-原题提取-基于简历",
           "summary": "本文档聚焦前端面试中高频出现的网络协议基础，详细讲解TCP/IP协议集、TCP三次握手与四次挥手过程、握手对延迟的影响以及TCP Fast Open，并解答常见面试题如握手次数差异和TIME_WAIT状态，旨在增强前端工程师对底层通信的理解。",
-          "keywords": ["TCP", "UDP", "TLS", "三次握手", "四次挥手"]
+          "keywords": [
+            "TCP",
+            "UDP",
+            "TLS",
+            "三次握手",
+            "四次挥手"
+          ]
         },
         {
-          "path": "/theory/job-description-lib/Framework copy.md",
-          "title": "Framework copy",
-          "summary": "一份面向高级前端工程师的技术自测清单，覆盖React 16+核心原理与Hooks、Webpack/Rollup/Vite构建工具对比、性能优化流程与请求链路分析、微前端方案实现及低代码架构设计。",
-          "keywords": ["React", "Webpack", "微前端", "性能优化", "低代码"]
+          "path": "/theory/interview-question/2025-04-28.md",
+          "title": "2025-04-28",
+          "summary": "该文档收集了多个 JavaScript 面试题，涵盖变量作用域、闭包、this 指向、异步编程、事件循环、Promise 顺序调用等核心概念，并包含代码示例与解析。",
+          "keywords": [
+            "JavaScript",
+            "面试题",
+            "闭包",
+            "事件循环",
+            "Promise"
+          ]
+        },
+        {
+          "path": "/theory/interview-question/2025-04-28-analysis.md",
+          "title": "2025-04-28-analysis",
+          "summary": "本文档是2025年4月28日面试题演练，涵盖笔试重点、技术面试高频考点、行为面试应答策略及软实力展现技巧。内容涉及框架原理、工程化实战、性能优化、算法、微前端、低代码、构建优化、内存排查等，并提供了STAR法则应答框架和用户体验优化案例。",
+          "keywords": [
+            "面试准备",
+            "Vue3",
+            "性能优化",
+            "微前端",
+            "STAR法则"
+          ]
         },
         {
           "path": "/theory/job-description-lib/Framework.md",
           "title": "Framework",
           "summary": "一份面向高级前端工程师的面试自测清单，覆盖React核心原理（Fiber、Hooks、并发渲染）、Webpack与Rollup/Vite对比、性能优化流程与请求链路分析、微前端方案对比及实现原理、低代码核心分层。",
-          "keywords": ["React", "Webpack", "性能优化", "微前端", "低代码"]
+          "keywords": [
+            "React",
+            "Webpack",
+            "性能优化",
+            "微前端",
+            "低代码"
+          ]
+        },
+        {
+          "path": "/theory/job-description-lib/Framework copy.md",
+          "title": "Framework copy",
+          "summary": "一份面向高级前端工程师的技术自测清单，覆盖React 16+核心原理与Hooks、Webpack/Rollup/Vite构建工具对比、性能优化流程与请求链路分析、微前端方案实现及低代码架构设计。",
+          "keywords": [
+            "React",
+            "Webpack",
+            "微前端",
+            "性能优化",
+            "低代码"
+          ]
+        }
+      ]
+    },
+    "TypeScript": {
+      "sidebarKey": "/TypeScript/",
+      "description": "类型系统与工程化实践",
+      "files": [
+        {
+          "path": "/TypeScript/Study.md",
+          "title": "Study",
+          "summary": "这是一篇TypeScript学习笔记，重点介绍了内置工具类型如Partial、Required、Pick、Omit、Record、Exclude、Extract、NonNullable、ReturnType、InstanceType、Parameters和ConstructorParameters等，并简要涉及条件类型extends和类型推断infer。内容通过代码示例展示用法，并关联到面试准备卡片。",
+          "keywords": [
+            "TypeScript",
+            "工具类型",
+            "Partial",
+            "Required",
+            "Pick"
+          ]
+        }
+      ]
+    },
+    "utils": {
+      "sidebarKey": "/utils/",
+      "description": "正则等常用工具函数片段",
+      "files": [
+        {
+          "path": "/utils/function.md",
+          "title": "function",
+          "summary": "文档介绍了常用工具方法，包括身份证信息提取（获取年龄、出生日期、性别）、运行环境判断以及将微信回调式API转换为Promise形式，方便在项目中使用。",
+          "keywords": [
+            "身份证解析",
+            "环境判断",
+            "Promise化",
+            "微信API",
+            "工具函数"
+          ]
+        },
+        {
+          "path": "/utils/library.md",
+          "title": "library",
+          "summary": "个人收集的JavaScript常用类库列表，涵盖工具库、时间处理、HTTP请求、精度计算、本地存储、滚动、事件、文件处理、富文本编辑器、用户体验引导、Webpack工具、CLI工具和命令行美化等多个类别。",
+          "keywords": [
+            "library",
+            "JavaScript",
+            "工具库",
+            "前端开发",
+            "收集"
+          ]
+        },
+        {
+          "path": "/utils/regexp.md",
+          "title": "regexp",
+          "summary": "本文档收集了常用正则表达式，涵盖金额、手机号、邮箱、QQ号、链接、身份证验证，以及手机号344格式化和隐藏中间四位等实用代码示例。",
+          "keywords": [
+            "正则表达式",
+            "验证",
+            "格式化",
+            "手机号",
+            "身份证"
+          ]
+        }
+      ]
+    },
+    "vue": {
+      "sidebarKey": "/vue/",
+      "description": "响应式、编译与 Vue 2/3 对比",
+      "files": [
+        {
+          "path": "/vue/code/Object.defineproperty.md",
+          "title": "Object.defineproperty",
+          "summary": "本文通过代码示例讲解 Vue 响应式系统中 Object.defineProperty 的自定义实现，展示如何利用数据劫持实现属性监听与双向绑定。",
+          "keywords": [
+            "Object.defineProperty",
+            "Vue 响应式",
+            "数据劫持",
+            "双向绑定"
+          ]
+        },
+        {
+          "path": "/vue/code/Proxy.md",
+          "title": "Proxy",
+          "summary": "提供 Vue 响应式系统中 Proxy 核心实现的自定义代码示例，展示如何用 Proxy 拦截对象操作实现数据响应式。",
+          "keywords": [
+            "Proxy",
+            "Vue",
+            "响应式",
+            "自定义实现",
+            "代码示例"
+          ]
+        },
+        {
+          "path": "/vue/code/proxy-observe.md",
+          "title": "proxy-observe",
+          "summary": "本文展示了使用Proxy实现观察者模式的核心代码示例，实现数据响应式绑定。",
+          "keywords": [
+            "Proxy",
+            "observe",
+            "响应式",
+            "Vue",
+            "自定义实现"
+          ]
+        },
+        {
+          "path": "/vue/vue_theory.md",
+          "title": "vue_theory",
+          "summary": "本文档深入探讨Vue核心原理，涵盖MVVM模型、响应式系统（Object.defineProperty和Proxy）、虚拟dom与diff算法、模版编译、渲染过程及前端路由，并整理常见面试题及解析，包括v-if/v-show区别、key作用、组件通信、生命周期等。",
+          "keywords": [
+            "vue原理",
+            "响应式",
+            "虚拟dom",
+            "diff算法",
+            "MVVM"
+          ]
+        },
+        {
+          "path": "/vue/vue-render.md",
+          "title": "vue-render",
+          "summary": "系统讲解Vue 3从模板编译到真实DOM的完整渲染流程，包括响应式依赖收集、虚拟DOM生成、初次挂载及更新patch机制，并与React Fiber进行对比。",
+          "keywords": [
+            "Vue 3",
+            "渲染流程",
+            "响应式",
+            "虚拟DOM",
+            "patch"
+          ]
+        },
+        {
+          "path": "/vue/vue2.md",
+          "title": "vue2",
+          "summary": "本文档概述了Vue 2的核心原理，包括组件化思想、响应式系统（Object.defineProperty）、虚拟DOM与diff算法、模板编译过程、渲染机制、前端路由（hash与history模式）以及常见面试题解析，涵盖生命周期、组件通讯、性能优化等方面。",
+          "keywords": [
+            "Vue2",
+            "响应式",
+            "虚拟DOM",
+            "组件化",
+            "路由"
+          ]
+        },
+        {
+          "path": "/vue/vue3.md",
+          "title": "vue3",
+          "summary": "该文档总结了Vue3的核心原理，通过代码示例展示响应式系统、虚拟DOM和Composition API等机制的实现，帮助深入理解框架底层。",
+          "keywords": [
+            "Vue3",
+            "原理",
+            "总结",
+            "代码示例",
+            "响应式"
+          ]
+        }
+      ]
+    },
+    "webpack": {
+      "sidebarKey": "/webpack/",
+      "description": "打包原理、Vite 对比与安装指南",
+      "files": [
+        {
+          "path": "/webpack/打包工具.md",
+          "title": "打包工具",
+          "summary": "本文档介绍了从npm到yarn、pnpm、ni等包管理工具的演进，分析了嵌套安装、路径过长、依赖提升不确定性、幽灵依赖等问题，并通过代码示例对比了各工具的结构。",
+          "keywords": [
+            "包管理工具",
+            "npm",
+            "pnpm",
+            "幽灵依赖",
+            "依赖提升"
+          ]
+        },
+        {
+          "path": "/webpack/架构及原理.md",
+          "title": "架构及原理",
+          "summary": "本文档详细解析Webpack的架构与运行原理，涵盖核心概念如入口、输出、模块、加载器、插件、依赖图，以及构建流程的初始化、依赖图构建、编译、打包输出等步骤，并介绍Compiler、Compilation、Chunk、Module等核心模块。",
+          "keywords": [
+            "Webpack",
+            "架构",
+            "原理",
+            "构建流程",
+            "依赖图"
+          ]
+        },
+        {
+          "path": "/webpack/知识梳理.md",
+          "title": "知识梳理",
+          "summary": "Webpack是一个模块打包器，将JavaScript、CSS、图片等资源打包为优化后的文件。核心概念包括入口、输出、加载器和插件，配置文件中可定义打包规则。常用加载器如babel-loader、css-loader，插件如HtmlWebpackPlugin、TerserWebpackPlugin。优化包括Tree Shaking、Code Splitting、懒加载等。开发模式和生产模式配置不同，用于提升开发效率和构建性能。",
+          "keywords": [
+            "Webpack",
+            "模块打包",
+            "加载器",
+            "插件",
+            "优化"
+          ]
+        },
+        {
+          "path": "/webpack/install/ni.md",
+          "title": "ni",
+          "summary": "本文介绍npm、yarn、pnpm、ni等包安装工具的演变，对比其安装结构，指出嵌套安装路径过长、依赖重复、扁平提升不确定性、npm分身和幽灵依赖等问题，并给出各工具的示例代码。",
+          "keywords": [
+            "包管理器",
+            "依赖管理",
+            "npm",
+            "pnpm",
+            "幽灵依赖"
+          ]
+        },
+        {
+          "path": "/webpack/install/npm.md",
+          "title": "npm",
+          "summary": "本文介绍了早期npm（v2）的安装机制及其导致的“嵌套地狱”问题，包括依赖树过深、重复依赖、空间浪费等，并探讨了开发中的常见疑问，如删除node_modules重装、依赖分类、yarn与npm混用等，最后简述npm install流程和版本一致性的重要性。",
+          "keywords": [
+            "npm",
+            "嵌套地狱",
+            "依赖管理",
+            "lockfiles",
+            "安装机制"
+          ]
+        },
+        {
+          "path": "/webpack/install/pnpm.md",
+          "title": "pnpm",
+          "summary": "文档阐述了传统node_modules安装方式的低效问题，介绍了Yarn 2.0默认的即插即用(PnP)安装模式如何通过.pnp.cjs映射文件实现快速安装、稳定I/O、完美依赖提升和更快启动。同时说明了PnP的初始化使用方法、边缘情况处理，以及为解决未声明依赖而提供的宽松(loose)模式。",
+          "keywords": [
+            "Yarn",
+            "PnP",
+            "即插即用",
+            "node_modules",
+            "依赖管理"
+          ]
+        },
+        {
+          "path": "/webpack/vite-架构及原理.md",
+          "title": "vite-架构及原理",
+          "summary": "本文深入剖析Vite架构与原理，涵盖开发服务器基于原生ESM按需加载、esbuild预构建依赖、WebSocket实现模块级HMR，生产构建使用Rollup进行Tree-shaking与代码分割。对比Webpack突出极速启动和状态保留热更新优势，并介绍统一插件系统。",
+          "keywords": [
+            "Vite",
+            "ESM",
+            "HMR",
+            "Rollup",
+            "esbuild"
+          ]
+        },
+        {
+          "path": "/webpack/vite-知识梳理.md",
+          "title": "vite-知识梳理",
+          "summary": "本文梳理了前端构建工具Vite的核心知识，包括其开发时基于ESM按需加载与生产时基于Rollup打包的原理、常用配置项、React相关插件，并与Webpack进行对比，最后给出学习路径建议。",
+          "keywords": [
+            "Vite",
+            "Webpack",
+            "构建工具",
+            "React",
+            "Rollup"
+          ]
+        },
+        {
+          "path": "/webpack/webpack-vite-rollup.md",
+          "title": "webpack-vite-rollup",
+          "summary": "本文档深度对比了现代前端构建工具 Webpack、Vite 和 Rollup 的架构原理、优缺点及应用场景。Webpack 是通用打包器，功能全面但配置复杂、启动慢；Rollup 专注 JS 库打包，输出代码干净；Vite 则结合 ESM 与 esbuild 提供极速开发体验，生产环境使用 Rollup 打包。",
+          "keywords": [
+            "Webpack",
+            "Vite",
+            "Rollup",
+            "构建工具",
+            "ESM"
+          ]
+        },
+        {
+          "path": "/webpack/install/yarn.md",
+          "title": "yarn",
+          "summary": "本文档概述了从npm到yarn、pnpm、ni等包管理工具的演进，主要讨论了依赖安装中的典型问题，如嵌套安装、路径过长、扁平化导致的不确定性和幽灵依赖，并通过代码示例展示了各工具的结构。",
+          "keywords": [
+            "npm",
+            "yarn",
+            "pnpm",
+            "幽灵依赖",
+            "包管理"
+          ]
+        }
+      ]
+    },
+    "travel": {
+      "sidebarKey": "/travel/",
+      "description": "",
+      "files": [
+        {
+          "path": "/travel/2026-08-zhuhai-chimelong.md",
+          "title": "2026-08-zhuhai-chimelong",
+          "summary": "Mock 摘要（珠海长隆飞船酒店两天一夜亲子行程）：&lt;style> .chimelong-guide \\{ --cg-primary: #0e7490; --cg-accent: #f59e0b; --cg-bg: #f5fbfd; --cg-border: #d7e8…",
+          "keywords": [
+            "Mock"
+          ]
         }
       ]
     }
