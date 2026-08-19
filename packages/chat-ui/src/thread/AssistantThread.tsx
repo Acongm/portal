@@ -264,18 +264,40 @@ function HistoryLoadIndicator({ loading }: { loading: boolean }) {
   );
 }
 
-function LazyHistoryViewport({
+function ConversationFooter({
   placeholder,
   composerDisabled,
-  hasOlderMessages,
-  loadingOlder,
-  onLoadOlderMessages,
+  disclaimer,
 }: {
   placeholder: string;
   composerDisabled: boolean;
+  disclaimer: string;
+}) {
+  return (
+    <ThreadPrimitive.ViewportFooter className="acongm-gpt-thread__footer sticky bottom-0">
+      <ThreadScrollToBottom />
+      <Composer placeholder={placeholder} disabled={composerDisabled} />
+      <p className="acongm-gpt-disclaimer acongm-gpt-disclaimer--thread">
+        {disclaimer}
+      </p>
+    </ThreadPrimitive.ViewportFooter>
+  );
+}
+
+function LazyHistoryViewport({
+  hasOlderMessages,
+  loadingOlder,
+  onLoadOlderMessages,
+  placeholder,
+  composerDisabled,
+  disclaimer,
+}: {
   hasOlderMessages: boolean;
   loadingOlder: boolean;
   onLoadOlderMessages?: () => void;
+  placeholder: string;
+  composerDisabled: boolean;
+  disclaimer: string;
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const scrollAnchorRef = useRef<number | null>(null);
@@ -321,11 +343,11 @@ function LazyHistoryViewport({
           AssistantMessage,
         }}
       />
-
-      <ThreadPrimitive.ViewportFooter className="acongm-gpt-thread__footer">
-        <ThreadScrollToBottom />
-        <Composer placeholder={placeholder} disabled={composerDisabled} />
-      </ThreadPrimitive.ViewportFooter>
+      <ConversationFooter
+        placeholder={placeholder}
+        composerDisabled={composerDisabled}
+        disclaimer={disclaimer}
+      />
     </ThreadPrimitive.Viewport>
   );
 }
@@ -341,8 +363,10 @@ export type AssistantThreadProps = {
 };
 
 /**
- * ChatGPT demo 风格 Thread（assistant-ui primitives）。
- * 参考：https://www.assistant-ui.com/demos/chatgpt
+ * Official assistant-ui Thread layout:
+ * Root → empty composer, or Viewport → Messages + sticky ViewportFooter.
+ * https://www.assistant-ui.com/docs/primitives/thread
+ * https://www.assistant-ui.com/examples/chatgpt
  */
 export function AssistantThread({
   emptyTitle = '我们从哪开始？',
@@ -365,15 +389,13 @@ export function AssistantThread({
 
       <AuiIf condition={(s) => !s.thread.isEmpty}>
         <LazyHistoryViewport
-          placeholder={placeholder}
-          composerDisabled={composerDisabled}
           hasOlderMessages={hasOlderMessages}
           loadingOlder={loadingOlder}
           onLoadOlderMessages={onLoadOlderMessages}
+          placeholder={placeholder}
+          composerDisabled={composerDisabled}
+          disclaimer={disclaimer}
         />
-        <p className="acongm-gpt-disclaimer acongm-gpt-disclaimer--thread">
-          {disclaimer}
-        </p>
       </AuiIf>
     </ThreadPrimitive.Root>
   );

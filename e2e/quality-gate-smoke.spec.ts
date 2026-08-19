@@ -51,4 +51,45 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
       timeout: 30_000,
     });
   });
+
+  test('docs drawer scrolls only the viewport and keeps the composer pinned', async ({
+    page,
+  }) => {
+    await page.goto('/docs/core');
+    await page.getByRole('button', { name: /AI 阅读助手|AI 助手/ }).click();
+    const composerInput = page.locator('.acongm-gpt-composer__input');
+    await expect(composerInput).toBeEnabled({ timeout: 30_000 });
+    await composerInput.fill('hello quality gate');
+    await page.getByTitle('发送').click();
+    await expect(page.getByText('你好，这是测试回复')).toBeVisible({
+      timeout: 30_000,
+    });
+
+    const viewport = page.locator('.acongm-gpt-thread__viewport');
+    const composer = page.locator(
+      '.acongm-gpt-thread__footer .acongm-gpt-composer',
+    );
+    await expect(
+      page.locator('.acongm-gpt-thread__viewport .acongm-gpt-thread__footer'),
+    ).toHaveCount(1);
+
+    await viewport.evaluate((node) => {
+      const spacer = document.createElement('div');
+      spacer.dataset.scrollProbe = '1';
+      spacer.style.height = '1600px';
+      spacer.style.flexShrink = '0';
+      node.prepend(spacer);
+    });
+
+    const before = await composer.boundingBox();
+    expect(before).toBeTruthy();
+    await viewport.evaluate((node) => {
+      node.scrollTop = 900;
+    });
+    const after = await composer.boundingBox();
+    expect(Math.abs((after?.y ?? 0) - (before?.y ?? 0))).toBeLessThan(2);
+    expect(await viewport.evaluate((node) => node.scrollTop)).toBeGreaterThan(
+      100,
+    );
+  });
 });

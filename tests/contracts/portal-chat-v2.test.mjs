@@ -93,3 +93,18 @@ test('User BFF proxies /api/user so getUserInfo works after login', () => {
   assert.match(userBff, /'authorization'/);
   assert.match(userBff, /USER_UPSTREAM_UNREACHABLE/);
 });
+
+test('docs drawer thread keeps composer inside official sticky ViewportFooter', () => {
+  const thread = read('packages/chat-ui/src/thread/AssistantThread.tsx');
+  const css = read('packages/chat-ui/src/styles/chatgpt.css');
+  const drawer = read('packages/chat-ui/src/styles/chat-ui.css');
+  assert.match(thread, /ThreadPrimitive\.ViewportFooter/);
+  assert.match(thread, /ThreadPrimitive\.ViewportFooter[\s\S]*<Composer /);
+  assert.match(thread, /ThreadPrimitive\.ViewportFooter[\s\S]*disclaimer/);
+  assert.match(css, /\.acongm-gpt-thread__footer\s*\{[\s\S]*position:\s*sticky/);
+  assert.doesNotMatch(
+    css,
+    /\.acongm-gpt-thread__footer\s*\{[^}]*position:\s*relative/,
+  );
+  assert.match(drawer, /\.acongm-chat-rd \.acongm-gpt-thread\s*\{[\s\S]*overflow:\s*hidden/);
+});
