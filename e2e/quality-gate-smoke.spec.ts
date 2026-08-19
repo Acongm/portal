@@ -15,6 +15,16 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
     await expect(page.getByRole('button', { name: '登录' })).toBeVisible();
   });
 
+  test('daily-news page mounts the docs assistant drawer', async ({ page }) => {
+    await page.goto('/docs/news/daily-news/2026-08-18');
+    await page.getByRole('button', { name: /AI 阅读助手|AI 助手/ }).click();
+    await expect(page.getByRole('heading', { name: 'AI 阅读助手' })).toBeVisible();
+    await expect(page.locator('.acongm-gpt-composer__input')).toBeEnabled({
+      timeout: 30_000,
+    });
+    await expect(page.locator('.acongm-chat-rd .acongm-gpt-thread')).toBeVisible();
+  });
+
   test('docs embed stays mounted and opens a typable composer', async ({
     page,
   }) => {
