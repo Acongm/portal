@@ -8,7 +8,7 @@ import {
 test.describe('Platform v2 live JWT browser smoke (#37)', () => {
   test.skip(!LIVE_ENABLED, 'ACONGM_SUPABASE_ACCESS_TOKEN is not set');
 
-  test('top bar shows the live account and keeps the chat FAB mounted', async ({
+  test('top bar shows the live account and docs keep the chat FAB mounted', async ({
     page,
     baseURL,
   }) => {
@@ -21,9 +21,15 @@ test.describe('Platform v2 live JWT browser smoke (#37)', () => {
         page.getByRole('button', { name: /Quality Gate Live|qg-/ }),
       ).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole('button', { name: '登录' })).toHaveCount(0);
+      await page.screenshot({
+        path: '/opt/cursor/artifacts/portal_topbar_live_jwt.png',
+        animations: 'disabled',
+      });
+
+      await page.goto('/docs/core');
       await expect(
         page.getByRole('button', { name: /AI 阅读助手|AI 助手/ }),
-      ).toBeVisible();
+      ).toBeVisible({ timeout: 30_000 });
     } finally {
       await live.cleanup();
     }
