@@ -15,6 +15,16 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
     await expect(page.getByRole('button', { name: '登录' })).toBeVisible();
   });
 
+  test('daily-news page mounts the docs assistant drawer', async ({ page }) => {
+    await page.goto('/docs/news/daily-news/2026-08-18');
+    await page.getByRole('button', { name: /AI 阅读助手|AI 助手/ }).click();
+    await expect(page.getByRole('heading', { name: 'AI 阅读助手' })).toBeVisible();
+    await expect(page.locator('.acongm-gpt-composer__input')).toBeEnabled({
+      timeout: 30_000,
+    });
+    await expect(page.locator('.acongm-chat-rd .acongm-gpt-thread')).toBeVisible();
+  });
+
   test('docs embed stays mounted and opens a typable composer', async ({
     page,
   }) => {
@@ -50,5 +60,114 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
     await expect(page.getByText('你好，这是测试回复')).toBeVisible({
       timeout: 30_000,
     });
+  });
+
+  test('daily-news long replies show drawer chrome at rest', async ({
+    page,
+  }) => {
+    await installQualityGateMocks(page, { longFirstReply: true });
+    await page.goto('/docs/news/daily-news/2026-08-18');
+    await page.getByRole('button', { name: /AI 阅读助手|AI 助手/ }).click();
+    const composerInput = page.locator('.acongm-gpt-composer__input');
+    await expect(composerInput).toBeEnabled({ timeout: 30_000 });
+    await composerInput.fill('继续');
+    await page.getByTitle('发送').click();
+    const viewport = page.locator('.acongm-gpt-thread__viewport');
+    await expect(page.locator('.acongm-gpt-msg.is-user')).toContainText('继续', {
+      timeout: 30_000,
+    });
+    await expect(viewport).toContainText('这是第 1 段长回复');
+    await expect(
+      page.locator('.acongm-gpt-thread__viewport .acongm-gpt-thread__footer'),
+    ).toHaveCount(0);
+    await expect(
+      page.locator('.acongm-gpt-thread__footer .acongm-gpt-composer'),
+    ).toBeVisible();
+
+    const metrics = await page.evaluate(() => {
+      const drawer = document.querySelector('.acongm-chat-rd .rc-drawer-content');
+      const thread = document.querySelector('.acongm-chat-rd .acongm-gpt-thread');
+      const viewport = document.querySelector('.acongm-gpt-thread__viewport');
+      const composer = document.querySelector(
+        '.acongm-gpt-thread__footer .acongm-gpt-composer',
+      );
+      const header = document.querySelector('.acongm-chat-shell__header');
+      const composerBox = composer?.getBoundingClientRect();
+      const headerBox = header?.getBoundingClientRect();
+      const drawerBox = drawer?.getBoundingClientRect();
+      return {
+        drawerHeight: drawerBox?.height ?? 0,
+        threadHeight: thread?.getBoundingClientRect().height ?? 0,
+        viewportHeight: viewport?.getBoundingClientRect().height ?? 0,
+        viewportScrollHeight: viewport?.scrollHeight ?? 0,
+        windowHeight: window.innerHeight,
+        composerVisible: Boolean(
+          composerBox &&
+            composerBox.top >= 0 &&
+            composerBox.bottom <= window.innerHeight + 1,
+        ),
+        headerVisible: Boolean(
+          headerBox &&
+            headerBox.top >= 0 &&
+            headerBox.bottom <= window.innerHeight + 1,
+        ),
+      };
+    });
+
+    expect(metrics.drawerHeight).toBeGreaterThan(200);
+    expect(metrics.drawerHeight).toBeLessThanOrEqual(metrics.windowHeight + 1);
+    expect(metrics.threadHeight).toBeLessThanOrEqual(metrics.drawerHeight + 1);
+    expect(metrics.viewportHeight).toBeGreaterThan(80);
+    expect(metrics.viewportScrollHeight).toBeGreaterThan(
+      metrics.viewportHeight + 200,
+    );
+    expect(metrics.composerVisible).toBe(true);
+    expect(metrics.headerVisible).toBe(true);
+
+    await page.screenshot({
+      path: '/opt/cursor/artifacts/portal_long_drawer_rest_no_scroll.png',
+      animations: 'disabled',
+    });
+  });
+
+  test('docs drawer scrolls only the viewport and keeps the composer pinned', async ({
+    page,
+  }) => {
+    await page.goto('/docs/core');
+    await page.getByRole('button', { name: /AI 阅读助手|AI 助手/ }).click();
+    const composerInput = page.locator('.acongm-gpt-composer__input');
+    await expect(composerInput).toBeEnabled({ timeout: 30_000 });
+    await composerInput.fill('hello quality gate');
+    await page.getByTitle('发送').click();
+    await expect(page.getByText('你好，这是测试回复')).toBeVisible({
+      timeout: 30_000,
+    });
+
+    const viewport = page.locator('.acongm-gpt-thread__viewport');
+    const composer = page.locator(
+      '.acongm-gpt-thread__footer .acongm-gpt-composer',
+    );
+    await expect(
+      page.locator('.acongm-gpt-thread__viewport .acongm-gpt-thread__footer'),
+    ).toHaveCount(0);
+
+    await viewport.evaluate((node) => {
+      const spacer = document.createElement('div');
+      spacer.dataset.scrollProbe = '1';
+      spacer.style.height = '1600px';
+      spacer.style.flexShrink = '0';
+      node.prepend(spacer);
+    });
+
+    const before = await composer.boundingBox();
+    expect(before).toBeTruthy();
+    await viewport.evaluate((node) => {
+      node.scrollTop = 900;
+    });
+    const after = await composer.boundingBox();
+    expect(Math.abs((after?.y ?? 0) - (before?.y ?? 0))).toBeLessThan(2);
+    expect(await viewport.evaluate((node) => node.scrollTop)).toBeGreaterThan(
+      100,
+    );
   });
 });

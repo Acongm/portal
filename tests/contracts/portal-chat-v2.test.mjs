@@ -93,3 +93,43 @@ test('User BFF proxies /api/user so getUserInfo works after login', () => {
   assert.match(userBff, /'authorization'/);
   assert.match(userBff, /USER_UPSTREAM_UNREACHABLE/);
 });
+
+test('docs drawer keeps an inner scroll pane and a relative composer', () => {
+  const thread = read('packages/chat-ui/src/thread/AssistantThread.tsx');
+  const css = read('packages/chat-ui/src/styles/chatgpt.css');
+  const drawer = read('packages/chat-ui/src/styles/chat-ui.css');
+  assert.match(
+    thread,
+    /ThreadPrimitive\.Viewport[\s\S]*<\/ThreadPrimitive\.Viewport>\s*<ConversationFooter/,
+  );
+  assert.doesNotMatch(thread, /ThreadPrimitive\.ViewportFooter/);
+  assert.match(css, /\.acongm-gpt-thread__footer\s*\{[\s\S]*position:\s*fixed/);
+  assert.doesNotMatch(
+    css,
+    /\.acongm-gpt-thread__footer\s*\{[^}]*position:\s*sticky/,
+  );
+  assert.match(
+    drawer,
+    /\.acongm-chat-rd \.acongm-gpt-thread\s*\{[\s\S]*overflow:\s*hidden/,
+  );
+  assert.match(
+    drawer,
+    /\.acongm-chat-rd \.acongm-gpt-thread__viewport\s*\{[\s\S]*overflow-y:\s*auto/,
+  );
+  assert.match(
+    drawer,
+    /\.acongm-chat-rd \.acongm-gpt-thread__footer\s*\{[\s\S]*position:\s*relative/,
+  );
+  assert.match(
+    drawer,
+    /\.acongm-chat-rd\.is-desktop[\s\S]*max-height:\s*calc\(100dvh/,
+  );
+  assert.doesNotMatch(
+    drawer,
+    /\.acongm-chat-fullscreen\s*\{[^}]*min-height:\s*100dvh/,
+  );
+  assert.doesNotMatch(
+    drawer,
+    /\.acongm-chat-shell\.is-fullscreen\s*\{[^}]*max-height:\s*none/,
+  );
+});
