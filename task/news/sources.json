@@ -1,0 +1,86 @@
+{
+  "front_end": [
+    {
+      "name": "Chrome Developers Blog RSS",
+      "url": "https://developer.chrome.com/static/blog/feed.xml",
+      "kind": "rss",
+      "notes": "Chrome RSS 有时近期为空，必须配合 web_search 查询 site:developer.chrome.com/blog。"
+    },
+    {
+      "name": "web.dev Blog",
+      "url": "https://web.dev/blog/",
+      "kind": "html_or_search",
+      "notes": "适合 Baseline monthly digest；月初可能尚未发布当月摘要。"
+    },
+    {
+      "name": "WebKit Blog RSS",
+      "url": "https://webkit.org/feed/",
+      "kind": "rss",
+      "notes": "Safari / STP release notes 是前端官方补位高质量来源。"
+    },
+    {
+      "name": "Mozilla Add-ons Blog",
+      "url": "https://blog.mozilla.org/addons/",
+      "kind": "html_or_search",
+      "notes": "Firefox WebExtensions / API 边界变化可作为前端官方来源。"
+    },
+    {
+      "name": "Svelte Blog",
+      "url": "https://svelte.dev/blog",
+      "kind": "html_or_search",
+      "notes": "浏览器平台平静时，可用框架大版本 / migration / 月报作为补位。"
+    },
+    {
+      "name": "Next.js Blog",
+      "url": "https://nextjs.org/blog",
+      "kind": "html_or_search",
+      "notes": "安全发布、大版本 breaking change 优先；不要把小修补写成平台趋势。"
+    }
+  ],
+  "devops": [
+    {
+      "name": "GitHub Changelog RSS",
+      "url": "https://github.blog/changelog/feed/",
+      "kind": "rss",
+      "notes": "GitHub 短更新的 RSS description 通常足够；治理/API/Actions/Copilot 条目可点详情补边界。"
+    },
+    {
+      "name": "Kubernetes Blog RSS",
+      "url": "https://kubernetes.io/feed.xml",
+      "kind": "rss",
+      "notes": "优先选择版本、API、调度、运维治理相关条目。"
+    },
+    {
+      "name": "GitHub Blog Changelog Search",
+      "url": "https://github.blog/changelog/",
+      "kind": "html_or_search",
+      "notes": "RSS 摘要不足时用 browser 或 web_search 补事实边界。"
+    }
+  ],
+  "ai": [
+    {
+      "name": "OpenAI News RSS",
+      "url": "https://openai.com/news/rss.xml",
+      "kind": "rss",
+      "notes": "RSS description 可能与 title/link 串位；遇到不一致必须交叉核对，不要扩写未核实事实。"
+    },
+    {
+      "name": "OpenAI News Search",
+      "url": "https://openai.com/news/",
+      "kind": "html_or_search",
+      "notes": "详情页常被 Cloudflare 拦截；可严格使用官方搜索摘要里的事实边界。"
+    },
+    {
+      "name": "Anthropic News",
+      "url": "https://www.anthropic.com/news",
+      "kind": "html_or_search",
+      "notes": "OpenAI 平静日的关键补充；不要手猜 slug，先从列表页抽 href。"
+    },
+    {
+      "name": "Hugging Face Blog",
+      "url": "https://huggingface.co/blog",
+      "kind": "html_or_search",
+      "notes": "只在官方模型/平台/安全事件高信号时补位。"
+    }
+  ]
+}
