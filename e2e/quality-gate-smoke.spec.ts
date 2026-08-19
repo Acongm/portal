@@ -62,6 +62,64 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
     });
   });
 
+  test('daily-news long replies keep the drawer and composer inside the window', async ({
+    page,
+  }) => {
+    await installQualityGateMocks(page, { longFirstReply: true });
+    await page.goto('/docs/news/daily-news/2026-08-18');
+    await page.getByRole('button', { name: /AI 阅读助手|AI 助手/ }).click();
+    const composerInput = page.locator('.acongm-gpt-composer__input');
+    await expect(composerInput).toBeEnabled({ timeout: 30_000 });
+    await composerInput.fill('继续');
+    await page.getByTitle('发送').click();
+    const viewport = page.locator('.acongm-gpt-thread__viewport');
+    await expect(viewport).toContainText('这是第 1 段长回复', { timeout: 30_000 });
+    await expect(viewport).toContainText('这是第 48 段长回复');
+
+    const metrics = await page.evaluate(() => {
+      const drawer = document.querySelector('.acongm-chat-rd .rc-drawer-content');
+      const thread = document.querySelector('.acongm-chat-rd .acongm-gpt-thread');
+      const viewport = document.querySelector('.acongm-gpt-thread__viewport');
+      const composer = document.querySelector(
+        '.acongm-gpt-thread__footer .acongm-gpt-composer',
+      );
+      const composerBox = composer?.getBoundingClientRect();
+      const drawerBox = drawer?.getBoundingClientRect();
+      return {
+        drawerHeight: drawerBox?.height ?? 0,
+        threadHeight: thread?.getBoundingClientRect().height ?? 0,
+        viewportHeight: viewport?.getBoundingClientRect().height ?? 0,
+        viewportScrollHeight: viewport?.scrollHeight ?? 0,
+        windowHeight: window.innerHeight,
+        composerVisible: Boolean(
+          composerBox &&
+            composerBox.top >= 0 &&
+            composerBox.bottom <= window.innerHeight + 1,
+        ),
+      };
+    });
+
+    expect(metrics.drawerHeight).toBeGreaterThan(200);
+    expect(metrics.drawerHeight).toBeLessThanOrEqual(metrics.windowHeight + 1);
+    expect(metrics.threadHeight).toBeLessThanOrEqual(metrics.drawerHeight + 1);
+    expect(metrics.viewportHeight).toBeGreaterThan(80);
+    expect(metrics.viewportScrollHeight).toBeGreaterThan(
+      metrics.viewportHeight + 200,
+    );
+    expect(metrics.composerVisible).toBe(true);
+
+    const composer = page.locator(
+      '.acongm-gpt-thread__footer .acongm-gpt-composer',
+    );
+    const before = await composer.boundingBox();
+    await viewport.evaluate((node) => {
+      node.scrollTop = 800;
+    });
+    const after = await composer.boundingBox();
+    expect(Math.abs((after?.y ?? 0) - (before?.y ?? 0))).toBeLessThan(2);
+    expect(await viewport.evaluate((node) => node.scrollTop)).toBeGreaterThan(100);
+  });
+
   test('docs drawer scrolls only the viewport and keeps the composer pinned', async ({
     page,
   }) => {

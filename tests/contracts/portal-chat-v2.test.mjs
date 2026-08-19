@@ -102,9 +102,23 @@ test('docs drawer thread keeps composer inside official sticky ViewportFooter', 
   assert.match(thread, /ThreadPrimitive\.ViewportFooter[\s\S]*<Composer /);
   assert.match(thread, /ThreadPrimitive\.ViewportFooter[\s\S]*disclaimer/);
   assert.match(css, /\.acongm-gpt-thread__footer\s*\{[\s\S]*position:\s*sticky/);
+  assert.match(css, /\.acongm-gpt-thread__viewport\s*\{[\s\S]*position:\s*absolute/);
+  assert.match(css, /\.acongm-gpt-thread__viewport\s*\{[\s\S]*inset:\s*0/);
   assert.doesNotMatch(
     css,
     /\.acongm-gpt-thread__footer\s*\{[^}]*position:\s*relative/,
   );
   assert.match(drawer, /\.acongm-chat-rd \.acongm-gpt-thread\s*\{[\s\S]*overflow:\s*hidden/);
+  assert.match(
+    drawer,
+    /\.acongm-chat-rd\.is-desktop[\s\S]*max-height:\s*calc\(100dvh/,
+  );
+  assert.doesNotMatch(
+    drawer,
+    /\.acongm-chat-fullscreen\s*\{[^}]*min-height:\s*100dvh/,
+  );
+  assert.doesNotMatch(
+    drawer,
+    /\.acongm-chat-shell\.is-fullscreen\s*\{[^}]*max-height:\s*none/,
+  );
 });

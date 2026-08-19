@@ -5,6 +5,24 @@ export const MOCK_ANON_KEY = 'mock-anon-key';
 export const MOCK_USER_ID = '00000000-0000-4000-8000-000000000001';
 export const MOCK_ACCESS_TOKEN = 'mock-access-token-quality-gate';
 export const MOCK_CHAT_ID = '11111111-1111-4111-8111-111111111111';
+export const FIRST_ASSISTANT_REPLY = '你好，这是测试回复';
+export const LONG_ASSISTANT_REPLY = Array.from({ length: 48 }, (_, index) => {
+  const n = index + 1;
+  return [
+    `## ${n}. Firefox / Tailwind / GitHub`,
+    '',
+    `这是第 ${n} 段长回复，用来验证文档助手抽屉只滚动消息区。`,
+    '',
+    '```ts',
+    `export const topic${n} = ${n};`,
+    '```',
+    '',
+  ].join('\n');
+}).join('\n');
+
+export type QualityGateMockOptions = {
+  longFirstReply?: boolean;
+};
 
 const MOCK_SESSION = {
   access_token: MOCK_ACCESS_TOKEN,
@@ -74,7 +92,7 @@ function fulfillAuthSession(route: Route) {
   });
 }
 
-function fulfillChats(route: Route) {
+function fulfillChats(route: Route, options: QualityGateMockOptions = {}) {
   const url = new URL(route.request().url());
   const method = route.request().method();
   const pathname = url.pathname.replace(/\/$/, '');
@@ -127,10 +145,20 @@ function fulfillChats(route: Route) {
       })}`,
       '',
       'event: delta',
-      `data: ${JSON.stringify({ type: 'delta', content: '你好，这是' })}`,
+      `data: ${JSON.stringify({
+        type: 'delta',
+        content: options.longFirstReply
+          ? LONG_ASSISTANT_REPLY.slice(0, Math.ceil(LONG_ASSISTANT_REPLY.length / 2))
+          : '你好，这是',
+      })}`,
       '',
       'event: delta',
-      `data: ${JSON.stringify({ type: 'delta', content: '测试回复' })}`,
+      `data: ${JSON.stringify({
+        type: 'delta',
+        content: options.longFirstReply
+          ? LONG_ASSISTANT_REPLY.slice(Math.ceil(LONG_ASSISTANT_REPLY.length / 2))
+          : '测试回复',
+      })}`,
       '',
       'event: persisted',
       `data: ${JSON.stringify({
@@ -179,9 +207,12 @@ function fulfillUser(route: Route) {
 }
 
 /** Intercept same-origin BFF routes and Supabase auth for local #37 browser smoke. */
-export async function installQualityGateMocks(page: Page) {
+export async function installQualityGateMocks(
+  page: Page,
+  options: QualityGateMockOptions = {},
+) {
   await page.route(`${MOCK_SUPABASE_URL}/**`, fulfillSupabaseAuth);
   await page.route('**/api/auth/session', fulfillAuthSession);
-  await page.route('**/api/chats**', fulfillChats);
+  await page.route('**/api/chats**', (route) => fulfillChats(route, options));
   await page.route('**/api/user/**', fulfillUser);
 }
