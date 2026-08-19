@@ -55,6 +55,25 @@ node scripts/migrate-docs.mjs /path/to/vuepress/docs
 node scripts/extract-sidebar.mjs /path/to/vuepress/docs
 ```
 
+## 构建与部署
+
+### 本仓库（portal）→ Vercel
+
+线上站点由 **Vercel** 构建与托管，不是 GitHub Pages。
+
+| 步骤 | 命令 / 配置 |
+|------|-------------|
+| Root Directory | `apps/web`（必填） |
+| 安装 | `cd ../.. && pnpm install` |
+| 构建 | `pnpm build:ai:v1 && pnpm build`（见 `apps/web/vercel.json`） |
+| 推送 `main` | 自动触发 Production 部署 |
+
+推荐在 Vercel 环境变量中设置 `AI_API_KEY`，部署时增量更新 AI 阅读摘要；未设置则使用仓库内已提交的 `summaries-v1.json`。
+
+### 旧仓库（vuepress）→ GitHub Pages
+
+历史站点 [acongm.github.io/vuepress](https://acongm.github.io/vuepress) 仍由 **vuepress 仓库** 的 GitHub Actions + gh-pages 处理，与 portal 构建链无关。内容迁移用 `pnpm migrate:docs`，不再在 portal 跑 VuePress build。
+
 ## Vercel 部署（线上预览）
 
 ### 一键导入
