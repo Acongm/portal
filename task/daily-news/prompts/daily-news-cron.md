@@ -7,6 +7,7 @@
 - 站点地址：`https://www.acongm.com/docs/news/daily-news/{{NEWS_DATE}}`
 - 是否提交并推送：`{{NEWS_COMMIT_PUSH}}`
 - 是否运行 build：`{{NEWS_RUN_BUILD}}`
+- 是否刷新 summaries-v1：`{{NEWS_RUN_SUMMARIES}}`
 - 是否运行 doc-links：`{{NEWS_RUN_DOC_LINKS}}`
 - 是否运行 types:check：`{{NEWS_RUN_TYPES_CHECK}}`
 
@@ -23,8 +24,8 @@
 7. 同步更新：
    - `content/docs/news/daily-news/meta.json`：把 `{{NEWS_DATE}}` 放到 `pages` 中 `index` 后面，保持日期倒序。
    - `apps/web/lib/navbar.ts`：把“每日资讯”链接更新为 `/daily-news/{{NEWS_DATE}}.md`。
-8. 生成文件后至少做结构检查；若 `NEWS_RUN_BUILD=1`，运行 `pnpm build`；若对应开关为 1，运行 `pnpm test:doc-links` / `pnpm types:check`。
-9. 若 `NEWS_COMMIT_PUSH=1`：只提交本次相关文件并推送 `origin/main`。若仓库已有无关脏改动，不要卷入提交。
+8. 生成文件后至少做结构检查；若 `NEWS_RUN_SUMMARIES=1`，先运行 `pnpm build:ai:v1`（增量刷新 `apps/web/public/summaries-v1.json` 与 `module-index.json`，需 `AI_API_KEY`）；若 `NEWS_RUN_BUILD=1`，再运行 `pnpm build`；若对应开关为 1，运行 `pnpm test:doc-links` / `pnpm types:check`。
+9. 若 `NEWS_COMMIT_PUSH=1`：只提交本次相关文件（含日报 MDX、`meta.json`、`navbar.ts`，以及 summaries / module-index 若有更新）并推送 `origin/main`。若仓库已有无关脏改动，不要卷入提交。
 10. 若 `NEWS_COMMIT_PUSH=0`：不要 commit / push，只保留本地文件变更并报告实际生成路径。
 
 ## 推荐文章结构

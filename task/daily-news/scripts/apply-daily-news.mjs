@@ -6,6 +6,7 @@
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 
 const repoRoot = path.resolve(new URL('../../..', import.meta.url).pathname);
 const newsDate = process.env.NEWS_DATE || new Date().toISOString().slice(0, 10);
@@ -51,6 +52,17 @@ if (!dryRun) {
   await fs.writeFile(targetFile, draft.endsWith('\n') ? draft : `${draft}\n`);
   await fs.writeFile(metaFile, `${JSON.stringify(meta, null, 2)}\n`);
   await fs.writeFile(navbarFile, navbar);
+
+  if (process.env.NEWS_RUN_SUMMARIES === '1') {
+    const result = spawnSync('pnpm', ['build:ai:v1'], {
+      cwd: repoRoot,
+      env: process.env,
+      stdio: 'inherit',
+    });
+    if (result.status !== 0) {
+      throw new Error('pnpm build:ai:v1 failed after applying daily news');
+    }
+  }
 }
 
 console.log(JSON.stringify({

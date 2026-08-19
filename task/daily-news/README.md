@@ -36,6 +36,7 @@ NEWS_DRY_RUN=0 NEWS_COMMIT_PUSH=1 NEWS_RUN_BUILD=1 bash task/daily-news/scripts/
 - `NEWS_DRY_RUN`：`1` 只生成 prompt；`0` 调用 Hermes。
 - `NEWS_COMMIT_PUSH`：`1` 允许生成任务提交并推送；`0` 只保留本地变更。
 - `NEWS_RUN_BUILD`：`1` 要求生成后运行 `pnpm build`。
+- `NEWS_RUN_SUMMARIES`：`1` 要求刷新 `summaries-v1.json` / `module-index.json`（需 `AI_API_KEY`）。
 - `NEWS_RUN_DOC_LINKS`：`1` 要求运行 `pnpm test:doc-links`。
 - `NEWS_RUN_TYPES_CHECK`：`1` 要求运行 `pnpm types:check`。
 - `HERMES_CMD`：Hermes CLI 命令，默认 `hermes`。
