@@ -16,11 +16,21 @@ Root Directory 必须为 `apps/web`。构建顺序（见 `apps/web/vercel.json`�
 1. `pnpm build:ai:v1` — 增量刷新 `summaries-v1.json` / `module-index.json`（从线上 fallback + 本地 cache 恢复，有 `AI_API_KEY` 时只分析新/变更文档）
 2. `pnpm build` — Next.js 生产构建
 
-在 Vercel 项目环境变量中配置：
+在 Vercel 项目环境变量中配置（你已配置的三项即可）：
 
-- `AI_API_KEY`（推荐）：部署时增量生成真实摘要
-- `AI_MODEL`（可选，默认 `deepseek-v4-pro`）
+- `AI_API_KEY` — 部署时调用 OpenAI 兼容接口生成摘要
+- `AI_MODEL` — 写入快照 `analysis.model`（未设时默认 `deepseek-v4-pro`）
+- `AI_BASE_URL` — 兼容 API 根地址（脚本会请求 `{AI_BASE_URL}/chat/completions`）
 - `SUMMARIES_FALLBACK_URL`（已在 vercel.json 默认为 `https://www.acongm.com`）
+
+构建日志中应看到：
+
+```text
+[generate-summaries-v1] env model=... baseUrl=... apiKey=set restore=local|remote
+[ai-v1-stats] {"pendingFiles":34,...}
+```
+
+有 Key 时只会对 **Mock 占位摘要** 和 **全新文档** 调用 AI，已有真实摘要会保留（`preserved-until-reanalysis`），避免 Vercel 首次部署重跑 200+ 篇。
 
 未配置 `AI_API_KEY` 时，构建会保留仓库内已提交的 `apps/web/public/summaries-v1.json`，不会清空。
 

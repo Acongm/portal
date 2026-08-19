@@ -12,6 +12,7 @@ import {
   discoverDocuments,
   filePathToLegacyPagePath,
   generateSnapshot,
+  isMockSummary,
   normalizeMarkdown,
   PROMPT_VERSION,
   EXTRACT_VERSION,
@@ -234,11 +235,65 @@ test('preserves existing success summaries when preserveExistingSuccess is enabl
     documents,
     snapshot,
     model: 'deepseek-v4-pro',
-    preserveExistingSuccess: true,
   });
 
   assert.equal(
     plan.actions.filter((action) => action.type === 'preserve').length,
+    1,
+  );
+  assert.equal(plan.aiCalls, 1);
+});
+
+test('with API key only mock placeholders are scheduled for analysis', () => {
+  const { docsDir } = fixtureRoot();
+  const documents = discoverDocuments({ docsDir, registry });
+  const realDoc = documents.find(
+    (doc) => doc.legacyPath === '/daily-news/2026-08-19.md',
+  );
+  const mockDoc = documents.find(
+    (doc) => doc.legacyPath === '/daily-news/2026-08-18.md',
+  );
+  assert.ok(realDoc && mockDoc);
+
+  const snapshot = {
+    version: SNAPSHOT_VERSION,
+    files: {
+      [realDoc.legacyPath]: {
+        sourceHash: 'sha256:old-hash',
+        analysisHash: 'sha256:old-analysis',
+        status: 'success',
+        summary: {
+          summary: '保留的真实摘要',
+          keyPoints: [],
+          keywords: [],
+          techStack: [],
+          difficulty: '中级',
+          contentType: 'daily-news',
+        },
+        processedAt: '2026-06-14T00:00:00.000Z',
+      },
+      [mockDoc.legacyPath]: {
+        sourceHash: mockDoc.sourceHash,
+        analysisHash: 'sha256:mock',
+        status: 'success',
+        summary: createMockSummary(mockDoc.normalizedContent, mockDoc.title),
+        processedAt: '2026-06-14T00:00:00.000Z',
+      },
+    },
+  };
+
+  const { plan } = buildAnalysisPlan({
+    documents,
+    snapshot,
+    model: 'deepseek-v4-pro',
+  });
+
+  assert.equal(
+    plan.actions.filter((action) => action.type === 'preserve').length,
+    1,
+  );
+  assert.equal(
+    plan.actions.filter((action) => action.type === 'analyze').length,
     1,
   );
   assert.equal(plan.aiCalls, 1);

@@ -217,13 +217,20 @@ export function discoverDocuments({
   return documents.sort((a, b) => a.legacyPath.localeCompare(b.legacyPath));
 }
 
+export function isMockSummary(summary) {
+  const text =
+    typeof summary === 'object' && summary !== null
+      ? summary.summary
+      : String(summary || '');
+  return typeof text === 'string' && text.startsWith('Mock 摘要');
+}
+
 export function buildAnalysisPlan({
   documents,
   snapshot,
   model,
   promptVersion = PROMPT_VERSION,
   extractVersion = EXTRACT_VERSION,
-  preserveExistingSuccess = false,
 }) {
   const files = { ...(snapshot?.files ?? {}) };
   const plan = {
@@ -273,7 +280,8 @@ export function buildAnalysisPlan({
     if (
       existing?.status === 'success' &&
       existing.summary &&
-      existing.analysisHash === analysisHash
+      existing.analysisHash === analysisHash &&
+      !isMockSummary(existing.summary)
     ) {
       files[doc.legacyPath] = existing;
       plan.reusedFiles += 1;
@@ -281,15 +289,23 @@ export function buildAnalysisPlan({
       continue;
     }
 
-    if (preserveExistingSuccess && existing?.status === 'success' && existing.summary) {
+    if (
+      existing?.status === 'success' &&
+      existing.summary &&
+      !isMockSummary(existing.summary)
+    ) {
       files[doc.legacyPath] = {
         ...existing,
         sourceHash: doc.sourceHash,
-        reason: 'preserved-until-reanalysis',
+        reason:
+          existing.analysisHash === analysisHash
+            ? existing.reason
+            : 'preserved-until-reanalysis',
       };
       plan.reusedFiles += 1;
       plan.actions.push({
-        type: 'preserve',
+        type:
+          existing.analysisHash === analysisHash ? 'reuse' : 'preserve',
         legacyPath: doc.legacyPath,
       });
       continue;
@@ -455,7 +471,6 @@ export async function generateSnapshot({
     documents,
     snapshot,
     model,
-    preserveExistingSuccess: provider === 'mock' || !apiKey,
   });
 
   const pending = plan.actions.filter((action) => action.type === 'analyze');

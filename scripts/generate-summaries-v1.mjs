@@ -34,6 +34,10 @@ const registry = JSON.parse(
 const restored = await restoreSummariesV1({ root });
 const snapshot = restored.snapshot;
 
+console.log(
+  `[generate-summaries-v1] env model=${model} baseUrl=${baseUrl} apiKey=${apiKey ? 'set' : 'missing'} restore=${restored.source}`,
+);
+
 if (!apiKey && provider !== 'mock' && !dryRun) {
   const hasUsable = Object.values(snapshot.files ?? {}).some(
     (entry) => entry.status === 'success',
