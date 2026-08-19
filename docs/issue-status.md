@@ -14,7 +14,8 @@
 
 ## 下一步（portal 仓）
 
-1. Embedded Chat 非阻塞 — ✅ `490c773`（FAB 始终挂载，composer 仅准备期禁用）
-2. **#37** mock browser smoke — ✅ `e2e/quality-gate-smoke.spec.ts`（登录 chrome / FAB / send）
-3. **#37** 生产 JWT browser — 仍缺 Runtime Secret
-4. **#130** shadcn Avatar/Menu 仍可选，不阻塞登录态
+1. Embedded Chat 非阻塞 — ✅ FAB 始终挂载，composer 仅准备期禁用
+2. **#37** mock browser smoke — ✅ `e2e/quality-gate-smoke.spec.ts`（登录 chrome / FAB / send / restore）
+3. **#37** live JWT browser — ✅ `pnpm test:e2e:live`（注入真实 session，顶栏账号 + FAB）
+4. **#37** 生产 cookie / OAuth browser — 仍待 `*.acongm.com`
+5. **#130** shadcn Avatar/Menu 仍可选，不阻塞登录态
