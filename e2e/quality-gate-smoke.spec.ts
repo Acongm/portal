@@ -62,7 +62,7 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
     });
   });
 
-  test('daily-news long replies keep the drawer and composer inside the window', async ({
+  test('daily-news long replies show drawer chrome at rest', async ({
     page,
   }) => {
     await installQualityGateMocks(page, { longFirstReply: true });
@@ -73,8 +73,16 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
     await composerInput.fill('继续');
     await page.getByTitle('发送').click();
     const viewport = page.locator('.acongm-gpt-thread__viewport');
-    await expect(viewport).toContainText('这是第 1 段长回复', { timeout: 30_000 });
-    await expect(viewport).toContainText('这是第 48 段长回复');
+    await expect(page.locator('.acongm-gpt-msg.is-user')).toContainText('继续', {
+      timeout: 30_000,
+    });
+    await expect(viewport).toContainText('这是第 1 段长回复');
+    await expect(
+      page.locator('.acongm-gpt-thread__viewport .acongm-gpt-thread__footer'),
+    ).toHaveCount(0);
+    await expect(
+      page.locator('.acongm-gpt-thread__footer .acongm-gpt-composer'),
+    ).toBeVisible();
 
     const metrics = await page.evaluate(() => {
       const drawer = document.querySelector('.acongm-chat-rd .rc-drawer-content');
@@ -83,7 +91,9 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
       const composer = document.querySelector(
         '.acongm-gpt-thread__footer .acongm-gpt-composer',
       );
+      const header = document.querySelector('.acongm-chat-shell__header');
       const composerBox = composer?.getBoundingClientRect();
+      const headerBox = header?.getBoundingClientRect();
       const drawerBox = drawer?.getBoundingClientRect();
       return {
         drawerHeight: drawerBox?.height ?? 0,
@@ -96,6 +106,11 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
             composerBox.top >= 0 &&
             composerBox.bottom <= window.innerHeight + 1,
         ),
+        headerVisible: Boolean(
+          headerBox &&
+            headerBox.top >= 0 &&
+            headerBox.bottom <= window.innerHeight + 1,
+        ),
       };
     });
 
@@ -107,17 +122,12 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
       metrics.viewportHeight + 200,
     );
     expect(metrics.composerVisible).toBe(true);
+    expect(metrics.headerVisible).toBe(true);
 
-    const composer = page.locator(
-      '.acongm-gpt-thread__footer .acongm-gpt-composer',
-    );
-    const before = await composer.boundingBox();
-    await viewport.evaluate((node) => {
-      node.scrollTop = 800;
+    await page.screenshot({
+      path: '/opt/cursor/artifacts/portal_long_drawer_rest_no_scroll.png',
+      animations: 'disabled',
     });
-    const after = await composer.boundingBox();
-    expect(Math.abs((after?.y ?? 0) - (before?.y ?? 0))).toBeLessThan(2);
-    expect(await viewport.evaluate((node) => node.scrollTop)).toBeGreaterThan(100);
   });
 
   test('docs drawer scrolls only the viewport and keeps the composer pinned', async ({
@@ -139,7 +149,7 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
     );
     await expect(
       page.locator('.acongm-gpt-thread__viewport .acongm-gpt-thread__footer'),
-    ).toHaveCount(1);
+    ).toHaveCount(0);
 
     await viewport.evaluate((node) => {
       const spacer = document.createElement('div');

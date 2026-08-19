@@ -94,19 +94,20 @@ test('User BFF proxies /api/user so getUserInfo works after login', () => {
   assert.match(userBff, /USER_UPSTREAM_UNREACHABLE/);
 });
 
-test('docs drawer thread keeps composer inside official sticky ViewportFooter', () => {
+test('docs drawer docks the composer outside the scroll viewport', () => {
   const thread = read('packages/chat-ui/src/thread/AssistantThread.tsx');
   const css = read('packages/chat-ui/src/styles/chatgpt.css');
   const drawer = read('packages/chat-ui/src/styles/chat-ui.css');
-  assert.match(thread, /ThreadPrimitive\.ViewportFooter/);
-  assert.match(thread, /ThreadPrimitive\.ViewportFooter[\s\S]*<Composer /);
-  assert.match(thread, /ThreadPrimitive\.ViewportFooter[\s\S]*disclaimer/);
-  assert.match(css, /\.acongm-gpt-thread__footer\s*\{[\s\S]*position:\s*sticky/);
-  assert.match(css, /\.acongm-gpt-thread__viewport\s*\{[\s\S]*position:\s*absolute/);
-  assert.match(css, /\.acongm-gpt-thread__viewport\s*\{[\s\S]*inset:\s*0/);
+  assert.match(
+    thread,
+    /ThreadPrimitive\.Viewport[\s\S]*<\/ThreadPrimitive\.Viewport>\s*<ConversationFooter/,
+  );
+  assert.doesNotMatch(thread, /ThreadPrimitive\.ViewportFooter/);
+  assert.match(css, /\.acongm-gpt-thread__footer\s*\{[\s\S]*flex-shrink:\s*0/);
+  assert.match(css, /\.acongm-gpt-thread__footer\s*\{[\s\S]*position:\s*relative/);
   assert.doesNotMatch(
     css,
-    /\.acongm-gpt-thread__footer\s*\{[^}]*position:\s*relative/,
+    /\.acongm-gpt-thread__footer\s*\{[^}]*position:\s*sticky/,
   );
   assert.match(drawer, /\.acongm-chat-rd \.acongm-gpt-thread\s*\{[\s\S]*overflow:\s*hidden/);
   assert.match(
