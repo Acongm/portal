@@ -7,15 +7,15 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { insertNewsDate, updateNavbarLink, validateDraft } from '../lib/apply.mjs';
+import { assertNewsDate, todayInTimeZone } from '../lib/date.mjs';
 
-const repoRoot = path.resolve(new URL('../../..', import.meta.url).pathname);
-const newsDate = process.env.NEWS_DATE || new Date().toISOString().slice(0, 10);
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+const newsDate = assertNewsDate(process.env.NEWS_DATE || todayInTimeZone());
 const inputFile = process.env.NEWS_INPUT_FILE || process.argv[2];
 const dryRun = process.env.NEWS_APPLY_DRY_RUN === '1';
 
-if (!/^\d{4}-\d{2}-\d{2}$/.test(newsDate)) {
-  throw new Error(`NEWS_DATE must be YYYY-MM-DD, got: ${newsDate}`);
-}
 if (!inputFile) {
   throw new Error('NEWS_INPUT_FILE or argv[2] is required');
 }
@@ -26,27 +26,14 @@ const metaFile = path.join(newsDir, 'meta.json');
 const navbarFile = path.join(repoRoot, 'apps/web/lib/navbar.ts');
 
 const draft = await fs.readFile(path.resolve(repoRoot, inputFile), 'utf8');
-
-function assertIncludes(label, needle) {
-  if (!draft.includes(needle)) throw new Error(`Draft missing ${label}: ${needle}`);
+const checked = validateDraft(draft, newsDate);
+if (!checked.ok) {
+  throw new Error(`Draft failed structure checks: ${checked.errors.join('; ')}`);
 }
-assertIncludes('frontmatter title', 'title:');
-assertIncludes('frontmatter date', `date: ${newsDate}`);
-for (const heading of ['### 前端', '### DevOps', '### AI', '## 简讯']) assertIncludes('heading', heading);
-const sourceCount = (draft.match(/\[来源\]\(https?:\/\//g) || []).length;
-if (sourceCount < 3) throw new Error(`Draft should contain at least 3 [来源](http...) links, got ${sourceCount}`);
 
 const meta = JSON.parse(await fs.readFile(metaFile, 'utf8'));
-const pages = Array.isArray(meta.pages) ? meta.pages.filter((p) => p !== newsDate) : ['index'];
-const indexPos = pages.indexOf('index');
-if (indexPos === -1) pages.unshift('index');
-pages.splice(pages.indexOf('index') + 1, 0, newsDate);
-meta.pages = pages;
-
-let navbar = await fs.readFile(navbarFile, 'utf8');
-const navRe = /docLink\('每日资讯',\s*'\/daily-news\/\d{4}-\d{2}-\d{2}\.md'\)/;
-if (!navRe.test(navbar)) throw new Error('Cannot find 每日资讯 nav link in apps/web/lib/navbar.ts');
-navbar = navbar.replace(navRe, `docLink('每日资讯', '/daily-news/${newsDate}.md')`);
+meta.pages = insertNewsDate(meta.pages, newsDate);
+const navbar = updateNavbarLink(await fs.readFile(navbarFile, 'utf8'), newsDate);
 
 if (!dryRun) {
   await fs.writeFile(targetFile, draft.endsWith('\n') ? draft : `${draft}\n`);
@@ -71,5 +58,5 @@ console.log(JSON.stringify({
   targetFile: path.relative(repoRoot, targetFile),
   metaFile: path.relative(repoRoot, metaFile),
   navbarFile: path.relative(repoRoot, navbarFile),
-  sourceCount,
+  sourceCount: checked.sourceCount,
 }, null, 2));

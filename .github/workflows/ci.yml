@@ -39,7 +39,7 @@ jobs:
         run: pnpm ui:drift
 
       - name: Portal Chat v2 contracts
-        run: pnpm test:portal-chat-v2 && node --test tests/contracts/getuserinfo-auth-button.test.mjs tests/contracts/portal-auth-chrome.test.mjs tests/contracts/portal-browser-smoke.test.mjs && pnpm test:ai-v1 && pnpm test:ai-path
+        run: pnpm test:portal-chat-v2 && node --test tests/contracts/getuserinfo-auth-button.test.mjs tests/contracts/portal-auth-chrome.test.mjs tests/contracts/portal-browser-smoke.test.mjs && pnpm test:ai-v1 && pnpm test:ai-path && pnpm test:daily-news
 
       - name: Typecheck
         run: pnpm types:check

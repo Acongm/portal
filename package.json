@@ -26,6 +26,7 @@
     "sync:module-intros": "node scripts/sync-module-index-intro.mjs",
     "migrate:domains": "node scripts/migrate-to-domains.mjs",
     "test:ai-v1": "node --test scripts/test-ai-summary-v1.mjs",
+    "test:daily-news": "node --test tests/contracts/daily-news.test.mjs",
     "restore:ai-v1": "node scripts/restore-summaries-v1.mjs",
     "build:ai:v1": "node scripts/generate-summaries-v1.mjs && node scripts/generate-module-index.mjs",
     "build:ai:v1:dry-run": "AI_SUMMARY_DRY_RUN=1 node scripts/generate-summaries-v1.mjs"

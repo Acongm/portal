@@ -49,11 +49,14 @@ Root Directory 必须为 `apps/web`。构建顺序（见 `apps/web/vercel.json`�
 - 正文：`content/docs/news/daily-news/YYYY-MM-DD.mdx`
 - 入口：`bash task/daily-news/scripts/generate-daily-news.sh`
 - 落盘草稿：`NEWS_INPUT_FILE=... node task/daily-news/scripts/apply-daily-news.mjs`
-- 正式定时：`NEWS_COMMIT_PUSH=1` 会 push 到 `main`，由 Vercel 自动部署；**不是** GitHub Pages。
+- 正式定时：`NEWS_DRY_RUN=0 NEWS_COMMIT_PUSH=1` 会由包装脚本 push 到 `main`，由 Vercel 自动部署；**不是** GitHub Pages。
+- 当天已在 `HEAD` 中发布时脚本直接跳过；重跑用 `NEWS_FORCE=1`。
+- 默认时区 `Asia/Shanghai`；本地 build 默认关闭（Vercel 会构建）。
+- 相关测试：`pnpm test:daily-news`。
 
 ## Summaries v1（本地 / 日报 / Vercel）
 
 - 生成：`pnpm build:ai:v1`
 - 预览：`pnpm build:ai:v1:dry-run`
 - 产物：`apps/web/public/summaries-v1.json`、`apps/web/public/module-index.json`
-- 日报默认 `NEWS_RUN_SUMMARIES=1`，在 `pnpm build` 前刷新摘要（随后 push → Vercel 构建）
+- 日报默认 `NEWS_RUN_SUMMARIES=1`，由 `apply-daily-news.mjs` 在落盘后刷新摘要（随后 push → Vercel 构建）

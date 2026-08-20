@@ -1,32 +1,30 @@
 你是运行在 Portal / Fumadocs 仓库中的每日资讯生成任务。
 
+包装脚本会在你写完草稿后，负责校验结构、更新 `meta.json` / navbar、按需刷新 summaries，以及按开关提交推送。你只负责写出当天正文。
+
 ## 本次运行参数
 - 仓库：`{{REPO_ROOT}}`
 - 日期：`{{NEWS_DATE}}`
-- 发布目标文件：`content/docs/news/daily-news/{{NEWS_DATE}}.mdx`
+- 草稿输出：`task/daily-news/tmp/{{NEWS_DATE}}.mdx`
+- 正式文件（由包装脚本落盘）：`content/docs/news/daily-news/{{NEWS_DATE}}.mdx`
 - 站点地址：`https://www.acongm.com/docs/news/daily-news/{{NEWS_DATE}}`
-- 是否提交并推送：`{{NEWS_COMMIT_PUSH}}`
-- 是否运行 build：`{{NEWS_RUN_BUILD}}`
-- 是否刷新 summaries-v1：`{{NEWS_RUN_SUMMARIES}}`
-- 是否运行 doc-links：`{{NEWS_RUN_DOC_LINKS}}`
-- 是否运行 types:check：`{{NEWS_RUN_TYPES_CHECK}}`
+- 包装脚本是否提交并推送：`{{NEWS_COMMIT_PUSH}}`
+- 包装脚本是否运行 build：`{{NEWS_RUN_BUILD}}`
+- 包装脚本是否刷新 summaries-v1：`{{NEWS_RUN_SUMMARIES}}`
+- 包装脚本是否运行 doc-links：`{{NEWS_RUN_DOC_LINKS}}`
+- 包装脚本是否运行 types:check：`{{NEWS_RUN_TYPES_CHECK}}`
 
 ## 任务目标
-使用已加载的 `daily-tech-news-vuepress` skill，生成当天的《每日科技动态》网页文章，并写入 Portal / Fumadocs 仓库。
+使用已加载的 `daily-tech-news-vuepress` skill，生成当天的《每日科技动态》网页文章草稿。
 
 ## 硬性要求
 1. 内容必须同时覆盖 **前端 / DevOps / AI** 三类，并尽量均衡。
 2. 优先使用最近 24 小时官方更新；不足时放宽到 72 小时，再不足时补最近 7 天高价值官方信息。
-3. 先读取最近一篇已存在日报，按标题和 `[来源](URL)` 去重，避免重复覆盖上一期主力条目。
+3. 先按下面「去重提示」避开最近一篇已发布日报的标题和 `[来源](URL)`，不要重复覆盖上一期主力条目。
 4. 文案必须是网页文章风格，不能写成会议稿、演讲稿、PPT 备注或口播提纲。
 5. 每条新闻必须有明确 `[来源](URL)`；事实必须严格贴合可核实来源，不得脑补。
-6. 文件写入路径必须是 `content/docs/news/daily-news/{{NEWS_DATE}}.mdx`。
-7. 同步更新：
-   - `content/docs/news/daily-news/meta.json`：把 `{{NEWS_DATE}}` 放到 `pages` 中 `index` 后面，保持日期倒序。
-   - `apps/web/lib/navbar.ts`：把“每日资讯”链接更新为 `/daily-news/{{NEWS_DATE}}.md`。
-8. 生成文件后至少做结构检查；若 `NEWS_RUN_SUMMARIES=1`，先运行 `pnpm build:ai:v1`（增量刷新 `apps/web/public/summaries-v1.json` 与 `module-index.json`，需 `AI_API_KEY`）；若 `NEWS_RUN_BUILD=1`，再运行 `pnpm build`；若对应开关为 1，运行 `pnpm test:doc-links` / `pnpm types:check`。
-9. 若 `NEWS_COMMIT_PUSH=1`：只提交本次相关文件（含日报 MDX、`meta.json`、`navbar.ts`，以及 summaries / module-index 若有更新）并推送 `origin/main`。若仓库已有无关脏改动，不要卷入提交。
-10. 若 `NEWS_COMMIT_PUSH=0`：不要 commit / push，只保留本地文件变更并报告实际生成路径。
+6. 只把完整 MDX 写到 `task/daily-news/tmp/{{NEWS_DATE}}.mdx`。不要改 `meta.json`、`navbar.ts`，不要 commit / push，不要运行 `pnpm build` / `pnpm build:ai:v1`。
+7. frontmatter 必须包含 `title:` 和 `date: {{NEWS_DATE}}`，正文必须包含 `### 前端`、`### DevOps`、`### AI`、`## 简讯`，且至少 3 个 `[来源](https://...)` 链接。
 
 ## 推荐文章结构
 ```mdx
@@ -64,14 +62,18 @@ tags:
 - **AI**：一句话
 ```
 
+## 去重提示
+{{PREVIOUS_HINTS}}
+
 ## 本地来源提示
 下面是 `task/daily-news/sources.json` 中维护的来源清单和轻量抓取提示。它只用于 discovery，不代表可直接写事实；正式写作仍需按 skill 中的抓取/核验策略交叉验证。
 
 {{SOURCE_HINTS}}
 
 ## 最终回复格式
-如果完成生成：
+如果完成草稿：
 
+草稿路径：task/daily-news/tmp/{{NEWS_DATE}}.mdx
 站点地址：https://www.acongm.com/docs/news/daily-news/{{NEWS_DATE}}
 
 新闻简讯：
