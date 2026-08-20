@@ -1,0 +1,18 @@
+{
+  "id": "daily-news",
+  "label": "每日科技资讯",
+  "contentDir": "content/docs/news/daily-news",
+  "filename": "date",
+  "siteBaseUrl": "https://www.acongm.com/docs/news/daily-news",
+  "draftDir": "task/daily-news/tmp",
+  "skill": "daily-tech-news-vuepress",
+  "toolsets": "web,file,skills",
+  "promptTemplate": "prompts/daily-news-cron.md",
+  "sourcesFile": "sources.json",
+  "commitMessage": "docs(daily-news): {{date}} 每日科技资讯",
+  "validation": {
+    "requireDate": true,
+    "requiredHeadings": ["### 前端", "### DevOps", "### AI", "## 简讯"],
+    "minSourceLinks": 3
+  }
+}

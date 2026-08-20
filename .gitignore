@@ -10,3 +10,4 @@ test-results/
 playwright-report/
 blob-report/
 task/daily-news/tmp/
+task/daily-golang/tmp/

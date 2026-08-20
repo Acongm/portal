@@ -44,12 +44,20 @@ Root Directory 必须为 `apps/web`。构建顺序（见 `apps/web/vercel.json`�
 - 仅当用户明确要求 PR 审查时，才使用 `cursor/*` 分支 + Draft PR。
 - 摘要相关改动：跑 `pnpm test:ai-v1`、`pnpm test:ai-path`。
 
-## Daily news (`task/daily-news/`)
+## Daily tasks (`task/`)
 
-- 正文：`content/docs/news/daily-news/YYYY-MM-DD.mdx`
-- 入口：`bash task/daily-news/scripts/generate-daily-news.sh`
-- 落盘草稿：`NEWS_INPUT_FILE=... node task/daily-news/scripts/apply-daily-news.mjs`
-- 正式定时：`NEWS_COMMIT_PUSH=1` 会 push 到 `main`，由 Vercel 自动部署；**不是** GitHub Pages。
+资讯领域支持多种 **每日收集** 系列，共享 `task/_shared/` 框架：
+
+| 任务 | 正文路径 | 入口 |
+|------|----------|------|
+| 科技资讯 | `content/docs/news/daily-news/YYYY-MM-DD.mdx` | `bash task/daily-news/scripts/generate-daily-news.sh` |
+| Go 学习 | `content/docs/news/daily-golang/lesson-NN.mdx` | `bash task/daily-golang/scripts/generate-daily-golang.sh` |
+
+- 标题使用**内容精简标题**，日期/课次写在 frontmatter（禁止 `每日科技动态 - 日期` 模板）
+- 落盘：`DAILY_TASK=... DAILY_INPUT_FILE=... node task/_shared/scripts/apply-daily-content.mjs`
+- 正式定时：`DAILY_DRY_RUN=0 DAILY_COMMIT_PUSH=1`，build/summaries 交给 Vercel（`DAILY_RUN_BUILD=0`）
+
+详见 `task/README.md`。
 
 ## Summaries v1（本地 / 日报 / Vercel）
 

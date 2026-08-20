@@ -1,0 +1,19 @@
+{
+  "id": "daily-golang",
+  "label": "每日 Go 从零学习",
+  "contentDir": "content/docs/news/daily-golang",
+  "filename": "lesson",
+  "lessonPrefix": "lesson-",
+  "siteBaseUrl": "https://www.acongm.com/docs/news/daily-golang",
+  "draftDir": "task/daily-golang/tmp",
+  "skill": null,
+  "toolsets": "file,terminal,skills",
+  "promptTemplate": "prompts/daily-golang-cron.md",
+  "syllabusFile": "syllabus.json",
+  "commitMessage": "docs(daily-golang): {{slug}} {{date}}",
+  "validation": {
+    "requireDate": true,
+    "requiredHeadings": ["## 学习目标", "## 核心概念", "## 代码示例", "## 练习", "## 小结"],
+    "minCodeBlocks": 1
+  }
+}

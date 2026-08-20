@@ -225,14 +225,21 @@
       "accent": "#ec4899",
       "categories": [
         {
-          "title": "阅读",
+          "title": "每日收集",
           "modules": [
             {
               "folder": "daily-news",
               "title": "每日资讯",
-              "description": "技术资讯与阅读摘要",
+              "description": "前端 / DevOps / AI 科技动态",
               "icon": "Newspaper",
               "accent": "#f43f5e"
+            },
+            {
+              "folder": "daily-golang",
+              "title": "Go 从零学习",
+              "description": "按课次推进的 Go 语言教程",
+              "icon": "Code2",
+              "accent": "#0ea5e9"
             }
           ]
         }

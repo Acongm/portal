@@ -1,6 +1,18 @@
 ---
 title: "每日资讯"
-description: "技术资讯与阅读摘要"
+description: "前端 / DevOps / AI 科技动态"
 ---
 
-本模块收录 **每日资讯** 相关笔记与实战记录，请从左侧目录选择具体章节。
+本系列收录 **每日科技资讯**，按日期归档。
+
+## 标题规范
+
+每篇文章使用**内容精简标题**（如 `Firefox 154 原生化布局，CodeQL 覆盖 Vue`），日期写在 frontmatter 的 `date` 字段，不再使用 `每日科技动态 - 日期` 固定格式。
+
+## 定时任务
+
+```bash
+bash task/daily-news/scripts/generate-daily-news.sh
+```
+
+详见 `task/daily-news/README.md`。

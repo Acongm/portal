@@ -1,0 +1,126 @@
+{
+  "title": "Go 从零学习路线",
+  "description": "按天推进的 Go 语言系统学习路径，每天一篇可独立阅读的文章。",
+  "lessons": [
+    {
+      "lesson": 1,
+      "topic": "Go 简介、安装与第一个程序",
+      "objectives": ["了解 Go 的设计目标与适用场景", "安装 Go 工具链并配置 GOPATH/module", "编写并运行 hello world"],
+      "prerequisites": []
+    },
+    {
+      "lesson": 2,
+      "topic": "基本语法、变量与常量",
+      "objectives": ["掌握包声明与 main 函数结构", "理解 var/:= 与基本类型", "使用 const 与 iota"],
+      "prerequisites": ["lesson-01"]
+    },
+    {
+      "lesson": 3,
+      "topic": "控制流：if、for、switch",
+      "objectives": ["熟练使用 if 与简短语句", "掌握 Go 唯一的 for 循环形式", "理解 switch 无 fallthrough 默认行为"],
+      "prerequisites": ["lesson-02"]
+    },
+    {
+      "lesson": 4,
+      "topic": "函数、多返回值与 defer",
+      "objectives": ["定义函数与命名返回值", "理解 defer 执行顺序", "处理简单错误返回"],
+      "prerequisites": ["lesson-03"]
+    },
+    {
+      "lesson": 5,
+      "topic": "数组、切片与 copy/append",
+      "objectives": ["区分数组与切片", "掌握切片底层共享机制", "安全使用 append 与 copy"],
+      "prerequisites": ["lesson-04"]
+    },
+    {
+      "lesson": 6,
+      "topic": "map 与集合操作",
+      "objectives": ["创建与遍历 map", "理解零值与 ok 模式", "避免常见并发误用"],
+      "prerequisites": ["lesson-05"]
+    },
+    {
+      "lesson": 7,
+      "topic": "结构体与方法",
+      "objectives": ["定义结构体与字面量", "值接收者与指针接收者", "为类型添加方法"],
+      "prerequisites": ["lesson-06"]
+    },
+    {
+      "lesson": 8,
+      "topic": "指针与值语义",
+      "objectives": ["理解指针基础", "判断何时传指针", "避免不必要的指针共享"],
+      "prerequisites": ["lesson-07"]
+    },
+    {
+      "lesson": 9,
+      "topic": "接口与多态",
+      "objectives": ["理解隐式接口实现", "使用空接口与类型断言", "编写可测试的小接口"],
+      "prerequisites": ["lesson-08"]
+    },
+    {
+      "lesson": 10,
+      "topic": "错误处理与 errors 包",
+      "objectives": ["掌握 error 接口", "包装与判断错误", "自定义错误类型"],
+      "prerequisites": ["lesson-09"]
+    },
+    {
+      "lesson": 11,
+      "topic": "包、模块与可见性",
+      "objectives": ["组织 go.mod 与模块路径", "理解导出规则", "拆分 internal 包"],
+      "prerequisites": ["lesson-10"]
+    },
+    {
+      "lesson": 12,
+      "topic": "测试基础：testing 与表驱动",
+      "objectives": ["编写 *_test.go", "使用表驱动测试", "理解 go test 常用参数"],
+      "prerequisites": ["lesson-11"]
+    },
+    {
+      "lesson": 13,
+      "topic": "goroutine 入门",
+      "objectives": ["启动 goroutine", "理解并发与并行区别", "避免闭包捕获陷阱"],
+      "prerequisites": ["lesson-12"]
+    },
+    {
+      "lesson": 14,
+      "topic": "channel 与 select",
+      "objectives": ["无缓冲/有缓冲 channel", "使用 select 多路复用", "掌握 done channel 模式"],
+      "prerequisites": ["lesson-13"]
+    },
+    {
+      "lesson": 15,
+      "topic": "sync 包与竞态检测",
+      "objectives": ["使用 Mutex/WaitGroup", "运行 -race 检测", "识别数据竞争场景"],
+      "prerequisites": ["lesson-14"]
+    },
+    {
+      "lesson": 16,
+      "topic": "context 取消与超时",
+      "objectives": ["传递 context.Context", "实现超时与取消", "在 HTTP 处理中使用 context"],
+      "prerequisites": ["lesson-15"]
+    },
+    {
+      "lesson": 17,
+      "topic": "标准库 io 与文件操作",
+      "objectives": ["使用 io.Reader/Writer", "读写文件与 bufio", "处理资源关闭"],
+      "prerequisites": ["lesson-16"]
+    },
+    {
+      "lesson": 18,
+      "topic": "JSON 编解码",
+      "objectives": ["结构体 tag 与 json.Marshal", "处理未知字段", "流式解码大 JSON"],
+      "prerequisites": ["lesson-17"]
+    },
+    {
+      "lesson": 19,
+      "topic": "net/http 构建 API",
+      "objectives": ["编写 Handler 与路由", "读取请求与写响应", "中间件基础"],
+      "prerequisites": ["lesson-18"]
+    },
+    {
+      "lesson": 20,
+      "topic": "项目结构与可维护性",
+      "objectives": ["分层 handler/service/repo", "依赖注入基础", "配置与环境变量"],
+      "prerequisites": ["lesson-19"]
+    }
+  ]
+}

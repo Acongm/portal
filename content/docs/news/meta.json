@@ -4,7 +4,8 @@
   "root": true,
   "pages": [
     "index",
-    "---阅读---",
-    "daily-news"
+    "---每日收集---",
+    "daily-news",
+    "daily-golang"
   ]
 }

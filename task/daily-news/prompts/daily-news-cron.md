@@ -1,18 +1,16 @@
-你是运行在 Portal / Fumadocs 仓库中的每日资讯生成任务。
+你是运行在 Portal / Fumadocs 仓库中的每日科技资讯生成任务。
 
 ## 本次运行参数
 - 仓库：`{{REPO_ROOT}}`
-- 日期：`{{NEWS_DATE}}`
-- 发布目标文件：`content/docs/news/daily-news/{{NEWS_DATE}}.mdx`
-- 站点地址：`https://www.acongm.com/docs/news/daily-news/{{NEWS_DATE}}`
-- 是否提交并推送：`{{NEWS_COMMIT_PUSH}}`
-- 是否运行 build：`{{NEWS_RUN_BUILD}}`
-- 是否刷新 summaries-v1：`{{NEWS_RUN_SUMMARIES}}`
-- 是否运行 doc-links：`{{NEWS_RUN_DOC_LINKS}}`
-- 是否运行 types:check：`{{NEWS_RUN_TYPES_CHECK}}`
+- 日期：`{{DAILY_DATE}}`
+- 草稿文件：`{{DRAFT_FILE}}`（**只写这里，不要直接写正式路径**）
+- 站点目录：`{{SITE_BASE_URL}}`
+- 是否提交并推送：`{{DAILY_COMMIT_PUSH}}`
+- 是否运行 build：`{{DAILY_RUN_BUILD}}`（正式定时建议 0，由 Vercel 构建）
+- 是否刷新 summaries-v1：`{{DAILY_RUN_SUMMARIES}}`（正式定时建议 0，由 Vercel 构建）
 
 ## 任务目标
-使用已加载的 `daily-tech-news-vuepress` skill，生成当天的《每日科技动态》网页文章，并写入 Portal / Fumadocs 仓库。
+使用已加载的 `daily-tech-news-vuepress` skill，生成当天的科技资讯网页文章。
 
 ## 硬性要求
 1. 内容必须同时覆盖 **前端 / DevOps / AI** 三类，并尽量均衡。
@@ -20,27 +18,39 @@
 3. 先读取最近一篇已存在日报，按标题和 `[来源](URL)` 去重，避免重复覆盖上一期主力条目。
 4. 文案必须是网页文章风格，不能写成会议稿、演讲稿、PPT 备注或口播提纲。
 5. 每条新闻必须有明确 `[来源](URL)`；事实必须严格贴合可核实来源，不得脑补。
-6. 文件写入路径必须是 `content/docs/news/daily-news/{{NEWS_DATE}}.mdx`。
-7. 同步更新：
-   - `content/docs/news/daily-news/meta.json`：把 `{{NEWS_DATE}}` 放到 `pages` 中 `index` 后面，保持日期倒序。
-   - `apps/web/lib/navbar.ts`：把“每日资讯”链接更新为 `/daily-news/{{NEWS_DATE}}.md`。
-8. 生成文件后至少做结构检查；若 `NEWS_RUN_SUMMARIES=1`，先运行 `pnpm build:ai:v1`（增量刷新 `apps/web/public/summaries-v1.json` 与 `module-index.json`，需 `AI_API_KEY`）；若 `NEWS_RUN_BUILD=1`，再运行 `pnpm build`；若对应开关为 1，运行 `pnpm test:doc-links` / `pnpm types:check`。
-9. 若 `NEWS_COMMIT_PUSH=1`：只提交本次相关文件（含日报 MDX、`meta.json`、`navbar.ts`，以及 summaries / module-index 若有更新）并推送 `origin/main`。若仓库已有无关脏改动，不要卷入提交。
-10. 若 `NEWS_COMMIT_PUSH=0`：不要 commit / push，只保留本地文件变更并报告实际生成路径。
+6. **只把完整 MDX 写入草稿路径 `{{DRAFT_FILE}}`**。不要修改 `meta.json`、navbar 或其它索引文件；落盘脚本会自动处理。
+7. 若 `DAILY_COMMIT_PUSH=1`：写完草稿后运行  
+   `DAILY_TASK=daily-news DAILY_DATE={{DAILY_DATE}} DAILY_INPUT_FILE={{DRAFT_FILE}} node task/_shared/scripts/apply-daily-content.mjs`  
+   然后只提交本次相关文件并推送 `origin/main`。若仓库已有无关脏改动，不要卷入提交。
+8. 若 `DAILY_COMMIT_PUSH=0`：只保留草稿与 apply 后的本地变更，报告实际路径。
+
+## 标题规范（重要）
+- `title` 必须是**内容导向的精简标题**（15~35 字），概括当天最重要 1~2 条主线。
+- **禁止**使用固定前缀 `每日科技动态 - 日期` 或 `每日科技动态 - YYYY年M月D日`。
+- 日期只写在 frontmatter 的 `date` 字段；页面 H1 与 `title` 保持一致。
+
+好标题示例：
+- `Firefox 154 原生化布局，CodeQL 覆盖 Vue`
+- `OpenAI 零数据保留架构，GitHub 质量趋势看板上线`
+
+差标题示例：
+- `每日科技动态 - 2026年8月20日`
+- `今日科技资讯`
 
 ## 推荐文章结构
 ```mdx
 ---
-title: 每日科技动态 - YYYY年M月D日
+title: <精简内容标题>
 date: YYYY-MM-DD
 tags:
   - 每日资讯
   - 前端
   - DevOps
   - AI
+series: daily-news
 ---
 
-# 每日科技动态
+# <与 title 相同的精简标题>
 
 <今日总观察 2~4 句>
 
@@ -65,14 +75,12 @@ tags:
 ```
 
 ## 本地来源提示
-下面是 `task/daily-news/sources.json` 中维护的来源清单和轻量抓取提示。它只用于 discovery，不代表可直接写事实；正式写作仍需按 skill 中的抓取/核验策略交叉验证。
+下面是维护的来源清单和轻量抓取提示。它只用于 discovery，不代表可直接写事实；正式写作仍需按 skill 中的抓取/核验策略交叉验证。
 
 {{SOURCE_HINTS}}
 
 ## 最终回复格式
-如果完成生成：
-
-站点地址：https://www.acongm.com/docs/news/daily-news/{{NEWS_DATE}}
+站点地址：{{SITE_BASE_URL}}/{{DAILY_DATE}}
 
 新闻简讯：
 - 前端：一句话
