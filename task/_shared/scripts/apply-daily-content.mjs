@@ -80,8 +80,32 @@ if (codeBlockCount < minCodeBlocks) {
 const titleMatch = draft.match(/^title:\s*(.+)$/m);
 const title = titleMatch?.[1]?.trim().replace(/^["']|["']$/g, '') ?? '';
 if (!title) throw new Error('Draft title is empty');
-if (/^每日科技动态\s*[-–—]/.test(title)) {
-  throw new Error('Title must be concise content headline, not "每日科技动态 - ..."');
+
+const genericTitles = new Set([
+  '每日科技动态',
+  '今日科技资讯',
+  '今日科技动态',
+  '每日资讯',
+  '科技资讯',
+]);
+const forbiddenPatterns = config.validation?.forbiddenTitlePatterns ?? [
+  /^每日科技动态\s*[-–—]/,
+  /^每日(科技)?动态$/,
+  /^今日(科技)?资讯$/,
+];
+
+if (genericTitles.has(title)) {
+  throw new Error(`Title must be a concise content headline, not generic "${title}"`);
+}
+for (const pattern of forbiddenPatterns) {
+  const re = pattern instanceof RegExp ? pattern : new RegExp(pattern);
+  if (re.test(title)) {
+    throw new Error(`Title matches forbidden pattern: ${re}`);
+  }
+}
+const minTitleLength = config.validation?.minTitleLength ?? 10;
+if (title.length < minTitleLength) {
+  throw new Error(`Title too short (${title.length} chars); use a concise content headline (>= ${minTitleLength})`);
 }
 
 if (!force && !dryRun) {

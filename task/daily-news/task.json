@@ -13,6 +13,7 @@
   "validation": {
     "requireDate": true,
     "requiredHeadings": ["### 前端", "### DevOps", "### AI", "## 简讯"],
-    "minSourceLinks": 3
+    "minSourceLinks": 3,
+    "minTitleLength": 10
   }
 }

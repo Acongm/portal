@@ -51,7 +51,7 @@ task/_shared/
 | `siteBaseUrl` | 站点 URL 前缀 |
 | `skill` | Hermes skill（可为 null） |
 | `toolsets` | Hermes 工具集 |
-| `validation` | 落盘前结构校验规则 |
+| `validation` | 落盘前结构校验规则（标题长度、禁止泛化标题等） |
 
 ## Prompt 占位符
 
