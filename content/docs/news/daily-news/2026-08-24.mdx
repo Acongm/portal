@@ -1,0 +1,49 @@
+---
+title: 每日科技动态
+date: 2026-08-24
+tags:
+  - 每日资讯
+  - 前端
+  - DevOps
+  - AI
+---
+
+# 每日科技动态
+
+过去 72 小时里，开发平台和模型平台都在把“新能力”继续往默认控制面里收；而前端官方主力更新相对平静，因此本文将前端时间窗放宽到最近 7 天，优先挑选仍会直接影响开发工作流的浏览器条目。Firefox 155 Beta 继续把 CSS、网络与 WebAssembly 能力往稳定发布节奏推进，Safari Technology Preview 250 则集中补齐 CSS、流式网络与资源管理细节；与此同时，GitHub 正把协作入口和质量治理沉到团队日常流程里，OpenAI 也在同步推进企业级隐私承诺与真实业务工作流落地。
+
+## 今日概览
+
+### 前端
+
+**前端今天更值得看的，不是某个单点 API，而是浏览器在继续把工程默认值补完整。** 一边是 Firefox 155 Beta 把 `progress()`、`attr()`、QUIC v2 和 WebAssembly 新提案送进更接近正式发布的位置，另一边是 Safari Technology Preview 250 把 CSS 文本与列表细节、流式上传和资源管理补齐到开发者真正会碰到的实现层。
+
+**Firefox 155 Beta 把 CSS 计算、链接语义和 WebAssembly 能力一起往前推，浏览器发布正在更直接影响工程默认写法。** Mozilla 在 8 月 17 日发布的 [Firefox 155 Beta release notes](https://www.firefox.com/en-US/firefox/155.0beta/releasenotes) 与 [Firefox 155 developer release notes](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/155) 显示，Firefox 155 Beta 已支持 `progress()`、可在任意属性中使用的 `attr()`、`alpha()`、`Promise.allKeyed` / `Promise.allSettledKeyed`、SVG `<a>` 元素的完整 URL 属性，以及 QUIC v2 和 WebAssembly 的 Compact Import Section / Wide Arithmetic 提案。对前端团队来说，这意味着过去需要额外封装、降级兼容或手写计算的一部分样式与运行时能力，正在被更快纳入浏览器默认可用区间，尤其会影响设计 token 计算、SVG 交互和高性能 WebAssembly 应用的实现方式。[来源](https://www.firefox.com/en-US/firefox/155.0beta/releasenotes) / [来源](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/155)
+
+**Safari Technology Preview 250 集中补齐 CSS 细节、流式上传与资源管理，Safari 正在补全现代应用实现边界。** WebKit 在 8 月 13 日发布的 [Safari Technology Preview 250 release notes](https://webkit.org/blog/18191/release-notes-for-safari-technology-preview-250/) 中写到，CSS 新增了 `white-space-trim`、`wrap-inside`、`text-decoration-inset`，并允许在 `::marker` 上使用 `content`；JavaScript 部分加入 Explicit Resource Management（含 `using` / `await using`、`Symbol.dispose`、`DisposableStack`），还支持 `Iterator.zip()` / `Iterator.zipKeyed()`；Networking 则新增 `fetch()` 上传 `ReadableStream` body 的初始支持和 `Request.duplex`。对开发者工作流来说，这类更新的重要性不在“又多了几个属性”，而在 Safari 正逐步补齐现代文本排版、流式请求和资源生命周期管理这些真实工程场景里的缺口。[来源](https://webkit.org/blog/18191/release-notes-for-safari-technology-preview-250/)
+
+### DevOps
+
+**DevOps 今天的主线，是平台把 agent 协作入口和质量治理边界同时收回到原生流程。** 一条更新让团队能直接在 Slack 会话里把讨论变成共享 agent 执行；另一条更新则把 GitHub Code Quality 从计费、报表到运行身份上和 code scanning 正式拆开，方便组织做更清晰的质量治理与成本归因。
+
+**GitHub 把 Copilot agent 接进 Slack，会话线程正在直接变成共享执行面。** GitHub 于 8 月 21 日发布的 [The new GitHub Copilot experience in Slack](https://github.blog/changelog/2026-08-21-the-new-github-copilot-experience-in-slack) 显示，组织现在可以在私聊、频道或线程里通过 `@GitHub` 启动 agent session，让 Copilot 基于对话与授权后的 GitHub 上下文回答代码问题、分诊 bug、创建或更新 issue、在 secure cloud sandbox 中调查失败并实施改动，最后直接发起 PR。官方同时强调，公共预览面向 Copilot Business / Enterprise，使用量仍计入现有 cloud agent 预算，且仓库管理员可以要求对 Copilot app identity 发起的 PR 增加一次人工审批。对平台团队来说，这意味着 Slack 不再只是通知面，而开始变成“讨论、执行、审批”连续发生的协作入口。[来源](https://github.blog/changelog/2026-08-21-the-new-github-copilot-experience-in-slack)
+
+**GitHub 为 Code Quality 单独拆出 Actions 路径，质量扫描开始拥有更清晰的成本与报表边界。** GitHub 在 8 月 20 日发布的 [Separate GitHub Actions path for GitHub Code Quality](https://github.blog/changelog/2026-08-20-separate-github-actions-path-for-github-code-quality) 中说明，Code Quality 的 CodeQL workflow 现在会使用独立的执行路径 `dynamic/github-code-quality/codeql`，并显示 `github-code-quality[bot]` 作为 actor，而不再与 code scanning 共用旧路径和 `github-advanced-security` 身份。官方还特别提醒，如果组织的 usage/billing 报表、仪表盘或脚本仍按旧路径和旧 actor 过滤，需要同步更新。对 DevOps 与平台治理来说，这一步很关键：质量分析终于不再和安全扫描混在同一条统计口径里，后续无论是预算分摊、运行归因还是平台度量都会更清晰。[来源](https://github.blog/changelog/2026-08-20-separate-github-actions-path-for-github-code-quality)
+
+### AI
+
+**AI 今天更值得关注的，是“企业能不能放心接入”与“团队能不能真正用起来”这两条线同时被产品化。** 一条更新把前沿模型的零数据留存承诺继续向企业 API 场景下沉，另一条则给出一个更接近真实组织工作流的采用样本：模型不只是写代码，而是在有人工复核的前提下压缩跨角色项目的交付时间。
+
+**OpenAI 把 Zero Data Retention 扩展到前沿模型，并预告兼容隐私承诺的安全处理路径。** OpenAI 于 8 月 19 日发布的 [Offering Zero Data Retention for frontier models](https://openai.com/index/offering-zero-data-retention-for-frontier-models) 显示，符合条件的 API 客户在启用 Zero Data Retention 后，请求处理完成后其 prompts 和 model responses 不会被保留，客户内容也不会提供给 OpenAI 人员查看，企业数据默认也不会用于训练模型；官方同时预告了 Private Safety Processing，强调会在不破坏 ZDR 承诺的前提下继续加强高级安全防护。对企业接入来说，这条更新的重要性在于：模型能力越向前沿推进，客户越希望隐私、审计和安全机制不是二选一，而是能同时成立。[来源](https://openai.com/index/offering-zero-data-retention-for-frontier-models)
+
+**Stampli 用 Codex 与 ChatGPT Work 把跨角色发布流程从约 243 小时压到 77 小时，AI 开始更像组织内的项目系统。** OpenAI 于 8 月 20 日发布的 [How ChatGPT Work helps Stampli move ideas to market](https://openai.com/index/stampli) 显示，Stampli 的营销团队把产品上下文、会议记录、决策和信息口径连接进共享系统，在保持所有面向客户内容都由人工最终审核和批准的前提下，把一次发布流程从约 243 个建模角色工时压缩到约 77 小时，节省约 166 小时。对企业 AI 工作流来说，这条案例的价值不在“又快了一点”，而在模型已经开始串起跨部门素材、上下文和审批链，像一个真正参与交付的工作系统，而不是单点问答工具。[来源](https://openai.com/index/stampli)
+
+## 今日观察
+
+把今天这六条放在一起看，一个明显趋势是：默认工作流正在重新定义。浏览器侧，新的 CSS、网络和资源管理能力继续进入“可以直接依赖”的区间；平台侧，GitHub 把协作和度量边界拉回原生控制面；模型侧，OpenAI 则把企业最敏感的两件事——数据边界与真实产出——同时往前推。接下来最有价值的，不是知道这些新能力存在，而是谁先把它们接进自己的浏览器兼容策略、协作入口、报表口径与内部审批流。
+
+## 简讯
+
+- **前端**：Firefox 155 Beta 与 Safari Technology Preview 250 同时补齐 CSS、流式网络和运行时细节，前端工程默认值正在继续前移。
+- **DevOps**：GitHub 一边把 Copilot agent 接进 Slack，会话线程直接变成共享执行面；一边把 Code Quality 的运行路径与计费口径从 code scanning 中拆开。
+- **AI**：OpenAI 同时推进前沿模型的零数据留存承诺与真实团队交付案例，企业 AI 落地开始把隐私边界和业务产出一起产品化。
