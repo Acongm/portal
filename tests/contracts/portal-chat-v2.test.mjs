@@ -13,12 +13,20 @@ const adapter = read('packages/chat-ui/src/runtime/createDocChatModelAdapter.ts'
 const runtime = read('packages/chat-ui/src/runtime/DocChatRuntimeProvider.tsx');
 const restore = read('packages/agent-session-sdk/src/chat-v2-restore.ts');
 
-test('Portal guests receive a real Supabase anonymous identity and Chat stays mounted', () => {
-  assert.match(authClient, /client\.auth\.signInAnonymously\(\)/);
-  assert.match(authHooks, /ensureAnonymousSession\(nextClient\)/);
-  assert.match(embed, /useSession\(\{\s*ensureAnonymous: true/);
+test('Portal guests keep a Client ID and create anonymous auth only on first send', () => {
+  assert.match(authClient, /client\.auth\.signInAnonymously\(/);
+  assert.match(authClient, /user_metadata\?\.cid/);
+  assert.match(authHooks, /getOrCreateClientId\(\)/);
+  assert.match(authHooks, /ensureGuestAuth/);
+  assert.doesNotMatch(authHooks, /ensureAnonymousSession\(nextClient\)/);
+  assert.match(embed, /ensureGuestAuth/);
+  assert.match(embed, /prepareAuth/);
   assert.match(embed, /composerDisabled/);
-  assert.match(embed, /const composerDisabled = status === 'restoring' \|\| !session/);
+  assert.match(
+    embed,
+    /const composerDisabled = status === 'restoring' \|\| status === 'error'/,
+  );
+  assert.doesNotMatch(embed, /请先登录后再发送/);
   assert.doesNotMatch(
     embed,
     /if \(authLoading \|\| !session \|\| !chatReady\) return null/,
@@ -45,7 +53,7 @@ test('Portal restores durable history tail-first instead of paging the full tran
 
 test('history restore failures only discard a confirmed stale pointer and otherwise fail closed', () => {
   assert.match(hook, /error instanceof ChatStreamError && error.status === 404/);
-  assert.match(hook, /localStorage\.removeItem\(pointerKey\)/);
+  assert.match(hook, /localStorage\.removeItem\(resolvePointerKey\(userId\)\)/);
   assert.match(hook, /setRestoreError\(/);
   assert.match(hook, /if \(restoreError\)/);
   assert.match(hook, /无法恢复已有会话：/);
@@ -63,7 +71,9 @@ test('Portal lazy-creates a durable chat and never supplies a ChatV1 stream URL'
 });
 
 test('runtime identity stays stable through draft-to-chat promotion but changes across auth uid/page', () => {
-  assert.match(embed, /runtimeKey: userId \? `portal:\$\{userId\}:\$\{pagePath\}`/);
+  assert.match(embed, /function resolvePortalRuntimeKey/);
+  assert.match(embed, /portal:\$\{input\.clientId \|\| 'guest'\}:\$\{input\.pagePath\}/);
+  assert.match(embed, /portal:\$\{input\.userId\}:\$\{input\.pagePath\}/);
   assert.match(runtime, /function seedFingerprint\(/);
   assert.match(runtime, /const seedKey = seedFingerprint\(seedMessages\)/);
 });

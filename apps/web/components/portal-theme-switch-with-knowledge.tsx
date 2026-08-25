@@ -75,7 +75,7 @@ function PortalAccountControl({
 }: {
   iconButtonClass: string;
 }) {
-  const { status, error, retry } = useSession({ ensureAnonymous: true });
+  const { status, error, retry } = useSession();
   const settingsHref = `${getAuthBaseUrl().replace(/\/$/, '')}/account#settings`;
 
   if (status === 'error') {
@@ -97,7 +97,6 @@ function PortalAccountControl({
       variant="icon"
       className={iconButtonClass}
       menu
-      ensureAnonymous
       menuFooter={
         <a
           href={settingsHref}
