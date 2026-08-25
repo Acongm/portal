@@ -35,15 +35,26 @@ export function DocChatEmbed() {
   const pathname = usePathname() || '/';
   const pagePath = toLegacyDocPath(pathname);
   const moduleKey = moduleKeyFromLegacyPath(pagePath);
-  const { session, status, error, retry, accessToken, userId } = useSession({
-    ensureAnonymous: true,
-  });
+  const { status, error, retry, accessToken, userId, ensureGuestAuth } =
+    useSession();
 
   const [title, setTitle] = useState('当前文档');
   const [content, setContent] = useState('');
   const [chips, setChips] = useState<KnowledgeRef[]>([]);
   const articleIndex = usePortalArticleIndex();
   const registry = useMemo(() => getDocModulesRegistry(), []);
+  const pagePointerKey = useCallback(
+    (uid: string) => pointerKey(uid, pagePath),
+    [pagePath],
+  );
+  const prepareAuth = useCallback(async () => {
+    if (userId && accessToken) {
+      return { userId, accessToken };
+    }
+    const next = await ensureGuestAuth();
+    if (!next?.user?.id || !next.access_token) return null;
+    return { userId: next.user.id, accessToken: next.access_token };
+  }, [accessToken, ensureGuestAuth, userId]);
 
   const {
     chatId,
@@ -59,7 +70,7 @@ export function DocChatEmbed() {
     accessToken,
     pagePath,
     moduleKey,
-    pointerKey: userId ? pointerKey(userId, pagePath) : '',
+    pointerKey: pagePointerKey,
     chatsBaseUrl: CHAT_BASE,
     title,
     chips,
@@ -67,6 +78,7 @@ export function DocChatEmbed() {
       surface: 'portal',
       routePath: pathname,
     },
+    prepareAuth,
   });
 
   useEffect(() => {
@@ -137,10 +149,9 @@ export function DocChatEmbed() {
     setChips(next);
   }, []);
 
-  const composerDisabled = status === 'restoring' || !session;
+  const composerDisabled = status === 'restoring' || status === 'error';
   const placeholder = resolveComposerPlaceholder({
     status,
-    hasSession: Boolean(session),
     chatReady,
     restoreError,
   });
@@ -173,13 +184,11 @@ export function DocChatEmbed() {
 
 function resolveComposerPlaceholder(input: {
   status: string;
-  hasSession: boolean;
   chatReady: boolean;
   restoreError: string | null;
 }): string {
   if (input.status === 'restoring') return '正在准备安全会话…';
   if (input.status === 'error') return '访客会话准备失败，请重试或先登录。';
-  if (!input.hasSession) return '请先登录后再发送。';
   if (input.restoreError) return input.restoreError;
   if (!input.chatReady) return '正在加载会话历史…';
   return '有什么可以帮忙的？输入 @ 引用知识…';

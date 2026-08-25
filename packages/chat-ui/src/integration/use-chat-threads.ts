@@ -22,6 +22,8 @@ export type UseChatThreadsOptions = {
   /** Initial selection (e.g. from /t/[id]). */
   initialThreadId?: string | null;
   chatsBaseUrl?: string;
+  /** Create guest auth on first send instead of page view. */
+  prepareAuth?: () => Promise<{ userId: string; accessToken: string } | null>;
 };
 
 export type SeedStatus = 'idle' | 'loading' | 'ready';
@@ -59,6 +61,7 @@ export type UseChatThreadsResult = {
   selectThread: (id: string) => Promise<void>;
   removeThread: (id: string) => Promise<void>;
   clearActive: () => void;
+  touchThread: (chatId: string) => void;
 };
 
 function mergeUniqueChats(
@@ -96,6 +99,7 @@ export function useChatThreads(
     identityKey = null,
     initialThreadId = null,
     chatsBaseUrl = DEFAULT_CHATS_BASE,
+    prepareAuth,
   } = options;
   const [threads, setThreads] = useState<ChatV2Record[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -153,7 +157,11 @@ export function useChatThreads(
   }, [identityKey, initialThreadId]);
 
   const refresh = useCallback(async () => {
-    if (!accessToken || !identityKey) return;
+    if (!accessToken || !identityKey) {
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
     const gen = ++refreshGen.current;
     setError(null);
     setRefreshing(true);
@@ -174,7 +182,10 @@ export function useChatThreads(
   }, [accessToken, identityKey, requestOptions]);
 
   useEffect(() => {
-    if (!accessToken || !identityKey) return;
+    if (!accessToken || !identityKey) {
+      setLoading(false);
+      return;
+    }
     void refresh();
   }, [accessToken, identityKey, refresh]);
 
@@ -303,7 +314,14 @@ export function useChatThreads(
       pagePath?: string;
       preserveSeed?: boolean;
     } = {}) => {
-      if (!accessToken || !identityKey) {
+      let token = accessToken;
+      let key = identityKey;
+      if ((!token || !key) && prepareAuth) {
+        const prepared = await prepareAuth();
+        token = prepared?.accessToken ?? token;
+        key = prepared?.userId ?? key;
+      }
+      if (!token || !key) {
         throw new Error('正在准备安全会话身份，请稍后重试。');
       }
       const chat = await createChatV2(
@@ -312,7 +330,10 @@ export function useChatThreads(
           moduleKey: input.moduleKey,
           pagePath: input.pagePath,
         },
-        requestOptions,
+        {
+          baseUrl: chatsBaseUrl,
+          accessToken: token,
+        },
       );
       setThreads((prev) => [chat, ...prev.filter((item) => item.id !== chat.id)]);
       setActiveThreadId(chat.id);
@@ -323,7 +344,7 @@ export function useChatThreads(
       }
       return chat;
     },
-    [accessToken, identityKey, requestOptions],
+    [accessToken, chatsBaseUrl, identityKey, prepareAuth],
   );
 
   const removeThread = useCallback(
@@ -351,6 +372,33 @@ export function useChatThreads(
     setSeedStatus('idle');
   }, []);
 
+  const touchThread = useCallback(
+    (chatId: string) => {
+      const now = new Date().toISOString();
+      setThreads((prev) => {
+        const found = prev.find((chat) => chat.id === chatId);
+        if (!found) {
+          return [
+            {
+              id: chatId,
+              userId: identityKey || '',
+              title: '新对话',
+              metadata: {},
+              createdAt: now,
+              updatedAt: now,
+            },
+            ...prev,
+          ];
+        }
+        return [
+          { ...found, updatedAt: now },
+          ...prev.filter((chat) => chat.id !== chatId),
+        ];
+      });
+    },
+    [identityKey],
+  );
+
   const activeThread =
     threads.find((chat) => chat.id === activeThreadId) ?? null;
 
@@ -375,5 +423,6 @@ export function useChatThreads(
     selectThread,
     removeThread,
     clearActive,
+    touchThread,
   };
 }
