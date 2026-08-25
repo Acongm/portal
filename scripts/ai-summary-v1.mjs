@@ -1,7 +1,7 @@
 /**
  * summaries-v1 构建期快照核心逻辑（从 VuePress tools/ai-summary-v1.mjs 迁移至 Fumadocs portal）
  */
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
@@ -358,6 +358,62 @@ export function parseSummaryResponse(raw) {
   };
 }
 
+export function buildPortalCiIdentity(env = process.env) {
+  const serviceId = (env.PORTAL_SERVICE_ID || 'portal-ci').trim() || 'portal-ci';
+  const serviceKey = (env.PORTAL_SERVICE_KEY || '').trim();
+  const requestId = randomUUID();
+  const callSource = 'portal:ci:summaries';
+  const headers = {
+    'content-type': 'application/json',
+    'x-call-source': callSource,
+    'x-request-id': requestId,
+    'x-client-id': `svc:${serviceId}`,
+    'user-agent': 'portal-ci/summaries',
+  };
+  if (serviceKey) {
+    headers['x-service-id'] = serviceId;
+    headers['x-service-key'] = serviceKey;
+  }
+  return {
+    headers,
+    requestId,
+    serviceId,
+    callSource,
+    caller: `svc:${serviceId}`,
+  };
+}
+
+function storedSummaryFromProvider(result) {
+  return {
+    summary: result.summary,
+    keyPoints: result.keyPoints,
+    keywords: result.keywords,
+    techStack: result.techStack,
+    difficulty: result.difficulty,
+    contentType: result.contentType,
+  };
+}
+
+function analysisFromProvider(result) {
+  if (!result?.caller && !result?.requestId) return undefined;
+  return {
+    caller: result.caller,
+    callSource: result.callSource,
+    requestId: result.requestId,
+  };
+}
+
+function attachProviderTrace(result, identity, response) {
+  const requestId =
+    response.headers.get('x-request-id')?.trim() || identity.requestId;
+  return {
+    ...result,
+    requestId,
+    caller: identity.caller,
+    callSource: identity.callSource,
+  };
+}
+
 export function createMockSummary(content, title) {
   const preview = content.slice(0, 120).replace(/\s+/g, ' ');
   const label = title || '当前文档';
@@ -390,11 +446,13 @@ export async function callSummaryProvider({
     throw new Error('AI_API_KEY is required for summary generation.');
   }
 
+  const identity = buildPortalCiIdentity();
+
   if (endpoint) {
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        'content-type': 'application/json',
+        ...identity.headers,
         ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {}),
       },
       body: JSON.stringify({
@@ -405,27 +463,39 @@ export async function callSummaryProvider({
     });
     if (!response.ok) {
       const text = await response.text();
-      throw new Error(`Summary API failed (${response.status}): ${text}`);
+      const requestId =
+        response.headers.get('x-request-id')?.trim() || identity.requestId;
+      throw new Error(
+        `Summary API failed (${response.status}) requestId=${requestId}: ${text}`,
+      );
     }
     const json = await response.json();
     if (json.summary && typeof json.summary === 'string') {
-      return {
-        summary: json.summary,
-        keyPoints: json.keyPoints ?? [],
-        keywords: json.keywords ?? [],
-        techStack: json.techStack ?? [],
-        difficulty: json.difficulty ?? '未分级',
-        contentType: json.contentType ?? '综合',
-      };
+      return attachProviderTrace(
+        {
+          summary: json.summary,
+          keyPoints: json.keyPoints ?? [],
+          keywords: json.keywords ?? [],
+          techStack: json.techStack ?? [],
+          difficulty: json.difficulty ?? '未分级',
+          contentType: json.contentType ?? '综合',
+        },
+        identity,
+        response,
+      );
     }
-    return parseSummaryResponse(JSON.stringify(json));
+    return attachProviderTrace(
+      parseSummaryResponse(JSON.stringify(json)),
+      identity,
+      response,
+    );
   }
 
   const url = `${baseUrl.replace(/\/+$/, '')}/chat/completions`;
   const response = await fetch(url, {
     method: 'POST',
     headers: {
-      'content-type': 'application/json',
+      ...identity.headers,
       authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
@@ -443,7 +513,11 @@ export async function callSummaryProvider({
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`AI provider failed (${response.status}): ${text}`);
+    const requestId =
+      response.headers.get('x-request-id')?.trim() || identity.requestId;
+    throw new Error(
+      `AI provider failed (${response.status}) requestId=${requestId}: ${text}`,
+    );
   }
 
   const json = await response.json();
@@ -451,7 +525,7 @@ export async function callSummaryProvider({
   if (!message) {
     throw new Error('AI provider returned empty message.');
   }
-  return parseSummaryResponse(message);
+  return attachProviderTrace(parseSummaryResponse(message), identity, response);
 }
 
 export async function generateSnapshot({
@@ -490,11 +564,13 @@ export async function generateSnapshot({
         });
         const doc = documents.find((item) => item.legacyPath === action.legacyPath);
         const sourceHash = doc?.sourceHash ?? '';
+        const analysis = analysisFromProvider(summary);
         files[action.legacyPath] = {
           sourceHash,
           analysisHash: createAnalysisHash({ sourceHash, model }),
           status: 'success',
-          summary,
+          summary: storedSummaryFromProvider(summary),
+          ...(analysis ? { analysis } : {}),
           processedAt: new Date().toISOString(),
         };
       } catch (error) {

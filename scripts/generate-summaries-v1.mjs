@@ -7,6 +7,8 @@
  * - AI_MODEL：默认 deepseek-v4-pro（与历史快照一致）
  * - AI_PROVIDER：mock 时使用本地 Mock 摘要
  * - AI_SUMMARY_ENDPOINT：可选，直连 /api/ai/summary 类 HTTP 接口
+ * - PORTAL_SERVICE_ID：默认 portal-ci，写入 x-service-id
+ * - PORTAL_SERVICE_KEY：与 API SERVICE_CALLERS=portal-ci:<secret> 配对
  * - AI_SUMMARY_DRY_RUN=1：只打印计划，不调用 AI
  * - AI_SUMMARY_STRICT=1：无 Key 且无可用快照时失败
  * - SUMMARIES_FALLBACK_URL：远程恢复地址（默认 https://www.acongm.com）
@@ -34,8 +36,10 @@ const registry = JSON.parse(
 const restored = await restoreSummariesV1({ root });
 const snapshot = restored.snapshot;
 
+const serviceId = process.env.PORTAL_SERVICE_ID || 'portal-ci';
+const serviceKeySet = Boolean(process.env.PORTAL_SERVICE_KEY);
 console.log(
-  `[generate-summaries-v1] env model=${model} baseUrl=${baseUrl} apiKey=${apiKey ? 'set' : 'missing'} restore=${restored.source}`,
+  `[generate-summaries-v1] env model=${model} baseUrl=${baseUrl} apiKey=${apiKey ? 'set' : 'missing'} restore=${restored.source} caller=svc:${serviceId} serviceKey=${serviceKeySet ? 'set' : 'missing'}`,
 );
 
 if (!apiKey && provider !== 'mock' && !dryRun) {

@@ -1,4 +1,8 @@
 import { NextRequest } from 'next/server';
+import {
+  applyUpstreamCallerHeaders,
+  echoRequestId,
+} from '../../../../../../lib/upstream-caller';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -34,6 +38,7 @@ export async function POST(request: NextRequest) {
   if (!headers.has('accept')) {
     headers.set('accept', 'text/event-stream');
   }
+  const requestId = applyUpstreamCallerHeaders(headers, 'portal:doc-chat');
 
   let upstream: Response;
   try {
@@ -47,9 +52,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'upstream unreachable';
+    const errorHeaders = new Headers();
+    echoRequestId(errorHeaders, requestId);
     return Response.json(
-      { type: 'error', message: `AI 上游不可达：${message}` },
-      { status: 502 },
+      { type: 'error', message: `AI 上游不可达：${message}`, requestId },
+      { status: 502, headers: errorHeaders },
     );
   }
 
@@ -58,6 +65,10 @@ export async function POST(request: NextRequest) {
   if (contentType) responseHeaders.set('content-type', contentType);
   responseHeaders.set('cache-control', 'no-cache, no-transform');
   responseHeaders.set('x-accel-buffering', 'no');
+  echoRequestId(
+    responseHeaders,
+    upstream.headers.get('x-request-id')?.trim() || requestId,
+  );
 
   return new Response(upstream.body, {
     status: upstream.status,

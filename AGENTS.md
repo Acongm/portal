@@ -21,6 +21,8 @@ Root Directory 必须为 `apps/web`。构建顺序（见 `apps/web/vercel.json`�
 - `AI_API_KEY` — 部署时调用 OpenAI 兼容接口生成摘要
 - `AI_MODEL` — 写入快照 `analysis.model`（未设时默认 `deepseek-v4-pro`）
 - `AI_BASE_URL` — 兼容 API 根地址（脚本会请求 `{AI_BASE_URL}/chat/completions`）
+- `PORTAL_SERVICE_ID` — 默认 `portal-ci`，CI 调 AI 时写入 `x-service-id`
+- `PORTAL_SERVICE_KEY` — 与 API 的 `SERVICE_CALLERS=portal-ci:<secret>` 配对；没有 key 时请求只能当 guest 被跟踪，无法作为 service 放行
 - `SUMMARIES_FALLBACK_URL`（已在 vercel.json 默认为 `https://www.acongm.com`）
 
 构建日志中应看到：

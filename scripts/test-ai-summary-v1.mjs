@@ -6,6 +6,8 @@ import test from 'node:test';
 import {
   buildAnalysisPlan,
   buildModuleIndex,
+  buildPortalCiIdentity,
+  callSummaryProvider,
   computeSourceHash,
   createAnalysisHash,
   createMockSummary,
@@ -327,4 +329,72 @@ test('buildModuleIndex groups success summaries by module folder', () => {
   assert.equal(moduleIndex._meta.moduleCount, 1);
   assert.equal(moduleIndex.modules['daily-news'].files.length, 1);
   assert.equal(moduleIndex.modules['daily-news'].files[0].path, '/daily-news/2026-08-19.md');
+});
+
+test('portal CI identity stamps service headers only when a key is present', () => {
+  const withKey = buildPortalCiIdentity({
+    PORTAL_SERVICE_ID: 'portal-ci',
+    PORTAL_SERVICE_KEY: 'ci-secret',
+  });
+  assert.equal(withKey.headers['x-service-id'], 'portal-ci');
+  assert.equal(withKey.headers['x-service-key'], 'ci-secret');
+  assert.equal(withKey.headers['x-call-source'], 'portal:ci:summaries');
+  assert.equal(withKey.headers['x-client-id'], 'svc:portal-ci');
+  assert.equal(withKey.headers['user-agent'], 'portal-ci/summaries');
+  assert.match(withKey.headers['x-request-id'], /^[0-9a-f-]{36}$/);
+
+  const withoutKey = buildPortalCiIdentity({
+    PORTAL_SERVICE_ID: 'portal-ci',
+    PORTAL_SERVICE_KEY: '',
+  });
+  assert.equal(withoutKey.headers['x-service-id'], undefined);
+  assert.equal(withoutKey.headers['x-service-key'], undefined);
+  assert.equal(withoutKey.headers['x-call-source'], 'portal:ci:summaries');
+});
+
+test('callSummaryProvider sends portal CI identity to the summary endpoint', async () => {
+  const previousKey = process.env.PORTAL_SERVICE_KEY;
+  process.env.PORTAL_SERVICE_KEY = 'ci-secret';
+  const calls = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    calls.push({ url, init });
+    return {
+      ok: true,
+      headers: new Headers({ 'x-request-id': 'req-from-api' }),
+      json: async () => ({
+        summary: '服务端摘要',
+        keyPoints: ['a'],
+        keywords: ['b'],
+        techStack: ['ts'],
+        difficulty: '入门',
+        contentType: '概念',
+      }),
+    };
+  };
+
+  try {
+    const result = await callSummaryProvider({
+      title: 'React 16',
+      content: 'Fiber',
+      path: '/react/react16.md',
+      model: 'deepseek-v4-pro',
+      apiKey: 'sk-test',
+      endpoint: 'https://api.acongm.com/api/ai/summary',
+    });
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, 'https://api.acongm.com/api/ai/summary');
+    assert.equal(calls[0].init.headers['x-service-id'], 'portal-ci');
+    assert.equal(calls[0].init.headers['x-service-key'], 'ci-secret');
+    assert.equal(calls[0].init.headers['x-call-source'], 'portal:ci:summaries');
+    assert.equal(result.requestId, 'req-from-api');
+    assert.equal(result.caller, 'svc:portal-ci');
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (previousKey === undefined) {
+      delete process.env.PORTAL_SERVICE_KEY;
+    } else {
+      process.env.PORTAL_SERVICE_KEY = previousKey;
+    }
+  }
 });

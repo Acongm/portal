@@ -88,6 +88,17 @@ test('same-origin chats BFF forwards authorization to the API upstream', () => {
   assert.doesNotMatch(bff, /headers: upstream\.headers/);
 });
 
+test('chats BFF stamps a portal call source and request id without a service key', () => {
+  const stream = read('apps/web/app/api/ai/v1/chat/stream/route.ts');
+  assert.match(bff, /applyUpstreamCallerHeaders\(headers, 'portal:bff:chats'\)/);
+  assert.match(bff, /echoRequestId/);
+  assert.doesNotMatch(bff, /x-service-key/);
+  assert.doesNotMatch(bff, /['"]x-client-id['"]/i);
+  assert.match(stream, /applyUpstreamCallerHeaders\(headers, 'portal:doc-chat'\)/);
+  assert.match(stream, /echoRequestId/);
+  assert.doesNotMatch(stream, /x-service-key/);
+});
+
 test('User BFF proxies /api/user so getUserInfo works after login', () => {
   assert.match(userBff, /https:\/\/api\.acongm\.com\/api\/user/);
   assert.match(userBff, /'authorization'/);
