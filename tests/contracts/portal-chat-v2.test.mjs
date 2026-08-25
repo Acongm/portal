@@ -71,7 +71,9 @@ test('Portal lazy-creates a durable chat and never supplies a ChatV1 stream URL'
 });
 
 test('runtime identity stays stable through draft-to-chat promotion but changes across auth uid/page', () => {
-  assert.match(embed, /runtimeKey: userId \? `portal:\$\{userId\}:\$\{pagePath\}`/);
+  assert.match(embed, /function resolvePortalRuntimeKey/);
+  assert.match(embed, /portal:\$\{input\.clientId \|\| 'guest'\}:\$\{input\.pagePath\}/);
+  assert.match(embed, /portal:\$\{input\.userId\}:\$\{input\.pagePath\}/);
   assert.match(runtime, /function seedFingerprint\(/);
   assert.match(runtime, /const seedKey = seedFingerprint\(seedMessages\)/);
 });

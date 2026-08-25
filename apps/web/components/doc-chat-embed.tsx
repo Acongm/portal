@@ -35,8 +35,16 @@ export function DocChatEmbed() {
   const pathname = usePathname() || '/';
   const pagePath = toLegacyDocPath(pathname);
   const moduleKey = moduleKeyFromLegacyPath(pagePath);
-  const { status, error, retry, accessToken, userId, ensureGuestAuth } =
-    useSession();
+  const {
+    status,
+    error,
+    retry,
+    accessToken,
+    userId,
+    clientId,
+    isAnonymous,
+    ensureGuestAuth,
+  } = useSession();
 
   const [title, setTitle] = useState('当前文档');
   const [content, setContent] = useState('');
@@ -119,7 +127,12 @@ export function DocChatEmbed() {
       accessToken,
       ensureChat,
       onChatPersisted: () => undefined,
-      runtimeKey: userId ? `portal:${userId}:${pagePath}` : `portal:${pagePath}`,
+      runtimeKey: resolvePortalRuntimeKey({
+        pagePath,
+        userId,
+        clientId,
+        isAnonymous,
+      }),
     };
   }, [
     chips,
@@ -131,6 +144,8 @@ export function DocChatEmbed() {
     accessToken,
     ensureChat,
     userId,
+    clientId,
+    isAnonymous,
   ]);
 
   const resolveMentionHits = useCallback(
@@ -180,6 +195,18 @@ export function DocChatEmbed() {
       />
     </>
   );
+}
+
+function resolvePortalRuntimeKey(input: {
+  pagePath: string;
+  userId?: string | null;
+  clientId?: string;
+  isAnonymous: boolean;
+}): string {
+  if (input.userId && !input.isAnonymous) {
+    return `portal:${input.userId}:${input.pagePath}`;
+  }
+  return `portal:${input.clientId || 'guest'}:${input.pagePath}`;
 }
 
 function resolveComposerPlaceholder(input: {
