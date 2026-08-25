@@ -4,6 +4,7 @@
   "installCommand": "cd ../.. && pnpm install",
   "buildCommand": "cd ../.. && pnpm build:ai:v1 && pnpm build",
   "devCommand": "pnpm dev",
+  "regions": ["hkg1"],
   "build": {
     "env": {
       "NODE_VERSION": "22",
