@@ -4,6 +4,7 @@
   "root": true,
   "pages": [
     "index",
-    "lesson-01"
+    "lesson-01",
+    "lesson-02"
   ]
 }

@@ -1,0 +1,206 @@
+---
+title: Go 基本语法、变量与常量
+date: 2026-08-27
+lesson: 2
+tags:
+  - 每日学习
+  - Golang
+  - 基本语法
+  - 变量与常量
+series: daily-golang
+---
+
+# Go 基本语法、变量与常量
+
+上一课我们已经完成了 Go 的安装，并运行了第一个 `hello world` 程序。今天开始正式进入写代码的第一步：看懂 `main` 函数里的语法，并学会在 Go 中声明变量、定义常量。
+
+## 学习目标
+- 看懂一个最小 Go 程序的基本结构
+- 理解 `var` 与 `:=` 的使用场景
+- 认识常见基本类型：字符串、整数、浮点数、布尔值
+- 学会使用 `const` 定义常量，并初步了解 `iota`
+
+## 核心概念
+
+### 1. Go 程序的基本结构
+一个可运行的 Go 程序通常从下面几个部分开始：
+
+- `package main`：声明当前包名是 `main`
+- `import`：导入标准库或其他包
+- `func main()`：程序的入口函数
+
+例如：
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("开始学习 Go")
+}
+```
+
+如果你把 Go 程序想象成一台机器：
+
+- `package main` 是告诉编译器“这是一个可以直接运行的程序”
+- `main()` 就像机器启动时按下的开关
+- `fmt.Println` 则负责把内容打印到终端
+
+### 2. 变量是什么
+变量可以理解成“有名字的盒子”，用来存放会变化的数据。
+
+在 Go 里，最常见的变量声明方式有两种。
+
+#### 使用 `var`
+
+```go
+var name string = "Go"
+var age int = 3
+```
+
+这里：
+
+- `name` 是变量名
+- `string` 是类型
+- `"Go"` 是值
+
+如果已经给出了初始值，Go 往往能自动推断类型，所以也可以写成：
+
+```go
+var name = "Go"
+var age = 3
+```
+
+#### 使用 `:=`
+在函数内部，更常见的写法是：
+
+```go
+name := "Go"
+age := 3
+```
+
+`:=` 会同时完成“声明变量”和“赋值”两件事，代码更短，也更常用。
+
+> 注意：`:=` 只能在函数内部使用，不能直接写在函数外面。
+
+### 3. 基本类型先认识四种
+零基础阶段，先掌握最常见的四类数据：
+
+- `string`：字符串，例如 `"hello"`
+- `int`：整数，例如 `18`
+- `float64`：小数，例如 `3.14`
+- `bool`：布尔值，只有 `true` 和 `false`
+
+示例：
+
+```go
+var language string = "Go"
+var lessons int = 20
+var score float64 = 9.5
+var isBeginner bool = true
+```
+
+Go 是静态类型语言，这意味着每个变量都有明确类型。好处是：编译器能更早发现错误。
+
+### 4. 变量值可以改变
+变量之所以叫变量，是因为它的值可以更新：
+
+```go
+count := 1
+count = 2
+```
+
+但更新时要注意类型一致。例如 `count` 是整数，就不能再赋值成字符串。
+
+### 5. 常量 `const`
+有些值在程序运行过程中不应该变化，这时就用常量。
+
+```go
+const siteName = "Go 从零学习"
+const maxUsers = 100
+```
+
+常量和变量的主要区别是：
+
+- 变量可以修改
+- 常量一旦定义，就不能再次赋值
+
+如果你写出下面的代码，编译器会直接报错：
+
+```go
+const pi = 3.14
+// pi = 3.14159 // 不能修改
+```
+
+### 6. `iota`：一组递增常量
+当你需要定义一组有顺序的常量时，可以使用 `iota`。
+
+```go
+const (
+    Unknown = iota
+    Beginner
+    Intermediate
+    Advanced
+)
+```
+
+它的效果相当于：
+
+- `Unknown = 0`
+- `Beginner = 1`
+- `Intermediate = 2`
+- `Advanced = 3`
+
+现在不用死记它的复杂规则，只需要先记住：**`iota` 很适合表示一组连续编号的常量。**
+
+## 代码示例
+下面这个程序把今天学到的变量、常量、基本类型和 `iota` 串起来。你可以在一个新目录中执行 `go mod init lesson02` 后，把以下内容保存为 `main.go`，再运行 `go run .`。
+
+```go
+package main
+
+import "fmt"
+
+const courseName = "Go 从零学习"
+
+const (
+    LevelBeginner = iota + 1
+    LevelIntermediate
+    LevelAdvanced
+)
+
+func main() {
+    learnerName := "小李"
+    lesson := 2
+    progress := 0.15
+    hasFinishedLesson1 := true
+
+    fmt.Println("课程：", courseName)
+    fmt.Println("学员：", learnerName)
+    fmt.Println("当前课次：", lesson)
+    fmt.Println("学习进度：", progress)
+    fmt.Println("是否完成第 1 课：", hasFinishedLesson1)
+    fmt.Println("等级常量：", LevelBeginner, LevelIntermediate, LevelAdvanced)
+
+    learnerName = "小王"
+    lesson = lesson + 1
+
+    fmt.Println("更新后的学员：", learnerName)
+    fmt.Println("下一课课次：", lesson)
+}
+```
+
+你应该能观察到两件事：
+
+1. 变量 `learnerName`、`lesson` 可以被修改
+2. 常量 `courseName` 和几组等级值只负责提供固定信息
+
+## 练习
+1. 新建一个 `main.go`，定义你的名字、年龄、是否正在学习 Go，并打印出来。
+2. 把一个变量用 `var` 声明，再把另一个变量改写成 `:=` 声明，体会两种写法的区别。
+3. 定义一组表示星期顺序的常量，尝试用 `iota` 生成 `1` 到 `7`。
+4. 故意把 `int` 变量赋值成字符串，观察编译器报错信息，理解 Go 的类型检查。
+
+## 小结
+今天你已经迈出了真正“写 Go 代码”的第一步：看懂了 `package main`、`import` 和 `main()` 的基本结构，也学会了用 `var` 和 `:=` 定义变量。我们还认识了 `string`、`int`、`float64`、`bool` 这些最常用的基础类型，并知道了 `const` 和 `iota` 适合表示固定值与连续编号。下一课我们会继续学习程序如何做判断和循环，也就是 `if`、`for` 和 `switch`。
