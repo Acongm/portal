@@ -2,6 +2,7 @@ import type { ChatModelAdapter, ThreadMessage } from '@assistant-ui/react';
 import {
   deriveTagOptions,
   modelHistory,
+  normalizeComposerText,
   resolveCallSource,
   streamChatMessageV2,
   streamChatV1,
@@ -122,13 +123,14 @@ export function createDocChatModelAdapter(
       } = ctx;
 
       const currentUser = findLastUser(messages);
-      const question = textFromMessage(currentUser?.message).trim();
+      const question = normalizeComposerText(textFromMessage(currentUser?.message));
       if (!currentUser || !question) {
         yield { content: [{ type: 'text', text: '' }] };
         return;
       }
 
       const tagOptions = deriveTagOptions(question);
+      const apiQuestion = tagOptions.promptForApi || question;
       const callSource = resolveCallSource(
         tagOptions.scope,
         tagOptions.enableWebSearch,
@@ -147,7 +149,7 @@ export function createDocChatModelAdapter(
       if (!chatId && ensureChat) {
         chatId = (
           await ensureChat({
-            title: question.replace(/\s+/g, ' ').trim().slice(0, 80) || undefined,
+            title: apiQuestion.replace(/\s+/g, ' ').trim().slice(0, 80) || undefined,
           })
         ).trim();
       }
@@ -156,7 +158,7 @@ export function createDocChatModelAdapter(
         ? await streamChatMessageV2(
             chatId,
             {
-              content: question,
+              content: apiQuestion,
               clientMessageId: currentUser.message.id,
               parentMessageId: parentOfCurrentUser(messages, currentUser.index),
               assistantMessageId: unstable_assistantMessageId,
@@ -206,10 +208,6 @@ export function createDocChatModelAdapter(
         }
       }
 
-      if (!text && thinking) {
-        yield yieldParts(thinking, '');
-        return;
-      }
       if (!text) {
         throw new Error('模型没有返回内容，请重试。');
       }
