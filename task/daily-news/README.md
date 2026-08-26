@@ -20,9 +20,10 @@ DAILY_DRY_RUN=0 DAILY_COMMIT_PUSH=1 bash task/daily-news/scripts/generate-daily-
 
 ## 标题规范
 
-- `title` 与 H1 使用**内容精简标题**（如 `Firefox 154 原生化布局，CodeQL 覆盖 Vue`）
-- 日期只写在 frontmatter `date` 字段
-- 禁止使用 `每日科技动态 - 日期` 固定格式
+- `title` 与 H1 必须包含对应日期，推荐格式：`YYYY-MM-DD｜内容精简标题`
+- 日期仍需写在 frontmatter `date` 字段，便于排序和元数据消费
+- 禁止使用只有栏目名和日期、缺少内容主线的固定格式，例如 `每日科技动态 - YYYY-MM-DD`
+- 示例：`2026-08-27｜Firefox 稳定版更新，GitHub 强化 Copilot 治理`
 
 ## 环境变量
 
