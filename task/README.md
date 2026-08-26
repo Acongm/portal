@@ -7,7 +7,7 @@
 | 任务 | 入口 | 内容目录 |
 |------|------|----------|
 | [daily-news](daily-news/) | `bash task/daily-news/scripts/generate-daily-news.sh` | `content/docs/news/daily-news/` |
-| [daily-golang](daily-golang/) | `bash task/daily-golang/scripts/generate-daily-golang.sh` | `content/docs/news/daily-golang/` |
+| [daily-golang](daily-golang/) | `bash task/daily-golang/scripts/generate-daily-golang.sh` | `content/docs/golang/daily-golang/` |
 
 共享框架见 [_shared/README.md](_shared/README.md)。
 

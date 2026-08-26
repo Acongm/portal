@@ -5,7 +5,6 @@
   "pages": [
     "index",
     "---每日收集---",
-    "daily-news",
-    "daily-golang"
+    "daily-news"
   ]
 }

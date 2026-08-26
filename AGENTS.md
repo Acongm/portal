@@ -53,7 +53,7 @@ Root Directory 必须为 `apps/web`。构建顺序（见 `apps/web/vercel.json`�
 | 任务 | 正文路径 | 入口 |
 |------|----------|------|
 | 科技资讯 | `content/docs/news/daily-news/YYYY-MM-DD.mdx` | `bash task/daily-news/scripts/generate-daily-news.sh` |
-| Go 学习 | `content/docs/news/daily-golang/lesson-NN.mdx` | `bash task/daily-golang/scripts/generate-daily-golang.sh` |
+| Go 学习 | `content/docs/golang/daily-golang/lesson-NN.mdx` | `bash task/daily-golang/scripts/generate-daily-golang.sh` |
 
 - 科技资讯标题使用 `YYYY-MM-DD｜内容精简标题`，同时保留 frontmatter `date`；禁止只有栏目名和日期、缺少内容主线的 `每日科技动态 - 日期` 模板。Go 学习仍用内容/课次导向标题，并把课次元数据写入 frontmatter。
 - 落盘：`DAILY_TASK=... DAILY_INPUT_FILE=... node task/_shared/scripts/apply-daily-content.mjs`

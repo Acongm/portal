@@ -1,0 +1,10 @@
+{
+  "title": "Go 学习",
+  "description": "Go 语言从零学习与实践",
+  "root": true,
+  "pages": [
+    "index",
+    "---系统课程---",
+    "daily-golang"
+  ]
+}

@@ -20,7 +20,8 @@ DAILY_DRY_RUN=0 DAILY_COMMIT_PUSH=1 bash task/daily-golang/scripts/generate-dail
 
 ## 课次与文件命名
 
-- 正文：`content/docs/news/daily-golang/lesson-01.mdx`、`lesson-02.mdx` …
+- 正文：`content/docs/golang/daily-golang/lesson-01.mdx`、`lesson-02.mdx` …
+- 站点地址：`https://www.acongm.com/docs/golang/daily-golang/lesson-NN`
 - 课次由目录中已有文件自动递增，与 `syllabus.json` 的 `lesson` 字段对齐
 - frontmatter：`date`（发布日期）、`lesson`（课次）、`title`（精简主题）
 

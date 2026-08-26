@@ -1,0 +1,9 @@
+{
+  "title": "Go 从零学习",
+  "description": "按课次推进的 Go 语言系统教程",
+  "root": true,
+  "pages": [
+    "index",
+    "lesson-01"
+  ]
+}

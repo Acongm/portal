@@ -1,10 +1,10 @@
 {
   "id": "daily-golang",
   "label": "每日 Go 从零学习",
-  "contentDir": "content/docs/news/daily-golang",
+  "contentDir": "content/docs/golang/daily-golang",
   "filename": "lesson",
   "lessonPrefix": "lesson-",
-  "siteBaseUrl": "https://www.acongm.com/docs/news/daily-golang",
+  "siteBaseUrl": "https://www.acongm.com/docs/golang/daily-golang",
   "draftDir": "task/daily-golang/tmp",
   "skill": null,
   "toolsets": "file,terminal,skills",

@@ -22,7 +22,7 @@
 ## 硬性要求
 1. 只写 **一节课** 的内容，聚焦今日 `topic`，不要贪多。
 2. 若存在 `prerequisites`，在文首用 1~2 句说明与前置章节的衔接。
-3. 先阅读 `content/docs/news/daily-golang/` 下已有文章，保持术语、示例风格一致，避免重复讲解。
+3. 先阅读 `content/docs/golang/daily-golang/` 下已有文章，保持术语、示例风格一致，避免重复讲解；Go 从零学习由独立 Go 学习领域管理，不放在资讯模块下。
 4. 必须包含可运行的 Go 代码示例（`go mod init` 后的完整片段或清晰标注包名）。
 5. **只把完整 MDX 写入 `{{DRAFT_FILE}}`**，不要手改 `meta.json`。
 6. 写完草稿后运行：  
