@@ -1,0 +1,222 @@
+---
+title: Go 控制流入门：if、for 与 switch
+date: 2026-08-28
+lesson: 3
+tags:
+  - 每日学习
+  - Golang
+  - 控制流
+  - if
+  - for
+  - switch
+series: daily-golang
+---
+
+# Go 控制流入门：if、for 与 switch
+
+上一课我们已经学会了用变量保存数据。接下来要解决的新问题是：**程序怎样根据不同情况做判断，或者把同一件事重复执行很多次？** 这就是控制流的作用。
+
+这一课只聚焦三个最基础、也最常用的语法：`if`、`for` 和 `switch`。学完之后，你就能写出“根据分数给出评价”“把 1 到 5 依次打印出来”“根据命令选择不同操作”这类程序。
+
+## 学习目标
+- 理解 `if` 用来做条件判断，并认识“先声明、再判断”的简短语句写法
+- 掌握 Go 中唯一的循环关键字 `for`，会写基础循环与条件循环
+- 理解 `switch` 的分支匹配方式，知道 Go 默认不会自动 `fallthrough`
+- 能把变量、比较运算和控制流组合成一个完整的入门程序
+
+## 核心概念
+
+### 1. `if`：程序先判断，再决定走哪条路
+`if` 的意思可以理解为“如果满足某个条件，就执行这段代码”。
+
+例如：
+
+```go
+score := 85
+
+if score >= 60 {
+    fmt.Println("及格")
+}
+```
+
+这里的判断条件是 `score >= 60`。如果条件成立，就打印“及格”；如果不成立，这段代码就跳过。
+
+你也可以加上 `else`，让程序在条件不成立时执行另一条路径：
+
+```go
+if score >= 60 {
+    fmt.Println("及格")
+} else {
+    fmt.Println("需要继续练习")
+}
+```
+
+如果有多种情况，可以继续写 `else if`：
+
+```go
+if score >= 90 {
+    fmt.Println("优秀")
+} else if score >= 75 {
+    fmt.Println("良好")
+} else if score >= 60 {
+    fmt.Println("及格")
+} else {
+    fmt.Println("未及格")
+}
+```
+
+### 2. `if` 的简短语句
+Go 很常见的一种写法是：**先在 `if` 里声明变量，再立刻判断它。**
+
+```go
+if length := len("gopher"); length > 5 {
+    fmt.Println("字符串比较长")
+}
+```
+
+这行代码可以拆成两部分理解：
+
+1. `length := len("gopher")`：先得到长度
+2. `length > 5`：再根据这个长度做判断
+
+这种写法的好处是变量作用域更小，不容易和外面的变量混在一起。
+
+### 3. Go 里只有一种循环：`for`
+很多语言会有 `for`、`while`、`do while` 多种循环写法，但 Go 把它们统一成了 `for`。
+
+#### 写法一：最常见的计数循环
+
+```go
+for i := 1; i <= 5; i++ {
+    fmt.Println(i)
+}
+```
+
+可以把它理解成：
+
+- `i := 1`：从 1 开始
+- `i <= 5`：只要还不超过 5，就继续循环
+- `i++`：每次循环结束后加 1
+
+#### 写法二：只写条件
+
+```go
+count := 1
+for count <= 3 {
+    fmt.Println("当前 count:", count)
+    count++
+}
+```
+
+这种写法的效果很像其他语言里的 `while`。
+
+#### 写法三：无限循环
+
+```go
+for {
+    fmt.Println("这会一直执行，除非 break")
+    break
+}
+```
+
+零基础阶段先记住：`for` 是 Go 唯一的循环入口，变化只是“里面写多少部分”。
+
+### 4. `switch`：适合多种分支选择
+当判断分支比较多时，连续写很多 `else if` 会变长，这时 `switch` 往往更清楚。
+
+```go
+day := 6
+
+switch day {
+case 1:
+    fmt.Println("周一")
+case 2:
+    fmt.Println("周二")
+case 6, 7:
+    fmt.Println("周末")
+default:
+    fmt.Println("其他日期")
+}
+```
+
+这里有两个初学者很值得注意的点：
+
+- `case 6, 7:` 表示多个值共用同一段逻辑
+- Go 的 `switch` **默认执行一个匹配分支后就结束**，不会像某些语言那样自动继续落到下一个分支
+
+也就是说，下面这段代码匹配到一个分支后，不会继续往下执行别的 `case`。
+
+### 5. 什么叫“默认不会 fallthrough”
+很多新手第一次学 `switch` 时会担心：执行完 `case 2` 会不会继续执行 `case 3`？
+
+在 Go 里，**不会**。这是默认行为，也是 Go 让分支逻辑更安全、可读的一种设计。
+
+所以你可以更放心地把 `switch` 当成“命中一个分支，就执行一个分支”。
+
+## 代码示例
+下面这个程序把 `if`、`for`、`switch` 放进同一个 `main.go`。你可以先在空目录执行：
+
+```bash
+go mod init lesson03
+```
+
+然后创建 `main.go`，写入以下内容，再运行 `go run .`：
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    learnerName := "小李"
+    score := 78
+
+    fmt.Println("欢迎学习 Go 控制流，学员：", learnerName)
+
+    if score >= 90 {
+        fmt.Println("成绩评价：优秀")
+    } else if score >= 75 {
+        fmt.Println("成绩评价：良好")
+    } else if score >= 60 {
+        fmt.Println("成绩评价：及格")
+    } else {
+        fmt.Println("成绩评价：继续加油")
+    }
+
+    fmt.Println("---- 使用 for 打印第 1 到 5 题 ----")
+    for i := 1; i <= 5; i++ {
+        fmt.Println("正在练习第", i, "题")
+    }
+
+    day := 6
+    switch day {
+    case 1:
+        fmt.Println("今天是周一，适合开始新内容")
+    case 2, 3, 4, 5:
+        fmt.Println("今天是工作日，继续稳定学习")
+    case 6, 7:
+        fmt.Println("今天是周末，适合复习和多练习")
+    default:
+        fmt.Println("无效日期")
+    }
+
+    if length := len(learnerName); length >= 2 {
+        fmt.Println("名字长度检查通过，字符数：", length)
+    }
+}
+```
+
+如果运行成功，你会观察到三类输出：
+
+1. 根据 `score` 进入不同的 `if / else if / else` 分支
+2. `for` 循环把 1 到 5 依次打印出来
+3. `switch` 根据 `day` 的值选择对应说明
+
+## 练习
+1. 把示例中的 `score` 改成 `92`、`61`、`45`，观察 `if` 分支输出如何变化。
+2. 用 `for` 循环打印 `10` 到 `1`，做一个简单的倒计时。
+3. 定义一个变量 `command := "start"`，尝试用 `switch` 根据不同命令输出“启动”“停止”“未知命令”。
+4. 把 `if length := len(learnerName); ...` 改成对你自己名字的长度判断，体会简短语句的写法。
+
+## 小结
+今天你已经学会了 Go 里最基础的控制流：`if` 负责判断条件，`for` 负责重复执行，`switch` 负责在多个选项中做清晰分支。还要特别记住两点：一是 Go 里只有一种循环关键字 `for`，二是 `switch` 默认不会自动 `fallthrough`。下一课我们会继续学习函数、多返回值与 `defer`，让程序开始具备“封装动作”和“返回结果”的能力。
