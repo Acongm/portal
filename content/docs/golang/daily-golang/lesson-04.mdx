@@ -1,0 +1,267 @@
+---
+title: Go 函数入门：多返回值与 defer
+date: 2026-08-29
+lesson: 4
+tags:
+  - 每日学习
+  - Golang
+  - 函数
+  - 多返回值
+  - defer
+series: daily-golang
+---
+
+# Go 函数入门：多返回值与 defer
+
+上一课我们已经学会了用 `if`、`for` 和 `switch` 控制程序流程。接下来要解决的新问题是：**如果一段逻辑要反复使用，怎样把它单独封装起来？如果一个操作既要给结果，又要告诉我们是否出错，又该怎么写？**
+
+这就是函数要解决的事情。今天这一课只聚焦三个关键点：定义函数、理解 Go 很常见的多返回值，以及认识 `defer` 在“先登记、后收尾”场景中的作用。
+
+## 学习目标
+- 理解函数的作用，学会声明参数和返回值
+- 认识 Go 的多返回值写法，知道它为什么常用于“结果 + 错误”
+- 初步了解命名返回值，能读懂基础示例
+- 理解 `defer` 的执行时机与“后进先出”的顺序
+
+## 核心概念
+
+### 1. 函数是什么
+函数可以理解成“给一段动作起名字”。
+
+比如，“计算两个数的和”这件事如果要反复做，就没必要每次都手写一遍加法逻辑，而是可以写成一个函数：
+
+```go
+func add(a int, b int) int {
+    return a + b
+}
+```
+
+这段代码可以拆成四部分理解：
+
+- `func`：表示要定义一个函数
+- `add`：函数名
+- `(a int, b int)`：输入参数
+- `int`：返回值类型
+
+调用时这样写：
+
+```go
+result := add(3, 5)
+```
+
+你可以把函数想象成一个小工具：给它输入，它帮你完成动作，然后把结果交回来。
+
+### 2. 返回值不一定只有一个
+很多语言里的函数通常只返回一个值，但 Go 很常见的一种写法是：**一个函数同时返回多个值。**
+
+例如：
+
+```go
+func divide(a int, b int) (int, bool) {
+    if b == 0 {
+        return 0, false
+    }
+
+    return a / b, true
+}
+```
+
+这里返回了两个值：
+
+- 第一个值是计算结果
+- 第二个值是这次计算是否成功
+
+调用时：
+
+```go
+result, ok := divide(10, 2)
+```
+
+如果你暂时用不到某个返回值，可以用下划线 `_` 忽略：
+
+```go
+result, _ := divide(10, 2)
+```
+
+这也是 Go 的一个常见风格：**不把额外状态藏起来，而是明确地返回出来。**
+
+### 3. 为什么 Go 经常写“结果 + 错误”
+在 Go 里，函数非常常见的一种返回形式是：
+
+```go
+value, err := someFunc()
+```
+
+意思是：
+
+- `value` 保存真正想要的数据
+- `err` 表示执行过程中有没有问题
+
+你现在还没正式学习错误处理细节，但今天先建立一个重要直觉：**Go 不喜欢把失败情况默默吞掉，而是要求你正面检查它。**
+
+例如：
+
+```go
+func getGreeting(name string) (string, error) {
+    if name == "" {
+        return "", errors.New("名字不能为空")
+    }
+
+    return "你好，" + name, nil
+}
+```
+
+调用后通常会先判断 `err`：
+
+```go
+message, err := getGreeting("小李")
+if err != nil {
+    fmt.Println("出错了：", err)
+    return
+}
+
+fmt.Println(message)
+```
+
+这里先不用死记所有错误处理写法，只要先熟悉“多返回值经常拿来返回错误”这个事实。
+
+### 4. 命名返回值：先认识，不必滥用
+Go 还支持给返回值直接起名字：
+
+```go
+func rectangleStats(width int, height int) (area int, perimeter int) {
+    area = width * height
+    perimeter = 2 * (width + height)
+    return
+}
+```
+
+这里的 `area` 和 `perimeter` 已经在函数签名里定义好了，所以函数体里可以直接给它们赋值，最后只写一个 `return`。
+
+这种写法在短函数里还算直观，但如果函数很长，反而可能让代码不够清楚。零基础阶段先做到两点就够了：
+
+- 能读懂命名返回值
+- 优先写清楚、直接的 `return 值1, 值2`
+
+### 5. `defer`：先登记，函数结束前再执行
+`defer` 可以理解成“先把这件收尾工作记下来，等函数快结束时再做”。
+
+最常见的使用场景是资源关闭、解锁、打印结束日志。
+
+例如：
+
+```go
+func showLesson() {
+    fmt.Println("开始上课")
+    defer fmt.Println("课程结束，准备收尾")
+    fmt.Println("正在讲解函数")
+}
+```
+
+执行顺序并不是从上到下直接打印三句，而是：
+
+1. 打印“开始上课”
+2. 遇到 `defer`，先登记起来，不立即执行
+3. 打印“正在讲解函数”
+4. 函数结束前，再执行 defer 的内容
+
+所以最终输出是：
+
+- 开始上课
+- 正在讲解函数
+- 课程结束，准备收尾
+
+### 6. 多个 `defer` 按“后进先出”执行
+如果一个函数里写了多个 `defer`，执行顺序是**后进先出**，也就是最后登记的，最先执行。
+
+```go
+func demo() {
+    defer fmt.Println("第一个 defer")
+    defer fmt.Println("第二个 defer")
+    fmt.Println("函数主体")
+}
+```
+
+输出顺序会是：
+
+1. 函数主体
+2. 第二个 defer
+3. 第一个 defer
+
+你可以把它想象成叠盘子：最后放上去的盘子，最先拿下来。
+
+## 代码示例
+下面这个程序把“普通函数”“多返回值”“结果 + 错误”“defer 收尾”放在一起。你可以先在一个新目录执行：
+
+```bash
+go mod init lesson04
+```
+
+然后创建 `main.go`，写入以下内容，再运行 `go run .`：
+
+```go
+package main
+
+import (
+    "errors"
+    "fmt"
+)
+
+func add(a int, b int) int {
+    return a + b
+}
+
+func divide(a int, b int) (int, error) {
+    if b == 0 {
+        return 0, errors.New("除数不能为 0")
+    }
+
+    return a / b, nil
+}
+
+func printStudySummary(name string, completed int) {
+    fmt.Println("开始生成学习总结")
+    defer fmt.Println("学习总结输出完成")
+
+    total := add(completed, 1)
+    fmt.Println("学员：", name)
+    fmt.Println("完成课次（含今天）：", total)
+
+    average, err := divide(10, completed)
+    if err != nil {
+        fmt.Println("计算平均练习数失败：", err)
+        return
+    }
+
+    fmt.Println("假设平均每课练习数：", average)
+}
+
+func main() {
+    printStudySummary("小李", 4)
+
+    result, err := divide(12, 3)
+    if err != nil {
+        fmt.Println("计算失败：", err)
+        return
+    }
+
+    fmt.Println("12 / 3 =", result)
+}
+```
+
+如果运行成功，你会观察到几件事：
+
+1. `add` 只负责一件小事：把两个整数相加
+2. `divide` 同时返回结果和错误信息
+3. `printStudySummary` 中的 `defer` 会在函数结束前执行
+4. 即使中途 `return`，已经登记的 `defer` 仍然会执行
+
+## 练习
+1. 自己写一个 `subtract(a, b int) int` 函数，并在 `main()` 中调用它。
+2. 把示例里的 `divide(12, 3)` 改成 `divide(12, 0)`，观察错误分支会输出什么。
+3. 写一个函数 `getFullName(firstName, lastName string) string`，返回完整姓名。
+4. 在一个函数里连续写两个 `defer`，亲自验证它们是不是按照“后进先出”执行。
+5. 尝试阅读并解释：为什么 `printStudySummary` 里即使提前 `return`，`defer fmt.Println("学习总结输出完成")` 还是会打印？
+
+## 小结
+今天你已经迈出了从“写零散语句”到“封装可复用动作”的关键一步：学会了如何定义函数、传入参数和返回结果，也认识了 Go 很有代表性的多返回值写法。你还知道了 `defer` 适合处理函数结束前的收尾工作，并且多个 `defer` 会按后进先出的顺序执行。下一课我们会继续学习数组、切片与 `append` / `copy`，开始处理一组数据，而不只是单个变量。
