@@ -17,7 +17,7 @@
     "ui:drift": "node scripts/check-ui-drift.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:portal-chat-v2": "node --test tests/contracts/portal-chat-v2.test.mjs",
+    "test:portal-chat-v2": "node --experimental-strip-types --test tests/contracts/portal-chat-v2.test.mjs tests/contracts/empty-thinking.test.mjs",
     "test:ai-path": "node scripts/test-ai-chat-path.mjs",
     "test:doc-links": "node scripts/test-doc-links.mjs",
     "fix:doc-links": "node scripts/fix-doc-internal-links.mjs",
