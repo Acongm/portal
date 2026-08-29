@@ -3,8 +3,10 @@ export type ThinkSplitState = {
   inThink: boolean;
 };
 
-const OPEN_RE = /<\s*think(?:ing)?\s*>|◁think▷/i;
-const CLOSE_RE = /<\s*\/\s*think(?:ing)?\s*>|◁\/think▷/i;
+const OPEN_RE =
+  /<\s*(?:think(?:ing)?|redacted_thinking)\s*>|◁think▷/i;
+const CLOSE_RE =
+  /<\s*\/\s*(?:think(?:ing)?|redacted_thinking)\s*>|◁\/think▷/i;
 
 function firstMatch(
   value: string,

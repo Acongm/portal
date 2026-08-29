@@ -33,16 +33,12 @@ function toUiMessages(messages: readonly ThreadMessage[]): ChatUiMessage[] {
     }));
 }
 
-function yieldParts(
-  thinking: string,
-  text: string,
-  enableThinking: boolean,
-) {
+function yieldParts(thinking: string, text: string) {
   const content: Array<
     { type: 'reasoning'; text: string } | { type: 'text'; text: string }
   > = [];
 
-  if (enableThinking || thinking) {
+  if (thinking.trim()) {
     content.push({ type: 'reasoning', text: thinking });
   }
   if (text) {
@@ -206,20 +202,16 @@ export function createDocChatModelAdapter(
       let text = '';
       const thinkState = createThinkSplitState();
 
-      if (enableThinking) {
-        yield yieldParts('', '', enableThinking);
-      }
-
       for await (const event of events) {
         if (event.type === 'thinking') {
           thinking += event.content || '';
-          yield yieldParts(thinking, text, enableThinking);
+          yield yieldParts(thinking, text);
         }
         if (event.type === 'delta') {
           const split = splitThinkDelta(event.content || '', thinkState);
           thinking += split.thinking;
           text += split.text;
-          yield yieldParts(thinking, text, enableThinking);
+          yield yieldParts(thinking, text);
         }
         if (event.type === 'persisted' && 'chatId' in event && event.chatId) {
           onChatPersisted?.(event.chatId);
@@ -234,11 +226,9 @@ export function createDocChatModelAdapter(
       const leftover = flushThinkSplit(thinkState);
       thinking += leftover.thinking;
       text += leftover.text;
-      if (leftover.thinking || leftover.text) {
-        yield yieldParts(thinking, text, enableThinking);
-      }
+      yield yieldParts(thinking, text);
 
-      if (!text) {
+      if (!text.trim()) {
         throw new Error('模型没有返回内容，请重试。');
       }
     },

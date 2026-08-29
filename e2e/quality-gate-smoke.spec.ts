@@ -62,6 +62,33 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
     });
   });
 
+  test('docs drawer hides empty reasoning panel when model returns no thinking', async ({
+    page,
+  }) => {
+    await page.goto('/docs/golang/daily-golang/lesson-01');
+
+    await page.getByRole('button', { name: /AI 阅读助手|AI 助手/ }).click();
+    const composer = page.locator('.acongm-gpt-composer__input');
+    await expect(composer).toBeEnabled({ timeout: 30_000 });
+
+    await composer.fill('如何理解这里的 fmt');
+    await page.getByTitle('发送').click();
+
+    await expect(page.getByText('你好，这是测试回复')).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(
+      page.getByText('模型未返回推理内容'),
+    ).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '思考过程' })).toHaveCount(0);
+
+    if (process.env.WALKTHROUGH_ARTIFACTS) {
+      await page.screenshot({
+        path: '/opt/cursor/artifacts/screenshots/portal-chat-no-thinking-fix.png',
+      });
+    }
+  });
+
   test('daily-news long replies show drawer chrome at rest', async ({
     page,
   }) => {
