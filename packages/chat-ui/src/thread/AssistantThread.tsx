@@ -75,7 +75,7 @@ function ReasoningPanel({
     if (text.length > 0) setOpen(true);
   }, [text.length]);
 
-  if (!enableThinking && !text && !running) return null;
+  if (!text.trim() && !running) return null;
 
   const shown = running || open;
 
@@ -97,12 +97,7 @@ function ReasoningPanel({
       </button>
       {shown ? (
         <div className="acongm-gpt-reasoning__body" aria-busy={running}>
-          <pre className="acongm-gpt-reasoning__text">
-            {text ||
-              (running
-                ? ''
-                : '模型未返回推理内容。若持续为空，当前模型可能未输出 reasoning / <think>。')}
-          </pre>
+          <pre className="acongm-gpt-reasoning__text">{text}</pre>
         </div>
       ) : null}
     </div>
@@ -120,7 +115,13 @@ function ReasoningPart() {
 }
 
 function ReasoningFallback() {
-  return <ReasoningPanel text="" running={false} />;
+  const { enableThinking } = useDocChatConfig();
+  if (!enableThinking) return null;
+  return (
+    <AuiIf condition={(state) => state.message.status?.type === 'running'}>
+      <ReasoningPanel text="" running={true} />
+    </AuiIf>
+  );
 }
 
 function UserMessage() {
