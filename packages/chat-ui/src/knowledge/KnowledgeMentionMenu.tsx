@@ -37,12 +37,8 @@ function titleForSource(source: KnowledgePickerSource): string {
   }
 }
 
-function readComposerTrigger(source: KnowledgePickerSource): DOMRect | null {
-  const preferred =
-    source === 'plus'
-      ? document.querySelector('.acongm-gpt-composer__plus')
-      : document.querySelector('.acongm-gpt-composer');
-  const el = preferred ?? document.querySelector('.acongm-gpt-composer');
+function readComposerTrigger(): DOMRect | null {
+  const el = document.querySelector('.acongm-gpt-composer');
   return el instanceof HTMLElement ? el.getBoundingClientRect() : null;
 }
 
@@ -65,7 +61,7 @@ export function KnowledgeMentionMenu({
   const updatePlacement = useCallback(() => {
     const trigger = anchor
       ? { top: anchor.top, left: anchor.left, width: 1, height: 1 }
-      : readComposerTrigger(source);
+      : readComposerTrigger();
     if (!trigger) return;
     const panel = panelRef.current?.getBoundingClientRect();
     const next = placeFixedMenu({
@@ -80,7 +76,7 @@ export function KnowledgeMentionMenu({
     });
     setCoords({ top: next.top, left: next.left });
     setPlaced(true);
-  }, [anchor, source]);
+  }, [anchor]);
 
   useLayoutEffect(() => {
     if (!open) {

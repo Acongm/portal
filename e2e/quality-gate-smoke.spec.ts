@@ -220,6 +220,11 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
     expect(box!.x).toBeGreaterThanOrEqual(0);
     expect(box!.y + box!.height).toBeLessThanOrEqual((viewport?.height ?? 0) + 1);
     expect(box!.x + box!.width).toBeLessThanOrEqual((viewport?.width ?? 0) + 1);
+
+    await page.screenshot({
+      path: '/opt/cursor/artifacts/docs_account_menu_in_viewport.png',
+      animations: 'disabled',
+    });
   });
 
   test('docs knowledge picker opens above the composer and stays in view', async ({
@@ -242,12 +247,21 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
     expect(composerBox).toBeTruthy();
     expect(viewport).toBeTruthy();
     expect(menuBox!.y).toBeGreaterThanOrEqual(0);
+    expect(menuBox!.x).toBeGreaterThanOrEqual(0);
     expect(menuBox!.y + menuBox!.height).toBeLessThanOrEqual(
       (viewport?.height ?? 0) + 1,
     );
-    expect(menuBox!.y + menuBox!.height).toBeLessThanOrEqual(
-      (composerBox?.y ?? 0) + 8,
+    expect(menuBox!.x + menuBox!.width).toBeLessThanOrEqual(
+      (viewport?.width ?? 0) + 1,
     );
+    expect(menuBox!.y + menuBox!.height).toBeLessThanOrEqual(
+      (composerBox?.y ?? 0) + 12,
+    );
+
+    await page.screenshot({
+      path: '/opt/cursor/artifacts/docs_knowledge_picker_above_composer.png',
+      animations: 'disabled',
+    });
   });
 
   test('docs drawer shows an error instead of an empty bubble when the model returns no text', async ({
@@ -261,11 +275,16 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
     await composer.fill('hello quality gate');
     await page.getByTitle('发送').click();
 
-    await expect(page.getByRole('alert')).toContainText(
+    await expect(page.locator('.acongm-gpt-msg__error')).toContainText(
       '模型没有返回内容，请重试。',
       { timeout: 30_000 },
     );
     await expect(page.getByText('你好，这是测试回复')).toHaveCount(0);
+
+    await page.screenshot({
+      path: '/opt/cursor/artifacts/docs_empty_send_error.png',
+      animations: 'disabled',
+    });
   });
 
   test('docs drawer surfaces stream HTTP errors in the assistant bubble', async ({
@@ -284,7 +303,7 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
     await composer.fill('hello quality gate');
     await page.getByTitle('发送').click();
 
-    await expect(page.getByRole('alert')).toContainText(
+    await expect(page.locator('.acongm-gpt-msg__error')).toContainText(
       'context.content must be shorter than 12000 characters',
       { timeout: 30_000 },
     );

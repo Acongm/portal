@@ -21,6 +21,14 @@ test('incomplete adapter errors keep their message for the assistant bubble', ()
     '对话请求失败 (400)',
   );
   assert.equal(
+    assistantErrorText({
+      type: 'incomplete',
+      reason: 'error',
+      error: { message: '模型没有返回内容，请重试。' },
+    }),
+    '模型没有返回内容，请重试。',
+  );
+  assert.equal(
     assistantErrorText({ type: 'incomplete', reason: 'error' }),
     '回复失败，请重试。',
   );
