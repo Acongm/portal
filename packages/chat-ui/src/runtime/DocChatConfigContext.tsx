@@ -7,11 +7,11 @@ export type DocChatConfigContextValue = {
 };
 
 const DocChatConfigContext = createContext<DocChatConfigContextValue>({
-  enableThinking: true,
+  enableThinking: false,
 });
 
 export function DocChatConfigProvider({
-  enableThinking = true,
+  enableThinking = false,
   children,
 }: {
   enableThinking?: boolean;

@@ -46,6 +46,12 @@ export { AuthAccountButton } from './AuthAccountButton';
 export type { AuthAccountButtonProps } from './AuthAccountButton';
 export { AuthAccountMenu } from './AuthAccountMenu';
 export type { AuthAccountMenuProps } from './AuthAccountMenu';
+export { placeFixedMenu } from './placeFixedMenu';
+export type {
+  MenuRect,
+  PlaceFixedMenuInput,
+  PlaceFixedMenuResult,
+} from './placeFixedMenu';
 export {
   clearAuthSessionCache,
   getAuthSession,
