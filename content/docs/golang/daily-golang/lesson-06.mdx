@@ -1,0 +1,290 @@
+---
+title: Go map 入门：键值查找、ok 判断与集合写法
+date: 2026-09-04
+lesson: 6
+tags:
+  - 每日学习
+  - Golang
+  - map
+  - 集合
+  - ok 模式
+series: daily-golang
+---
+
+# Go map 入门：键值查找、ok 判断与集合写法
+
+上一课我们已经学会了用数组和切片按顺序保存一组数据。接下来要解决的新问题是：**如果我不是想按位置找第 1 个、第 2 个元素，而是想用“名字 → 分数”“单词 → 次数”这种方式快速查找，该怎么做？** 这就是 `map` 要解决的事情。
+
+这一课只聚焦 syllabus 中的三个重点：学会创建和遍历 `map`，理解为什么读取 `map` 时常常要配合 `ok` 模式判断键是否存在，以及认识 `map` 还能怎样表示“集合”。最后我们也会先建立一个重要直觉：**普通 `map` 不能在多个 goroutine 中同时随意读写。**
+
+## 学习目标
+- 理解 `map` 是“键和值”的对应关系，学会创建、读取、修改和删除元素
+- 掌握遍历 `map` 的基本写法，知道遍历顺序默认不固定
+- 理解零值读取与 `value, ok := map[key]` 的区别
+- 学会用 `map[T]bool` 或 `map[T]struct{}` 表示集合，并知道普通 `map` 不适合并发读写
+
+## 核心概念
+
+### 1. `map` 是什么
+`map` 可以理解成一个“根据键快速找到值”的表。
+
+例如：
+
+```go
+scores := map[string]int{
+    "小李": 95,
+    "小王": 88,
+}
+```
+
+这里：
+
+- 键（key）是 `string`
+- 值（value）是 `int`
+- `"小李"` 对应 `95`
+- `"小王"` 对应 `88`
+
+和切片不同，`map` 不是靠下标 `0`、`1`、`2` 查找，而是靠键来找值。
+
+### 2. 如何创建 `map`
+最常见的创建方式有两种。
+
+#### 写法一：直接用字面量创建
+
+```go
+ages := map[string]int{
+    "Alice": 20,
+    "Bob":   22,
+}
+```
+
+这适合一开始就有数据的场景。
+
+#### 写法二：先用 `make` 创建，再逐个放入
+
+```go
+prices := make(map[string]float64)
+prices["苹果"] = 3.5
+prices["香蕉"] = 4.2
+```
+
+这适合“先准备一个空 map，之后再慢慢往里放数据”的情况。
+
+零基础阶段先记住一个很重要的规则：
+
+> 如果 `map` 还是 `nil`，就不能直接写入键值；通常先用 `make` 再赋值。
+
+### 3. 读取、修改和删除元素
+读取元素时，直接用键：
+
+```go
+score := scores["小李"]
+```
+
+修改元素也很直接：
+
+```go
+scores["小李"] = 98
+```
+
+如果键原本不存在，这种赋值也会自动变成“新增一个键值对”：
+
+```go
+scores["小张"] = 91
+```
+
+删除元素用 `delete`：
+
+```go
+delete(scores, "小王")
+```
+
+`delete` 的特点是：即使这个键不存在，也不会报错。它会安静地结束。
+
+### 4. 为什么读取 `map` 时常配合 `ok` 模式
+这是今天最关键的概念之一。
+
+看下面这行：
+
+```go
+score := scores["小赵"]
+```
+
+如果 `"小赵"` 这个键不存在，会发生什么？Go 不会报错，而是返回值类型的**零值**。
+
+比如：
+
+- `map[string]int` 不存在的键会得到 `0`
+- `map[string]string` 不存在的键会得到 `""`
+- `map[string]bool` 不存在的键会得到 `false`
+
+问题在于：你有时分不清这个 `0` 到底表示“真实存的就是 0”，还是“其实这个键根本不存在”。
+
+所以 Go 很常见的写法是：
+
+```go
+score, ok := scores["小赵"]
+```
+
+这里：
+
+- `score` 是取出来的值
+- `ok` 是一个布尔值，表示这个键是否真的存在
+
+例如：
+
+```go
+score, ok := scores["小赵"]
+if ok {
+    fmt.Println("找到了分数：", score)
+} else {
+    fmt.Println("没有这个学员")
+}
+```
+
+你可以把它理解成：**先取值，再顺手问一句“这个键真的在吗？”**
+
+### 5. 如何遍历 `map`
+遍历 `map` 用 `for range`：
+
+```go
+for name, score := range scores {
+    fmt.Println(name, score)
+}
+```
+
+如果你只关心键，也可以这样写：
+
+```go
+for name := range scores {
+    fmt.Println(name)
+}
+```
+
+这里要特别记住一个初学者很容易忽略的点：
+
+> `map` 的遍历顺序默认不固定，不要依赖它每次都按同样顺序输出。
+
+如果你以后需要稳定顺序，通常要先把键取出来放到切片，再排序处理。但零基础阶段先知道“别假设顺序固定”就够了。
+
+### 6. `map` 也可以表示集合
+很多时候我们并不关心“值是什么”，只关心“某个元素在不在”。这时候 `map` 就可以拿来表示集合。
+
+例如，用 `map[string]bool` 表示你已经学过哪些主题：
+
+```go
+learned := map[string]bool{
+    "变量": true,
+    "函数": true,
+    "切片": true,
+}
+```
+
+判断某个主题是否学过：
+
+```go
+if learned["map"] {
+    fmt.Println("已经学过 map")
+}
+```
+
+也可以写成更节省空间的形式：
+
+```go
+visited := map[string]struct{}{
+    "beijing": {},
+    "shanghai": {},
+}
+```
+
+对于零基础来说，先把 `map[string]bool` 当成集合写法就够用了，因为更直观。
+
+### 7. 为什么说普通 `map` 不适合并发读写
+今天不展开 goroutine，但要先建立一个正确习惯：
+
+> 普通 `map` 不是并发安全的，不能在多个 goroutine 中同时随意写入，甚至“边写边读”也可能出问题。
+
+这意味着：
+
+- 在当前这种单线程入门程序里，直接用 `map` 没问题
+- 等以后学到并发时，如果多个 goroutine 共享同一个 `map`，要额外用锁或其他同步方式保护它
+
+零基础阶段不用记所有并发细节，只要先避免形成“map 天然线程安全”的误解。
+
+## 代码示例
+下面这个程序把“创建 map”“读取与修改”“ok 模式”“遍历”“集合写法”放在一起。你可以先在空目录执行：
+
+```bash
+go mod init lesson06
+```
+
+然后创建 `main.go`，写入以下内容，再运行 `go run .`：
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    scores := make(map[string]int)
+    scores["小李"] = 95
+    scores["小王"] = 88
+    scores["小张"] = 0
+
+    fmt.Println("初始 scores:", scores)
+
+    scores["小王"] = 90
+    fmt.Println("修改后小王的分数:", scores["小王"])
+
+    if score, ok := scores["小李"]; ok {
+        fmt.Println("找到小李的分数:", score)
+    }
+
+    if score, ok := scores["小赵"]; ok {
+        fmt.Println("找到小赵的分数:", score)
+    } else {
+        fmt.Println("没有找到小赵，score 的零值是:", score)
+    }
+
+    fmt.Println("---- 遍历 scores ----")
+    for name, score := range scores {
+        fmt.Println(name, score)
+    }
+
+    delete(scores, "小张")
+    fmt.Println("删除小张后:", scores)
+
+    learned := map[string]bool{
+        "变量": true,
+        "函数": true,
+        "切片": true,
+    }
+
+    topic := "map"
+    if learned[topic] {
+        fmt.Println(topic, "已经学过")
+    } else {
+        fmt.Println(topic, "还没学过，今天开始学习")
+    }
+
+    learned[topic] = true
+    fmt.Println("更新后的 learned:", learned)
+}
+```
+
+如果运行成功，你应该重点观察四件事：
+
+1. `scores["小王"] = 90` 说明 `map` 中的值可以直接更新
+2. `score, ok := scores["小赵"]` 能区分“键不存在”和“值刚好等于零值”
+3. `for range` 可以遍历整个 `map`，但输出顺序不保证固定
+4. `learned` 这个 `map[string]bool` 就是一种很常见的“集合”写法
+
+## 练习
+1. 创建一个 `map[string]string`，保存 3 个英文单词和它们的中文含义，并打印其中一个单词的解释。
+2. 定义一个 `map[string]int` 保存三位同学的分数，其中一位分数设为 `0`，再用 `value, ok := ...` 区分“键存在且值为 0”和“键不存在”。
+3. 写一个程序，向 `map[string]int` 中加入几本书的库存数量，然后删除其中一本，观察结果。
+4. 用 `map[string]bool` 表示“今天已经完成的练习题编号”或“已经学过的 Go 主题”，再写判断某个元素是否存在的代码。
+5. 用自己的话解释：为什么只看 `scores["某人"]` 的结果，有时不足以判断这个键到底在不在？
+
+## 小结
+今天你已经学会了 Go 里非常常用的一种数据结构：`map`。你知道了它适合做“键 → 值”的快速查找，能用 `make` 创建、用 `delete` 删除、用 `for range` 遍历；更重要的是，你理解了 `value, ok := map[key]` 这组写法为什么重要，也认识到 `map` 还能拿来表示集合。最后请记住一个提前埋下的安全习惯：**普通 `map` 不适合并发读写。** 下一课我们会继续学习结构体与方法，让程序不仅能保存零散数据，还能把同一类数据组织成更清晰的类型。
