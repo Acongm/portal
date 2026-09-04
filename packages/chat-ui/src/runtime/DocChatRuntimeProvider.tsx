@@ -248,7 +248,7 @@ function DocChatRuntimeInner({
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
-      <DocChatConfigProvider enableThinking={context.enableThinking ?? true}>
+      <DocChatConfigProvider enableThinking={context.enableThinking ?? false}>
         {children}
       </DocChatConfigProvider>
     </AssistantRuntimeProvider>

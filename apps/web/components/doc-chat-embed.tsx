@@ -121,7 +121,7 @@ export function DocChatEmbed() {
       tags: [],
       historyMode: 'long',
       callSourcePrefix: 'portal',
-      enableThinking: true,
+      enableThinking: false,
       chatId: chatId ?? undefined,
       chatsBaseUrl: CHAT_BASE,
       accessToken,

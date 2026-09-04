@@ -22,6 +22,13 @@ export const LONG_ASSISTANT_REPLY = Array.from({ length: 48 }, (_, index) => {
 
 export type QualityGateMockOptions = {
   longFirstReply?: boolean;
+  emptyFirstReply?: boolean;
+  authenticatedUser?: boolean;
+  streamHttpError?: {
+    status: number;
+    message: string;
+    code?: string;
+  };
 };
 
 const MOCK_SESSION = {
@@ -76,7 +83,33 @@ function fulfillSupabaseAuth(route: Route) {
   return json(route, 200, {});
 }
 
-function fulfillAuthSession(route: Route) {
+function fulfillAuthSession(route: Route, options: QualityGateMockOptions = {}) {
+  if (options.authenticatedUser) {
+    return json(route, 200, {
+      authenticated: true,
+      configured: true,
+      isAnonymous: false,
+      anonymous: false,
+      user: {
+        id: MOCK_USER_ID,
+        email: 'qg-portal@acongm.com',
+        name: 'Quality Gate',
+        avatarUrl: null,
+      },
+      userInfo: {
+        id: MOCK_USER_ID,
+        displayName: 'Quality Gate',
+        email: 'qg-portal@acongm.com',
+        avatarUrl: null,
+        accountLabel: 'qg-portal@acongm.com',
+        role: 'user',
+        tier: 'user',
+        isAnonymous: false,
+      },
+      accessToken: MOCK_ACCESS_TOKEN,
+    });
+  }
+
   return json(route, 200, {
     authenticated: true,
     configured: true,
@@ -135,6 +168,34 @@ function fulfillChats(route: Route, options: QualityGateMockOptions = {}) {
     pathname === `/api/chats/${MOCK_CHAT_ID}/messages/stream` &&
     method === 'POST'
   ) {
+    if (options.streamHttpError) {
+      return json(route, options.streamHttpError.status, {
+        message: options.streamHttpError.message,
+        code: options.streamHttpError.code || 'CHAT_BAD_REQUEST',
+      });
+    }
+
+    if (options.emptyFirstReply) {
+      const emptySse = [
+        'event: user-persisted',
+        `data: ${JSON.stringify({
+          type: 'user-persisted',
+          chatId: MOCK_CHAT_ID,
+          messageId: 'user-msg-1',
+          runId: 'run-1',
+        })}`,
+        '',
+        'event: done',
+        `data: ${JSON.stringify({ type: 'done', runId: 'run-1', status: 'complete' })}`,
+        '',
+      ].join('\n');
+      return route.fulfill({
+        status: 201,
+        contentType: 'text/event-stream',
+        body: emptySse,
+      });
+    }
+
     const sse = [
       'event: user-persisted',
       `data: ${JSON.stringify({
@@ -183,11 +244,32 @@ function fulfillChats(route: Route, options: QualityGateMockOptions = {}) {
   return json(route, 404, { message: `unmocked chats route: ${method} ${pathname}` });
 }
 
-function fulfillUser(route: Route) {
+function fulfillUser(route: Route, options: QualityGateMockOptions = {}) {
   const url = new URL(route.request().url());
   const pathname = url.pathname.replace(/\/$/, '');
 
   if (pathname === '/api/user/info') {
+    if (options.authenticatedUser) {
+      return json(route, 200, {
+        id: MOCK_USER_ID,
+        email: 'qg-portal@acongm.com',
+        name: 'Quality Gate',
+        isAnonymous: false,
+        role: 'user',
+        tier: 'user',
+        userInfo: {
+          id: MOCK_USER_ID,
+          displayName: 'Quality Gate',
+          avatarUrl: null,
+          email: 'qg-portal@acongm.com',
+          accountLabel: 'qg-portal@acongm.com',
+          role: 'user',
+          tier: 'user',
+          isAnonymous: false,
+          source: 'auth',
+        },
+      });
+    }
     return json(route, 200, {
       userInfo: {
         id: MOCK_USER_ID,
@@ -212,7 +294,9 @@ export async function installQualityGateMocks(
   options: QualityGateMockOptions = {},
 ) {
   await page.route(`${MOCK_SUPABASE_URL}/**`, fulfillSupabaseAuth);
-  await page.route('**/api/auth/session', fulfillAuthSession);
+  await page.route('**/api/auth/session', (route) =>
+    fulfillAuthSession(route, options),
+  );
   await page.route('**/api/chats**', (route) => fulfillChats(route, options));
-  await page.route('**/api/user/**', fulfillUser);
+  await page.route('**/api/user/**', (route) => fulfillUser(route, options));
 }

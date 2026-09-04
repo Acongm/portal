@@ -222,6 +222,12 @@
   min-width: 0;
 }
 
+.acongm-auth-menu__panel.is-fixed {
+  position: fixed;
+  right: auto;
+  bottom: auto;
+}
+
 .acongm-auth-menu__header {
   display: flex;
   flex-direction: column;

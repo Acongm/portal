@@ -122,7 +122,7 @@ export function createDocChatModelAdapter(
         tags = [],
         content,
         streamUrl,
-        enableThinking = true,
+        enableThinking = false,
         maxTokens,
         historyMode = 'short',
         chatsBaseUrl,

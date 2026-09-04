@@ -16,6 +16,7 @@ import {
   MessagePrimitive,
   ThreadPrimitive,
   unstable_useComposerInput,
+  useAuiState,
   useMessagePartReasoning,
   useMessagePartText,
 } from '@assistant-ui/react';
@@ -38,6 +39,7 @@ import { useDocChatConfig } from '../runtime/DocChatConfigContext';
 import { ChatQuickTags } from './ChatQuickTags';
 import { normalizeComposerText } from './composer-text';
 import { TrimmedComposerSend } from './TrimmedComposerSend';
+import { assistantErrorText } from './assistant-error';
 
 function AssistantMarkdown() {
   return (
@@ -174,6 +176,16 @@ function EditComposer() {
   );
 }
 
+function AssistantErrorBanner() {
+  const text = useAuiState((state) => assistantErrorText(state.message.status));
+  if (!text) return null;
+  return (
+    <p className="acongm-gpt-msg__error" role="alert">
+      {text}
+    </p>
+  );
+}
+
 function AssistantMessage() {
   return (
     <MessagePrimitive.Root className="acongm-gpt-msg is-assistant">
@@ -187,6 +199,7 @@ function AssistantMessage() {
         <AuiIf condition={(s) => !hasReasoningPart(s.message.parts)}>
           <ReasoningFallback />
         </AuiIf>
+        <AssistantErrorBanner />
       </div>
       <div className="acongm-gpt-actions-slot">
         <ActionBarPrimitive.Root

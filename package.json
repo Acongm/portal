@@ -18,6 +18,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:portal-chat-v2": "node --test tests/contracts/portal-chat-v2.test.mjs",
+    "test:overlays": "node --experimental-strip-types --test tests/contracts/place-fixed-menu.test.mjs tests/contracts/assistant-error.test.mjs tests/contracts/docs-detail-overlays.test.mjs tests/contracts/mention-panel-measure-key.test.mjs tests/contracts/chat-thinking-fallback.test.mjs",
     "test:ai-path": "node scripts/test-ai-chat-path.mjs",
     "test:doc-links": "node scripts/test-doc-links.mjs",
     "fix:doc-links": "node scripts/fix-doc-internal-links.mjs",

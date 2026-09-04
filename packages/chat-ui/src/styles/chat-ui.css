@@ -1665,7 +1665,7 @@
 
 .acongm-mention-menu {
   position: fixed;
-  z-index: 80;
+  z-index: calc(var(--acongm-chat-z, 1200) + 80);
   width: min(360px, calc(100vw - 24px));
   max-height: 280px;
   overflow: auto;
@@ -1673,9 +1673,13 @@
   border-radius: 12px;
   background: var(--acongm-bg, #fff);
   box-shadow: 0 12px 40px color-mix(in srgb, #000 18%, transparent);
-  bottom: calc(92px + env(safe-area-inset-bottom));
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: auto;
+  left: auto;
+  transform: none;
+}
+
+.acongm-mention-menu.is-fixed {
+  position: fixed;
 }
 
 .acongm-mention-menu__head {

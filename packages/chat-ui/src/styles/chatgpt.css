@@ -433,6 +433,17 @@ html[data-theme='dark'] .acongm-workspace[data-preset='siteFull'] {
   line-height: 1.7;
 }
 
+.acongm-gpt-msg__error {
+  margin: 0.55rem 0 0;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid color-mix(in oklab, var(--destructive, #c62828) 32%, var(--border, #e4e7ef));
+  border-radius: 0.7rem;
+  background: color-mix(in oklab, var(--destructive, #c62828) 8%, transparent);
+  color: color-mix(in oklab, var(--destructive, #c62828) 82%, var(--foreground, #1a1d27));
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
 .acongm-gpt-actions-slot {
   box-sizing: border-box;
   width: 100%;

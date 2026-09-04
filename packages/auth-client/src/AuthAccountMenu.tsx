@@ -1,13 +1,17 @@
 'use client';
 
 import {
+  useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type ReactNode,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { getAuthBaseUrl } from './client';
+import { placeFixedMenu } from './placeFixedMenu';
 
 function avatarChar(label: string): string {
   const trimmed = label.trim();
@@ -68,18 +72,61 @@ export function AuthAccountMenu({
   menuFooter,
 }: AuthAccountMenuProps) {
   const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState({ top: 0, left: 0 });
+  const [placed, setPlaced] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
   const title =
     email && email !== label ? `${label} · ${email}` : label;
   const accountBase = `${getAuthBaseUrl().replace(/\/$/, '')}/account`;
 
+  const updatePlacement = useCallback(() => {
+    const trigger = triggerRef.current?.getBoundingClientRect();
+    if (!trigger) return;
+    const panel = panelRef.current?.getBoundingClientRect();
+    const next = placeFixedMenu({
+      trigger,
+      panel: {
+        width: panel?.width || 192,
+        height: panel?.height || 200,
+      },
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      align: variant === 'sidebar' ? 'start' : 'end',
+      prefer: 'auto',
+    });
+    setCoords({ top: next.top, left: next.left });
+    setPlaced(true);
+  }, [variant]);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setPlaced(false);
+      return;
+    }
+    updatePlacement();
+    const frame = window.requestAnimationFrame(updatePlacement);
+    window.addEventListener('resize', updatePlacement);
+    window.addEventListener('scroll', updatePlacement, true);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('resize', updatePlacement);
+      window.removeEventListener('scroll', updatePlacement, true);
+    };
+  }, [open, updatePlacement, menuFooter]);
+
   useEffect(() => {
     if (!open) return;
     const onPointer = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false);
+      const target = event.target as Node;
+      if (
+        rootRef.current?.contains(target) ||
+        panelRef.current?.contains(target)
+      ) {
+        return;
       }
+      setOpen(false);
     };
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setOpen(false);
@@ -105,6 +152,7 @@ export function AuthAccountMenu({
       data-open={open ? 'true' : 'false'}
     >
       <button
+        ref={triggerRef}
         type="button"
         className={triggerClass}
         aria-haspopup="menu"
@@ -150,51 +198,60 @@ export function AuthAccountMenu({
         )}
       </button>
 
-      {open ? (
-        <div
-          id={menuId}
-          role="menu"
-          className="acongm-auth-menu__panel"
-          aria-label="账号菜单"
-        >
-          <div className="acongm-auth-menu__header">
-            <span className="acongm-auth-menu__header-name">{label}</span>
-            {email ? (
-              <span className="acongm-auth-menu__header-email">{email}</span>
-            ) : null}
-          </div>
-          <a
-            role="menuitem"
-            className="acongm-auth-menu__item"
-            href={accountBase}
-            onClick={() => setOpen(false)}
-          >
-            账号
-          </a>
-          <a
-            role="menuitem"
-            className="acongm-auth-menu__item"
-            href={`${accountBase}#settings`}
-            onClick={() => setOpen(false)}
-          >
-            设置
-          </a>
-          <button
-            type="button"
-            role="menuitem"
-            className="acongm-auth-menu__item is-danger"
-            onClick={() => {
-              setOpen(false);
-              onLogout();
-            }}
-          >
-            退出登录
-          </button>
-          {menuFooter ? (
-            <div className="acongm-auth-menu__footer">{menuFooter}</div>
-          ) : null}
-        </div>
-      ) : null}
+      {open && typeof document !== 'undefined'
+        ? createPortal(
+            <div
+              ref={panelRef}
+              id={menuId}
+              role="menu"
+              className="acongm-auth-menu__panel is-fixed"
+              style={{
+                top: coords.top,
+                left: coords.left,
+                visibility: placed ? 'visible' : 'hidden',
+              }}
+              aria-label="账号菜单"
+            >
+              <div className="acongm-auth-menu__header">
+                <span className="acongm-auth-menu__header-name">{label}</span>
+                {email ? (
+                  <span className="acongm-auth-menu__header-email">{email}</span>
+                ) : null}
+              </div>
+              <a
+                role="menuitem"
+                className="acongm-auth-menu__item"
+                href={accountBase}
+                onClick={() => setOpen(false)}
+              >
+                账号
+              </a>
+              <a
+                role="menuitem"
+                className="acongm-auth-menu__item"
+                href={`${accountBase}#settings`}
+                onClick={() => setOpen(false)}
+              >
+                设置
+              </a>
+              <button
+                type="button"
+                role="menuitem"
+                className="acongm-auth-menu__item is-danger"
+                onClick={() => {
+                  setOpen(false);
+                  onLogout();
+                }}
+              >
+                退出登录
+              </button>
+              {menuFooter ? (
+                <div className="acongm-auth-menu__footer">{menuFooter}</div>
+              ) : null}
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
