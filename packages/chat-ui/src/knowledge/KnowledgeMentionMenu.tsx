@@ -13,6 +13,7 @@ import { placeFixedMenu } from '@acongm/auth-client';
 import type { KnowledgeRef } from '@acongm/kb-catalog';
 import type { KnowledgeSearchHit } from '@acongm/kb-catalog';
 import type { KnowledgePickerSource } from './KnowledgeUiContext';
+import { mentionPanelMeasureKey } from './mention-panel-measure-key';
 
 export type KnowledgeMentionMenuProps = {
   open: boolean;
@@ -56,6 +57,17 @@ export function KnowledgeMentionMenu({
   const [placed, setPlaced] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const visible = useMemo(() => hits.slice(0, 12), [hits]);
+  const measureKey = useMemo(
+    () =>
+      mentionPanelMeasureKey(
+        query,
+        visible.map((hit) => ({
+          title: hit.ref.title,
+          subtitle: hit.subtitle,
+        })),
+      ),
+    [query, visible],
+  );
   const title = titleForSource(source);
 
   const updatePlacement = useCallback(() => {
@@ -85,14 +97,21 @@ export function KnowledgeMentionMenu({
     }
     updatePlacement();
     const frame = window.requestAnimationFrame(updatePlacement);
+    const panel = panelRef.current;
+    const observer =
+      typeof ResizeObserver !== 'undefined' && panel
+        ? new ResizeObserver(() => updatePlacement())
+        : null;
+    if (panel) observer?.observe(panel);
     window.addEventListener('resize', updatePlacement);
     window.addEventListener('scroll', updatePlacement, true);
     return () => {
       window.cancelAnimationFrame(frame);
+      observer?.disconnect();
       window.removeEventListener('resize', updatePlacement);
       window.removeEventListener('scroll', updatePlacement, true);
     };
-  }, [open, updatePlacement, visible.length]);
+  }, [open, updatePlacement, measureKey]);
 
   useEffect(() => {
     setActive(0);
