@@ -91,10 +91,10 @@ export function usePageBoundChat(
     setRawMessages([]);
     setSeedMessages(null);
     setReady(false);
-    setRestoreError(null);
     setPrevCursor(null);
 
     if (!userId || !accessToken) {
+      setRestoreError(null);
       setReady(true);
       return;
     }
@@ -121,6 +121,7 @@ export function usePageBoundChat(
         setRawMessages(detail.messages);
         setSeedMessages(mapDurableBranchToUiMessages(detail.messages));
         setPrevCursor(detail.prevCursor ?? null);
+        setRestoreError(null);
         setReady(true);
       })
       .catch((error) => {

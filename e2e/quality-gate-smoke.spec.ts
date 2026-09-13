@@ -440,7 +440,7 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
     await blockedRestore;
 
     const composer = page.locator('.acongm-gpt-composer__input');
-    await expect(page.locator('.portal-chat-restore-error')).toBeVisible({
+    await expect(page.getByText('history temporarily unavailable')).toBeVisible({
       timeout: 30_000,
     });
     await expect(composer).toBeDisabled();
