@@ -467,6 +467,11 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
 
     await account.click();
     await page.getByRole('menuitem', { name: '退出登录' }).click();
+    await page.waitForResponse(
+      (response) =>
+        response.url().includes('/auth/v1/logout') && response.status() === 204,
+      { timeout: 30_000 },
+    );
     await page.reload();
     await waitForGuestSession(page);
 

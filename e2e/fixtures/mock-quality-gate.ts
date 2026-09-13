@@ -87,17 +87,17 @@ function createMockStore(options: QualityGateMockOptions = {}) {
   let historyGetAttempts = 0;
   let signedOut = false;
 
-  function chatRecord(chatId: string, pagePath = '/core') {
+  function chatRecord(chatId: string, pagePath = CORE_PAGE_PATH) {
     const stamp = new Date().toISOString();
     return {
       id: chatId,
-      userId: MOCK_USER_ID,
+      user_id: MOCK_USER_ID,
       title: 'Quality gate chat',
-      pagePath,
-      moduleKey: pagePath.split('/').filter(Boolean)[0] || 'core',
+      page_path: pagePath,
+      module_key: pagePath.split('/').filter(Boolean)[0] || 'core',
       metadata: {},
-      createdAt: stamp,
-      updatedAt: stamp,
+      created_at: stamp,
+      updated_at: stamp,
     };
   }
 
@@ -209,7 +209,10 @@ function createMockStore(options: QualityGateMockOptions = {}) {
     const chatMatch = pathname.match(/^\/api\/chats\/([^/]+)$/);
     if (chatMatch && method === 'GET') {
       const chatId = chatMatch[1];
-      if (options.failHistoryRestore && historyGetAttempts < 2) {
+      if (
+        options.failHistoryRestore &&
+        historyGetAttempts < (options.failHistoryRestore === true ? 2 : 1)
+      ) {
         historyGetAttempts += 1;
         return json(route, 500, {
           message: 'history temporarily unavailable',
