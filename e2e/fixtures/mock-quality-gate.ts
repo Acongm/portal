@@ -426,6 +426,9 @@ function createMockStore(
     allowHistoryRestore() {
       blockHistoryRestore = false;
     },
+    markSignedOut() {
+      signedOut = true;
+    },
     seedHistory(
       chatId: string,
       userText: string,

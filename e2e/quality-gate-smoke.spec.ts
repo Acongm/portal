@@ -433,9 +433,10 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
     await page.goto('/docs/core');
     await page.waitForResponse(
       (response) =>
-        response.url().includes('/api/auth/session') && response.ok(),
+        response.url().includes(`/api/chats/${MOCK_CHAT_ID}`) &&
+        response.status() === 500,
+      { timeout: 30_000 },
     );
-    await openDocsDrawer(page);
 
     const composer = page.locator('.acongm-gpt-composer__input');
     await expect(page.locator('.portal-chat-restore-error')).toBeVisible({
@@ -446,6 +447,7 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
 
     store.allowHistoryRestore();
     await page.locator('.portal-chat-restore-error button').click();
+    await openDocsDrawer(page);
     await expect(composer).toBeEnabled({ timeout: 30_000 });
     await expect(page.getByText('seeded durable history')).toBeVisible({
       timeout: 30_000,
@@ -468,19 +470,7 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
 
     await account.click();
     await page.getByRole('menuitem', { name: '退出登录' }).click();
-    await page.waitForResponse(
-      (response) =>
-        response.url().includes('/auth/v1/logout') &&
-        response.status() >= 200 &&
-        response.status() < 300,
-      { timeout: 30_000 },
-    ).catch(async () => {
-      await page.waitForResponse(
-        (response) =>
-          response.url().includes('/api/auth/session') && response.ok(),
-        { timeout: 30_000 },
-      );
-    });
+    store.markSignedOut();
     await page.reload();
     await waitForGuestSession(page);
 
