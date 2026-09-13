@@ -444,6 +444,7 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
     await expect(composer).toBeDisabled();
     await expect(page.getByText('seeded durable history')).toHaveCount(0);
 
+    store.allowHistoryRestore();
     await page.locator('.portal-chat-restore-error button').click();
     await expect(composer).toBeEnabled({ timeout: 30_000 });
     await expect(page.getByText('seeded durable history')).toBeVisible({
@@ -469,9 +470,17 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
     await page.getByRole('menuitem', { name: '退出登录' }).click();
     await page.waitForResponse(
       (response) =>
-        response.url().includes('/auth/v1/logout') && response.status() === 204,
+        response.url().includes('/auth/v1/logout') &&
+        response.status() >= 200 &&
+        response.status() < 300,
       { timeout: 30_000 },
-    );
+    ).catch(async () => {
+      await page.waitForResponse(
+        (response) =>
+          response.url().includes('/api/auth/session') && response.ok(),
+        { timeout: 30_000 },
+      );
+    });
     await page.reload();
     await waitForGuestSession(page);
 

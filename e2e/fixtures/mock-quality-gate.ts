@@ -68,6 +68,19 @@ const MOCK_SESSION = {
   },
 };
 
+function buildAuthenticatedSession() {
+  return {
+    ...MOCK_SESSION,
+    user: {
+      ...MOCK_SESSION.user,
+      email: 'qg-portal@acongm.com',
+      is_anonymous: false,
+      app_metadata: { provider: 'github' },
+      user_metadata: { name: 'Quality Gate' },
+    },
+  };
+}
+
 function json(route: Route, status: number, body: unknown) {
   return route.fulfill({
     status,
@@ -81,11 +94,14 @@ function chatIdForPagePath(pagePath?: string | null): string {
   return MOCK_CHAT_ID;
 }
 
-function createMockStore(options: QualityGateMockOptions = {}) {
+function createMockStore(
+  options: QualityGateMockOptions = {},
+  sessionRef: { current: typeof MOCK_SESSION },
+) {
   const messagesByChat = new Map<string, StoredMessage[]>();
   let streamCount = 0;
-  let historyGetAttempts = 0;
   let signedOut = false;
+  let blockHistoryRestore = Boolean(options.failHistoryRestore);
 
   function chatRecord(chatId: string, pagePath = CORE_PAGE_PATH) {
     const stamp = new Date().toISOString();
@@ -111,19 +127,21 @@ function createMockStore(options: QualityGateMockOptions = {}) {
     }
 
     if (url.includes('/auth/v1/signup') && method === 'POST') {
-      return json(route, 200, MOCK_SESSION);
+      return json(route, 200, sessionRef.current);
     }
 
     if (url.includes('/auth/v1/token') && method === 'POST') {
-      return json(route, 200, MOCK_SESSION);
+      return json(route, 200, sessionRef.current);
     }
 
     if (url.includes('/auth/v1/user') && method === 'GET') {
-      return json(route, 200, MOCK_SESSION.user);
+      return json(route, 200, sessionRef.current.user);
     }
 
     if (url.includes('/auth/v1/session') && method === 'GET') {
-      return json(route, 200, { session: signedOut ? null : MOCK_SESSION });
+      return json(route, 200, {
+        session: signedOut ? null : sessionRef.current,
+      });
     }
 
     return json(route, 200, {});
@@ -209,11 +227,7 @@ function createMockStore(options: QualityGateMockOptions = {}) {
     const chatMatch = pathname.match(/^\/api\/chats\/([^/]+)$/);
     if (chatMatch && method === 'GET') {
       const chatId = chatMatch[1];
-      if (
-        options.failHistoryRestore &&
-        historyGetAttempts < (options.failHistoryRestore === true ? 2 : 1)
-      ) {
-        historyGetAttempts += 1;
+      if (blockHistoryRestore) {
         return json(route, 500, {
           message: 'history temporarily unavailable',
           code: 'CHAT_HISTORY_UNAVAILABLE',
@@ -409,6 +423,9 @@ function createMockStore(options: QualityGateMockOptions = {}) {
     fulfillAuthSession,
     fulfillChats,
     fulfillUser,
+    allowHistoryRestore() {
+      blockHistoryRestore = false;
+    },
     seedHistory(
       chatId: string,
       userText: string,
@@ -448,7 +465,10 @@ export async function installQualityGateMocks(
   page: Page,
   options: QualityGateMockOptions = {},
 ) {
-  const store = createMockStore(options);
+  const sessionRef = {
+    current: options.authenticatedUser ? buildAuthenticatedSession() : MOCK_SESSION,
+  };
+  const store = createMockStore(options, sessionRef);
   await page.unroute(`${MOCK_SUPABASE_URL}/**`).catch(() => undefined);
   await page.unroute('**/api/auth/session').catch(() => undefined);
   await page.unroute('**/api/chats**').catch(() => undefined);
