@@ -431,6 +431,10 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
     );
 
     await page.goto('/docs/core');
+    await page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/auth/session') && response.ok(),
+    );
     await openDocsDrawer(page);
 
     const composer = page.locator('.acongm-gpt-composer__input');
@@ -451,13 +455,13 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
 
   test('logout updates portal header chrome back to login', async ({ page }) => {
     await installQualityGateMocks(page, { authenticatedUser: true });
-    await page.goto('/');
+    await page.goto('/docs/core');
     await page.waitForResponse(
       (response) =>
         response.url().includes('/api/auth/session') && response.ok(),
     );
 
-    const account = page.locator('.acongm-auth-menu button').first();
+    const account = page.locator('.acongm-auth-menu button');
     await expect(account).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole('button', { name: '登录' })).toHaveCount(0);
 

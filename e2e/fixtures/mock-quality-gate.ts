@@ -209,7 +209,7 @@ function createMockStore(options: QualityGateMockOptions = {}) {
     const chatMatch = pathname.match(/^\/api\/chats\/([^/]+)$/);
     if (chatMatch && method === 'GET') {
       const chatId = chatMatch[1];
-      if (options.failHistoryRestore && historyGetAttempts < 1) {
+      if (options.failHistoryRestore && historyGetAttempts < 2) {
         historyGetAttempts += 1;
         return json(route, 500, {
           message: 'history temporarily unavailable',
