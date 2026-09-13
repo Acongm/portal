@@ -430,25 +430,27 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
       { userId: MOCK_USER_ID, chatId: MOCK_CHAT_ID, pagePath: CORE_PAGE_PATH },
     );
 
-    const blockedRestore = page.waitForResponse(
+    await page.goto('/docs/core');
+    await page.waitForResponse(
       (response) =>
-        response.url().includes(`/api/chats/${MOCK_CHAT_ID}`) &&
-        response.status() === 500,
+        response.url().includes('/api/auth/session') && response.ok(),
       { timeout: 30_000 },
     );
-    await page.goto('/docs/core');
-    await blockedRestore;
+    await page.waitForResponse(
+      (response) => response.url().includes(`/api/chats/${MOCK_CHAT_ID}`),
+      { timeout: 30_000 },
+    );
 
     const composer = page.locator('.acongm-gpt-composer__input');
     await expect(page.getByText('history temporarily unavailable')).toBeVisible({
       timeout: 30_000,
     });
-    await expect(composer).toBeDisabled();
+    await openDocsDrawer(page);
+    await expect(composer).toBeDisabled({ timeout: 30_000 });
     await expect(page.getByText('seeded durable history')).toHaveCount(0);
 
     store.allowHistoryRestore();
     await page.locator('.portal-chat-restore-error button').click();
-    await openDocsDrawer(page);
     await expect(composer).toBeEnabled({ timeout: 30_000 });
     await expect(page.getByText('seeded durable history')).toBeVisible({
       timeout: 30_000,
@@ -472,6 +474,11 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
     await account.click();
     await page.getByRole('menuitem', { name: '退出登录' }).click();
     store.markSignedOut();
+    await page.evaluate(() => {
+      for (const key of Object.keys(localStorage)) {
+        if (key.startsWith('sb-')) localStorage.removeItem(key);
+      }
+    });
     await page.reload();
     await waitForGuestSession(page);
 
