@@ -435,12 +435,19 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
       },
       { userId: MOCK_USER_ID, chatId: MOCK_CHAT_ID, pagePath: CORE_PAGE_PATH },
     );
+    const blockedRestore = page.waitForResponse(
+      (response) =>
+        response.url().includes(`/api/chats/${MOCK_CHAT_ID}`) &&
+        response.status() === 500,
+      { timeout: 30_000 },
+    );
     await page.reload();
     await page.waitForResponse(
       (response) =>
         response.url().includes('/api/auth/session') && response.ok(),
       { timeout: 30_000 },
     );
+    await blockedRestore;
 
     const composer = page.locator('.acongm-gpt-composer__input');
     await expect(page.getByText('history temporarily unavailable')).toBeVisible({
