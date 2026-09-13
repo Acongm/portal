@@ -433,6 +433,11 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
     await page.goto('/docs/core');
     await page.waitForResponse(
       (response) =>
+        response.url().includes('/api/auth/session') && response.ok(),
+      { timeout: 30_000 },
+    );
+    await page.waitForResponse(
+      (response) =>
         response.url().includes(`/api/chats/${MOCK_CHAT_ID}`) &&
         response.status() === 500,
       { timeout: 30_000 },
@@ -457,7 +462,7 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
   });
 
   test('logout updates portal header chrome back to login', async ({ page }) => {
-    await installQualityGateMocks(page, { authenticatedUser: true });
+    const store = await installQualityGateMocks(page, { authenticatedUser: true });
     await page.goto('/docs/core');
     await page.waitForResponse(
       (response) =>
