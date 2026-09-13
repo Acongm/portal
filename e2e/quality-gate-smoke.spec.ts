@@ -420,7 +420,13 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
       FIRST_ASSISTANT_REPLY,
     );
 
-    await page.addInitScript(
+    await page.goto('/docs/core');
+    await page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/auth/session') && response.ok(),
+      { timeout: 30_000 },
+    );
+    await page.evaluate(
       ({ userId, chatId, pagePath }) => {
         localStorage.setItem(
           `acongm.portal.chat.v2:${userId}:${pagePath}`,
@@ -429,15 +435,10 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
       },
       { userId: MOCK_USER_ID, chatId: MOCK_CHAT_ID, pagePath: CORE_PAGE_PATH },
     );
-
-    await page.goto('/docs/core');
+    await page.reload();
     await page.waitForResponse(
       (response) =>
         response.url().includes('/api/auth/session') && response.ok(),
-      { timeout: 30_000 },
-    );
-    await page.waitForResponse(
-      (response) => response.url().includes(`/api/chats/${MOCK_CHAT_ID}`),
       { timeout: 30_000 },
     );
 
@@ -474,11 +475,7 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
     await account.click();
     await page.getByRole('menuitem', { name: '退出登录' }).click();
     store.markSignedOut();
-    await page.evaluate(() => {
-      for (const key of Object.keys(localStorage)) {
-        if (key.startsWith('sb-')) localStorage.removeItem(key);
-      }
-    });
+    await page.evaluate(() => localStorage.clear());
     await page.reload();
     await waitForGuestSession(page);
 
