@@ -64,6 +64,11 @@ export function DocChatEmbed() {
     return { userId: next.user.id, accessToken: next.access_token };
   }, [accessToken, ensureGuestAuth, userId]);
 
+  useEffect(() => {
+    if (status === 'restoring') return;
+    void ensureGuestAuth();
+  }, [ensureGuestAuth, status]);
+
   const {
     chatId,
     seedMessages,

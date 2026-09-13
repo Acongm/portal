@@ -430,18 +430,14 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
       { userId: MOCK_USER_ID, chatId: MOCK_CHAT_ID, pagePath: CORE_PAGE_PATH },
     );
 
-    await page.goto('/docs/core');
-    await page.waitForResponse(
-      (response) =>
-        response.url().includes('/api/auth/session') && response.ok(),
-      { timeout: 30_000 },
-    );
-    await page.waitForResponse(
+    const blockedRestore = page.waitForResponse(
       (response) =>
         response.url().includes(`/api/chats/${MOCK_CHAT_ID}`) &&
         response.status() === 500,
       { timeout: 30_000 },
     );
+    await page.goto('/docs/core');
+    await blockedRestore;
 
     const composer = page.locator('.acongm-gpt-composer__input');
     await expect(page.locator('.portal-chat-restore-error')).toBeVisible({
