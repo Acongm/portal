@@ -1,4 +1,9 @@
+import os from 'node:os';
 import { defineConfig, devices } from '@playwright/test';
+
+const chromeChannel =
+  process.env.PLAYWRIGHT_CHANNEL ||
+  (os.release().startsWith('21.') ? 'chrome' : undefined);
 
 const MOCK_SUPABASE_URL = 'http://mock-supabase.test';
 const MOCK_ANON_KEY = 'mock-anon-key';
@@ -19,7 +24,10 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        ...(chromeChannel ? { channel: chromeChannel } : {}),
+      },
     },
   ],
   webServer: {

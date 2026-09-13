@@ -1,8 +1,45 @@
-import { expect, test } from '@playwright/test';
-import { installQualityGateMocks } from './fixtures/mock-quality-gate';
+import { expect, test, type Page } from '@playwright/test';
+import {
+  CORE_PAGE_PATH,
+  FIRST_ASSISTANT_REPLY,
+  MOCK_CHAT_ID,
+  MOCK_USER_ID,
+  installQualityGateMocks,
+} from './fixtures/mock-quality-gate';
+
+async function waitForGuestSession(page: Page) {
+  await page
+    .waitForResponse(
+      (response) =>
+        response.url().includes('/api/auth/session') && response.ok(),
+      { timeout: 30_000 },
+    )
+    .catch(() => undefined);
+}
+
+async function openDocsDrawer(page: Page) {
+  await waitForGuestSession(page);
+  const fab = page.getByRole('button', { name: /AI 阅读助手|AI 助手/ });
+  await expect(fab).toBeVisible({ timeout: 30_000 });
+  await fab.click();
+  await expect(page.getByRole('heading', { name: 'AI 阅读助手' })).toBeVisible();
+}
+
+async function readyComposer(page: Page) {
+  const composer = page.locator('.acongm-gpt-composer__input');
+  await expect(composer).toBeEnabled({ timeout: 30_000 });
+  await expect(composer).not.toHaveAttribute('placeholder', /正在准备安全会话/);
+  return composer;
+}
 
 test.describe('Platform v2 quality gate browser smoke (#37)', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }, testInfo) => {
+    if (
+      testInfo.title.includes('history restore failures') ||
+      testInfo.title.includes('logout updates portal header')
+    ) {
+      return;
+    }
     await installQualityGateMocks(page);
   });
 
@@ -307,5 +344,151 @@ test.describe('Platform v2 quality gate browser smoke (#37)', () => {
       'context.content must be shorter than 12000 characters',
       { timeout: 30_000 },
     );
+  });
+
+  test('docs drawer restores history after close, reopen, and refresh', async ({
+    page,
+  }) => {
+    await page.goto('/docs/core');
+    await openDocsDrawer(page);
+    const composer = await readyComposer(page);
+    await composer.fill('persist drawer history');
+    await page.getByTitle('发送').click();
+    await expect(page.getByText(FIRST_ASSISTANT_REPLY)).toBeVisible({
+      timeout: 30_000,
+    });
+
+    await page.getByRole('button', { name: '关闭助手' }).click();
+    await expect(page.getByRole('heading', { name: 'AI 阅读助手' })).toHaveCount(
+      0,
+    );
+
+    await openDocsDrawer(page);
+    await expect(page.getByText('persist drawer history')).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.getByText(FIRST_ASSISTANT_REPLY)).toBeVisible();
+
+    await page.reload();
+    await openDocsDrawer(page);
+    await expect(page.getByText('persist drawer history')).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.getByText(FIRST_ASSISTANT_REPLY)).toBeVisible();
+  });
+
+  test('docs A/B pages keep separate chat pointers and transcripts', async ({
+    page,
+  }) => {
+    await page.goto('/docs/core');
+    await openDocsDrawer(page);
+    const coreComposer = await readyComposer(page);
+    await coreComposer.fill('message for doc core');
+    await page.getByTitle('发送').click();
+    await expect(page.getByText('message for doc core')).toBeVisible({
+      timeout: 30_000,
+    });
+
+    await page.goto('/docs/golang/daily-golang/lesson-01');
+    await openDocsDrawer(page);
+    const golangComposer = await readyComposer(page);
+    await expect(page.getByText('message for doc core')).toHaveCount(0);
+    await golangComposer.fill('message for doc golang');
+    await page.getByTitle('发送').click();
+    await expect(page.getByText('message for doc golang')).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.getByText('message for doc core')).toHaveCount(0);
+
+    await page.goto('/docs/core');
+    await openDocsDrawer(page);
+    await expect(page.getByText('message for doc core')).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.getByText('message for doc golang')).toHaveCount(0);
+  });
+
+  test('history restore failures surface retry and avoid a second transcript', async ({
+    page,
+  }) => {
+    const store = await installQualityGateMocks(page, {
+      failHistoryRestore: true,
+    });
+    store.seedHistory(
+      MOCK_CHAT_ID,
+      'seeded durable history',
+      FIRST_ASSISTANT_REPLY,
+    );
+
+    await page.goto('/docs/core');
+    await page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/auth/session') && response.ok(),
+      { timeout: 30_000 },
+    );
+    await page.evaluate(
+      ({ userId, chatId, pagePath }) => {
+        localStorage.setItem(
+          `acongm.portal.chat.v2:${userId}:${pagePath}`,
+          chatId,
+        );
+      },
+      { userId: MOCK_USER_ID, chatId: MOCK_CHAT_ID, pagePath: CORE_PAGE_PATH },
+    );
+    const blockedRestore = page.waitForResponse(
+      (response) =>
+        response.url().includes(`/api/chats/${MOCK_CHAT_ID}`) &&
+        response.status() === 500,
+      { timeout: 30_000 },
+    );
+    await page.reload();
+    await page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/auth/session') && response.ok(),
+      { timeout: 30_000 },
+    );
+    await blockedRestore;
+
+    const composer = page.locator('.acongm-gpt-composer__input');
+    await expect(page.getByText('history temporarily unavailable')).toBeVisible({
+      timeout: 30_000,
+    });
+    await openDocsDrawer(page);
+    await expect(composer).toBeDisabled({ timeout: 30_000 });
+    await expect(page.getByText('seeded durable history')).toHaveCount(0);
+
+    store.allowHistoryRestore();
+    await page.locator('.portal-chat-restore-error button').click();
+    await expect(composer).toBeEnabled({ timeout: 30_000 });
+    await expect(page.getByText('seeded durable history')).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.getByText(FIRST_ASSISTANT_REPLY)).toBeVisible();
+    await expect(page.locator('.portal-chat-restore-error')).toHaveCount(0);
+  });
+
+  test('logout updates portal header chrome back to login', async ({ page }) => {
+    const store = await installQualityGateMocks(page, { authenticatedUser: true });
+    await page.goto('/docs/core');
+    await page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/auth/session') && response.ok(),
+    );
+
+    const account = page.locator('.acongm-auth-menu button');
+    await expect(account).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('button', { name: '登录' })).toHaveCount(0);
+
+    await account.click();
+    await page.getByRole('menuitem', { name: '退出登录' }).click();
+    store.markSignedOut();
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await waitForGuestSession(page);
+
+    await expect(page.getByRole('button', { name: '登录' })).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.locator('.acongm-auth-menu button')).toHaveCount(0);
   });
 });

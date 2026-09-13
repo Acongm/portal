@@ -64,11 +64,17 @@ export function DocChatEmbed() {
     return { userId: next.user.id, accessToken: next.access_token };
   }, [accessToken, ensureGuestAuth, userId]);
 
+  useEffect(() => {
+    if (status === 'restoring') return;
+    void ensureGuestAuth();
+  }, [ensureGuestAuth, status]);
+
   const {
     chatId,
     seedMessages,
     ready: chatReady,
     restoreError,
+    retryRestore,
     hasOlderMessages,
     loadingOlder,
     loadOlderMessages,
@@ -164,12 +170,15 @@ export function DocChatEmbed() {
     setChips(next);
   }, []);
 
-  const composerDisabled = status === 'restoring' || status === 'error';
+  const blockedByRestore = Boolean(restoreError);
+  const composerDisabled =
+    status === 'restoring' || status === 'error' || blockedByRestore;
   const placeholder = resolveComposerPlaceholder({
     status,
     chatReady,
     restoreError,
   });
+  const effectiveSeedMessages = blockedByRestore ? [] : seedMessages;
 
   return (
     <>
@@ -181,9 +190,17 @@ export function DocChatEmbed() {
           </button>
         </div>
       ) : null}
+      {restoreError ? (
+        <div className="portal-chat-restore-error" role="alert">
+          <p>{restoreError}</p>
+          <button type="button" onClick={retryRestore}>
+            重试
+          </button>
+        </div>
+      ) : null}
       <DocsChatShell
         context={context}
-        seedMessages={seedMessages}
+        seedMessages={effectiveSeedMessages}
         chips={chips}
         onChipsChange={onChipsChange}
         resolveMentionHits={resolveMentionHits}
@@ -216,6 +233,7 @@ function resolveComposerPlaceholder(input: {
 }): string {
   if (input.status === 'restoring') return '正在准备安全会话…';
   if (input.status === 'error') return '访客会话准备失败，请重试或先登录。';
+  if (input.restoreError && !input.chatReady) return '正在重新加载会话历史…';
   if (input.restoreError) return input.restoreError;
   if (!input.chatReady) return '正在加载会话历史…';
   return '有什么可以帮忙的？输入 @ 引用知识…';
