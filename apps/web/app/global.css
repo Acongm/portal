@@ -118,7 +118,8 @@ html > body[data-scroll-locked] {
   color: var(--foreground);
 }
 
-.portal-chat-auth-error button {
+.portal-chat-auth-error button,
+.portal-chat-restore-error button {
   flex-shrink: 0;
   border: 1px solid var(--border);
   border-radius: 0.5rem;
@@ -127,6 +128,29 @@ html > body[data-scroll-locked] {
   font-size: 0.75rem;
   padding: 0.25rem 0.55rem;
   cursor: pointer;
+}
+
+.portal-chat-restore-error {
+  position: fixed;
+  right: 1rem;
+  bottom: 5.5rem;
+  z-index: 1190;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: min(22rem, calc(100vw - 2rem));
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--background);
+  box-shadow: 0 8px 24px color-mix(in oklab, var(--foreground) 12%, transparent);
+}
+
+.portal-chat-restore-error p {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--foreground);
 }
 
 .portal-nav-brand__avatar {

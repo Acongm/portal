@@ -33,6 +33,7 @@ export type UsePageBoundChatResult = {
   seedMessages: ChatUiMessage[] | null;
   ready: boolean;
   restoreError: string | null;
+  retryRestore: () => void;
   hasOlderMessages: boolean;
   loadingOlder: boolean;
   loadOlderMessages: () => Promise<void>;
@@ -72,6 +73,7 @@ export function usePageBoundChat(
   const [seedMessages, setSeedMessages] = useState<ChatUiMessage[] | null>(null);
   const [ready, setReady] = useState(false);
   const [restoreError, setRestoreError] = useState<string | null>(null);
+  const [restoreAttempt, setRestoreAttempt] = useState(0);
   const [prevCursor, setPrevCursor] = useState<string | null>(null);
   const [loadingOlder, setLoadingOlder] = useState(false);
 
@@ -89,10 +91,10 @@ export function usePageBoundChat(
     setRawMessages([]);
     setSeedMessages(null);
     setReady(false);
-    setRestoreError(null);
     setPrevCursor(null);
 
     if (!userId || !accessToken) {
+      setRestoreError(null);
       setReady(true);
       return;
     }
@@ -119,6 +121,7 @@ export function usePageBoundChat(
         setRawMessages(detail.messages);
         setSeedMessages(mapDurableBranchToUiMessages(detail.messages));
         setPrevCursor(detail.prevCursor ?? null);
+        setRestoreError(null);
         setReady(true);
       })
       .catch((error) => {
@@ -139,7 +142,14 @@ export function usePageBoundChat(
     return () => {
       cancelled = true;
     };
-  }, [userId, accessToken, pagePath, pointerKey, requestOptions]);
+  }, [userId, accessToken, pagePath, pointerKey, requestOptions, restoreAttempt]);
+
+  const retryRestore = useCallback(() => {
+    if (!userId || !accessToken) return;
+    setRestoreError(null);
+    setReady(false);
+    setRestoreAttempt((attempt) => attempt + 1);
+  }, [accessToken, userId]);
 
   const persistPointer = useCallback(
     (nextChatId: string, uid?: string | null) => {
@@ -230,6 +240,7 @@ export function usePageBoundChat(
     seedMessages,
     ready,
     restoreError,
+    retryRestore,
     hasOlderMessages: Boolean(prevCursor),
     loadingOlder,
     loadOlderMessages,
