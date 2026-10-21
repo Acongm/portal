@@ -1,0 +1,204 @@
+---
+title: Go 接口与多态：用小接口描述行为
+date: 2026-10-22
+lesson: 9
+tags:
+  - 每日学习
+  - Golang
+  - 接口
+  - 多态
+  - 类型断言
+series: daily-golang
+---
+
+# Go 接口与多态：用小接口描述行为
+
+上一课分清了值复制与指针共享。今天继续使用学员“小李”的例子，但不再讨论如何修改分数，而是解决新问题：**学员和课程的数据不同，能否交给同一个函数生成摘要？**
+
+前置知识是第 8 课的指针与值语义，以及第 7 课的方法。本课只学习普通行为接口、空接口与安全类型断言，不展开泛型、反射或复杂架构。
+
+## 学习目标
+
+- 理解接口描述行为，以及 Go 如何隐式判断一个类型是否实现接口。
+- 让不同类型通过同一个小接口参与相同的处理流程。
+- 分清值接收者、指针接收者对接口赋值的影响。
+- 使用 `any`（空接口）保存不同类型的值，并用 `value, ok` 安全断言类型。
+- 用可替换的简单类型检查依赖接口的函数，为后续正式测试打基础。
+
+## 核心概念
+
+### 1. 接口关心“能做什么”，不关心字段长什么样
+
+结构体描述数据，接口描述一组方法。例如：
+
+```go
+type Summarizer interface {
+    Summary() string
+}
+```
+
+这段声明放在包级别，表示实现者必须具有 `Summary() string` 方法。方法名、参数和返回值都要匹配；只有一个名为 `Summary` 的字段，或者方法返回 `int`，都不满足要求。
+
+接口没有要求实现者必须有 `Name` 或 `Score` 字段。调用者只依赖摘要行为，不需要了解背后的数据结构。
+
+### 2. 隐式实现：不用写 implements
+
+如果 `Student` 已经定义了 `func (s Student) Summary() string`，它就满足 `Summarizer`，不需要额外声明实现关系。另一个 `Course` 类型只要有同样签名的方法，也能满足这个接口。
+
+函数接收 `Summarizer` 后，可以对传入的学员或课程调用 `Summary()`。**同一个调用入口，根据实际存入的具体类型执行不同方法，这就是这里的多态。** 不需要让课程继承学员，也不需要将两种结构体改成同样的字段。
+
+### 3. 值与指针的接口实现关系
+
+对本课这种普通方法接口，可以先记住：
+
+| 方法的接收者 | 能赋给接口的类型 |
+| --- | --- |
+| `func (s Student) Summary() string` | `Student` 和 `*Student` |
+| `func (s *Student) Summary() string` | `*Student`，不是 `Student` |
+
+上一课见过，可寻址变量调用指针接收者方法时，Go 在一些场景会自动取地址。但**给接口赋值不会自动把结构体值变成指针**。如果 `Summary` 改成指针接收者，传入接口时应写 `&student`。
+
+接口也没有改变按值传递规则：传入结构体值与传入结构体指针，仍然存在上一课讲过的复制和共享区别。
+
+### 4. 空接口 any：能保存任何类型，但不承诺具体行为
+
+`any` 是 `interface{}` 的别名，Go 1.18 起可用。空接口没有方法要求，所以整数、字符串、结构体等都能赋给它。
+
+但接收 `any` 的函数不能直接写 `value.Summary()`，因为静态类型没有承诺这个方法。需要摘要行为时应优先接收 `Summarizer`，不要为了“灵活”到处使用 `any`。
+
+类型断言用来检查接口中保存的具体值，例如在函数内写：
+
+```go
+var value any = "小李"
+name, ok := value.(string)
+// ok 为 true，name 是字符串“小李”。
+```
+
+`value.(T)` 的操作对象必须是接口值。使用两返回值形式，断言失败时 `ok` 为 `false`，第一个结果是目标类型的零值。只写 `name := value.(string)`，失败则会 panic。
+
+还要注意：断言不是类型转换。接口里放的是 `int`，断言成 `int64` 会失败，不会自动转换。
+
+### 5. 小接口让检查与替换更容易
+
+如果一个函数只需要摘要，就让它接收仅含 `Summary()` 的接口，不要顺手加入保存文件、修改分数等无关方法。接口通常围绕使用者真正需要的行为设计。
+
+这样可以定义一个返回固定摘要的简单类型，替代真实学员，检查函数是否正确拼接文本。不需要数据库、网络或复杂对象。本课用普通 `main` 程序演示检查；第 12 课再系统学习 `testing` 与 `go test`。
+
+最后记住一个边界：未赋值的接口变量是 `nil`；**接口中保存一个类型为 `*Student`、值为 `nil` 的指针后，接口本身不等于 `nil`**。所以不能仅凭接口不为 `nil` 就认为内部指针可安全访问。本课只传有效值，不把空指针当成正常摘要对象。
+
+## 代码示例
+
+在新的空目录执行：
+
+```bash
+mkdir lesson09
+cd lesson09
+go mod init lesson09
+```
+
+将以下完整代码保存为 `main.go`，执行 `go run .`。程序只使用标准库；这里保留前课的姓名和分数，省略与今天目标无关的年龄字段。
+
+```go
+package main
+
+import "fmt"
+
+type Summarizer interface {
+    Summary() string
+}
+
+type Student struct {
+    Name  string
+    Score int
+}
+
+func (s Student) Summary() string {
+    return fmt.Sprintf("%s，当前分数 %d", s.Name, s.Score)
+}
+
+type Course struct {
+    Title string
+}
+
+func (c Course) Summary() string {
+    return "课程：" + c.Title
+}
+
+// 只依赖摘要行为，不依赖 Student 或 Course 的字段。
+func summaryLine(item Summarizer) string {
+    return "摘要：" + item.Summary()
+}
+
+// 固定返回值的替身，用来检查 summaryLine 的拼接逻辑。
+type FixedSummary struct {
+    Text string
+}
+
+func (f FixedSummary) Summary() string {
+    return f.Text
+}
+
+// 编译期检查：这两个类型都满足接口。
+var _ Summarizer = Student{}
+var _ Summarizer = Course{}
+
+func main() {
+    student := Student{Name: "小李", Score: 63}
+    course := Course{Title: "Go 从零学习"}
+
+    items := []Summarizer{student, course}
+    for _, item := range items {
+        fmt.Println(summaryLine(item))
+    }
+    fmt.Println("指针也满足接口:", summaryLine(&student))
+
+    var value any = student
+    restored, ok := value.(Student)
+    fmt.Println("断言为 Student:", ok, restored.Name)
+
+    name, ok := value.(string)
+    fmt.Printf("断言为 string: %t，结果 %q\n", ok, name)
+
+    value = 63
+    number, ok := value.(int64)
+    fmt.Println("int 断言为 int64:", ok, number)
+
+    got := summaryLine(FixedSummary{Text: "固定内容"})
+    want := "摘要：固定内容"
+    fmt.Println("小接口替身检查:", got == want)
+}
+```
+
+预期输出：
+
+```text
+摘要：小李，当前分数 63
+摘要：课程：Go 从零学习
+指针也满足接口: 摘要：小李，当前分数 63
+断言为 Student: true 小李
+断言为 string: false，结果 ""
+int 断言为 int64: false 0
+小接口替身检查: true
+```
+
+逐步观察：
+
+1. `[]Summarizer` 中的元素接口类型相同，但内部的具体值可以分别是学员和课程；循环不需要判断类型就能调用摘要方法。
+2. `summaryLine(&student)` 能编译，是因为 `*Student` 的方法集也包含这里的值接收者方法。
+3. `value` 保存 `Student` 时，断言为 `Student` 成功，断言为 `string` 失败；没有发生强制转换，也没有触发 panic。
+4. `int` 与 `int64` 是不同类型，即使数值相同也不能直接断言成功。
+5. `FixedSummary` 只提供所需的一个方法，就能帮助检查拼接结果；这里的比较只是入门自查，不替代正式测试。
+
+## 练习
+
+1. 新增 `Book` 结构体，包含 `Title string` 字段，实现 `Summary() string`，将一本书加入 `items`。不修改 `summaryLine`，确认它仍能处理新类型。
+2. 将 `Student.Summary` 改为指针接收者。先观察原来的编译错误，再把 `var _ Summarizer = Student{}` 改为 `var _ Summarizer = (*Student)(nil)`，把 `items` 中的 `student` 改为 `&student`。后者检查指针类型是否实现接口，并没有调用空指针的方法。
+3. 把 `var value any = student` 改成保存 `&student`，将成功的断言改成 `value.(*Student)`。解释为什么此时断言为 `Student` 不成功。
+4. 使用 `FixedSummary{Text: ""}` 检查 `summaryLine`，期望结果应是 `"摘要："`。尝试故意写错期望值，确认比较结果会变成 `false`。
+5. 用自己的话回答：为什么 `summaryLine` 接收 `Summarizer` 比接收 `any` 更清楚？如果没有类型相关需求，是否还需要在函数里逐个断言学员和课程？
+
+自查标准：添加一本书时，应该只新增类型、方法和调用数据，不需要给 `summaryLine` 增加类型判断分支。
+
+## 小结
+
+接口把“需要什么行为”与“数据具体如何保存”分开：类型拥有匹配的方法，就能隐式实现接口；不同类型通过同一接口参与处理，形成多态。优先用围绕需求的小接口表达约束，仅在确实需要保存任意类型时使用 `any`，并用两返回值断言安全检查类型。值接收者与指针接收者会影响接口实现关系，接口也不会消除复制与共享的区别。下一课学习错误处理与 `errors` 包，认识一个实际常用的小接口：`error`。
