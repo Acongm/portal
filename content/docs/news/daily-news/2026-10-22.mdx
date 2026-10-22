@@ -1,0 +1,74 @@
+---
+title: 2026-10-22｜GitHub CLI 引入短期凭据，OpenAI 模型将接入 Google Cloud
+date: 2026-10-22
+tags:
+  - 每日资讯
+  - 前端
+  - DevOps
+  - AI
+series: daily-news
+---
+
+# 2026-10-22｜GitHub CLI 引入短期凭据，OpenAI 模型将接入 Google Cloud
+
+今天值得关注的不是单一能力扩张，而是开发工作流的可靠性与接入边界：Vite 修复构建和开发服务器细节，Firefox 用版本更新补齐证书阻断的离线保障；GitHub 将短期凭据与安全事件接口做得更可操作；OpenAI 则把模型分发拓展到 Google Cloud，并继续探索企业知识如何进入专业工作流。本文优先采用最近 24 小时官方更新，Firefox 和 secret scanning 补充采用最近 72 小时内容；六条来源均未在最近一篇日报中作为主力条目出现。
+
+## 今日概览
+
+### 前端
+
+**相比增加新 API，构建一致性、交互回归和浏览器安全底线更值得进入本周验收清单。**
+
+#### 1. Vite 8.3.5 修复 chunk import map 与 bundled-dev 的多处边界
+
+**发布日期：2026-10-21。** Vite 官方发布 8.3.5，构建侧修复缺失 chunk import map 的处理，并将 preload dependencies 纳入 chunk import map 的哈希计算；bundled-dev 修复资源 URL 对 `server.origin` 的应用、转发错误栈的 source map 映射，以及不再被导入的模块仍继续传播 HMR 等问题。CSS 处理也修复了 `url()` 内字面量 `%` 导致失败的情况。[来源](https://github.com/vitejs/vite/releases/tag/v8.3.5)
+
+这些变化不是新功能宣传，而是直接涉及产物关联关系、开发资源地址与调试定位的修复。使用相关模式的团队可以把预加载依赖变更后的产物、定制资源 origin 和移除模块后的热更新纳入回归测试；发布说明没有给出通用性能提升比例，不应把补丁升级写成整体构建加速保证。
+
+#### 2. Firefox 158.0.1 将已受损证书阻断列表打包进入版本更新
+
+**发布日期：2026-10-20，72 小时窗口。** Mozilla 说明，10 月 17 日已通过 OneCRL 和 Remote Settings 分发对受损 eMudhra 中间证书的阻断；158.0.1 再将更新后的 OneCRL 列表包含在版本中，确保 Remote Settings 被策略禁用或因网络环境不可用时，客户端仍能阻断这些证书。该版本同时修复选中文本时页面意外滚回顶部，以及 macOS 从其他应用拖入文件却没有落到网页等问题。[来源](https://www.firefox.com/en-US/firefox/158.0.1/releasenotes/)
+
+这里要区分“阻断首次分发”和“版本内置兜底”：10 月 20 日并非首次启动证书阻断。前端团队可关注上传组件的跨应用拖放和长页面文本选择回归；企业浏览器维护则不能只看是否启用远程配置，还应检查客户端补丁版本。
+
+### DevOps
+
+**凭据生命周期和审计字段都在变化，自动化脚本需要摆脱长期保存令牌与依赖展示名称的假设。**
+
+#### 3. GitHub CLI 公开预览可过期、自动刷新的 OAuth 凭据
+
+**发布日期：2026-10-21。** 从 GitHub CLI **v2.103.0** 起，可使用 `gh auth login --expiring` 主动启用短期 access token 与轮换 refresh token，CLI 在需要时自动刷新。也可用 `gh config set expiring_credentials enabled` 将其设为后续登录的偏好；当前仍是 opt-in，现有登录和手动提供的 token 不会自动改变。[来源](https://github.blog/changelog/2026-10-21-github-cli-opt-in-to-expiring-auto-refreshing-oauth-tokens)
+
+Git over HTTPS 场景官方建议运行 `gh auth setup-git`，让 CLI 作为 credential helper，并建议 Git **2.46 或更新版本**。最值得检查的是把 `gh auth token` 结果保存后长期复用的脚本：应在每次需要时重新读取，而不是缓存一次。功能现已支持 github.com 与 ghe.com；GHES 从 **3.23** 起支持，更早版本会回退为非过期凭据，因此不能假定所有服务端都已具备同样行为。
+
+#### 4. Secret scanning 调整审计字段，并扩展编码令牌的撤销支持
+
+**发布日期：2026-10-20，72 小时窗口。** GitHub 公告预告，**2026-11-12** 起，受影响的 `secret_scanning_alert.*` 和 `secret_scanning_push_protection.bypass` 审计事件中，`business` 字段将由企业展示名变为 enterprise slug；字段仍为字符串，事件名和数值型 `business_id` 不变。官方建议依赖展示名过滤的集成提前兼容两种格式，或改用 `business_id`。[来源](https://github.blog/changelog/2026-10-20-updates-to-github-secret-scanning)
+
+此外，在 github.com 已开启 secret scanning 的私有及内部仓库中，现有撤销操作的公开预览支持 Base64 编码的 classic PAT、fine-grained PAT、OAuth access token 与 GitHub App user access token，平台会自动解码。撤销请求 webhook 也补充 `exemption_request.number`，关联时需结合仓库识别。对平台团队来说，当前行动项是修正 SIEM 过滤与事件关联逻辑，而不是等字段切换后再排查“告警突然消失”。
+
+### AI
+
+**模型接入开始更多沿用企业已有云环境，专业工作流则仍需要明确最终决策人。**
+
+#### 5. OpenAI 模型与 Codex 工作流将进入 Google Cloud Model Garden
+
+**发布日期：2026-10-21。** OpenAI 同一官方文章的搜索摘要显示，双方合作将 OpenAI 前沿模型和 Codex agentic workflows 带入 Google Cloud 的 Model Garden，让客户在该云环境内访问模型并构建 agent 工作流。摘要还写明，OpenAI 模型也将很快进入 Google Antigravity 与 Gemini Agent。[来源](https://openai.com/index/openai-models-google-cloud)
+
+这条消息的实际意义是增加企业评估与采用模型的接入路径，而不是要求团队迁移现有数据平台。但“将接入”和“很快提供”不等于所有区域、模型及功能已正式开放；本次可核实信息不足以列出具体上线时间、价格、配额或数据驻留承诺，选型仍应以实际产品可用范围为准。
+
+#### 6. AT&T 以 LegalEdge 探索企业法务知识与任务入口的结合
+
+**发布日期：2026-10-21。** OpenAI 官方案例的搜索摘要显示，合作建立在 AT&T 的 LegalEdge 团队之上，该团队由律师、法律专业人员、技术人员和项目经理组成，专注于把 AI 用于重大法律事务。下一步探索重点是将企业积累的专业知识更紧密地连接到律师收到的工作中；案例明确强调，**决策始终由律师作出**。[来源](https://openai.com/index/att-legal)
+
+这一案例更适合被理解为知识检索、任务入口和专业判断之间的工作流设计，而不是“AI 替代律师”。公开摘要没有提供可核实的普遍效率指标，也不足以推断具体系统权限或审查流程；企业采用时，值得借鉴的是先明确 AI 帮助获取什么信息，以及哪些决定必须继续由专业责任人负责。
+
+## 今日观察
+
+今天的六条更新落在同一个工程原则上：把隐含假设变成可以检查的边界。前端要验证产物与交互是否一致，平台要验证凭据是否会刷新、审计过滤是否仍命中，AI 项目则要区分宣布接入与实际可用，并明确专业决策的责任归属。功能越自动化，越需要把版本、状态和异常路径写进验收条件。
+
+## 简讯
+
+- **前端**：Vite 8.3.5 修复构建与热更新边界，Firefox 158.0.1 内置更新后的证书阻断列表并修复交互回归。
+- **DevOps**：GitHub CLI 公开预览自动刷新的短期 OAuth 凭据，secret scanning 预告审计字段迁移并扩展编码令牌撤销支持。
+- **AI**：OpenAI 模型与 Codex 工作流将接入 Google Cloud，AT&T 法务案例强调知识接入与律师最终决策的边界。
