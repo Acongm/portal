@@ -1,0 +1,201 @@
+---
+title: Go 错误处理：用 errors 判断原因与保留上下文
+date: 2026-10-23
+lesson: 10
+tags:
+  - 每日学习
+  - Golang
+  - 错误处理
+  - errors
+series: daily-golang
+---
+
+# Go 错误处理：用 errors 判断原因与保留上下文
+
+上一课认识了“只描述行为”的小接口。今天用最常见的一个接口 `error`，为学员“小李”的分数校验补上清晰的失败处理：**出错时既说明正在做什么，也让调用者判断具体原因。**
+
+前置知识是第 9 课的接口、第 4 课的多返回值。今天聚焦错误返回、包装与判断，以及自定义错误类型，不展开文件、HTTP、并发或复杂错误聚合。
+
+## 学习目标
+
+- 理解 `error` 接口与 `nil` 表示成功的约定，及时检查错误。
+- 使用 `errors.New` 定义可识别的错误，用 `fmt.Errorf` 和 `%w` 保留错误链。
+- 使用 `errors.Is` 判断原因，使用 `errors.As` 提取自定义错误中的字段。
+- 为错误补充操作上下文，避免比较错误文本、吞掉错误或重复打印。
+
+## 核心概念
+
+### 1. error 是一个普通接口
+
+标准库预声明的 `error` 接口只有一个方法，形状如下；这是说明，不需要在程序中重新定义：
+
+```go
+type error interface {
+    Error() string
+}
+```
+
+具有 `Error() string` 方法的类型就能隐式实现它。`Error()` 提供给人阅读的说明，`error` 值则可以作为函数返回值传给调用者。
+
+常见签名是 `func loadStudent(...) (Student, error)`。约定返回 `nil` 错误表示成功，非 `nil` 表示失败。拿到结果后先写 `if err != nil`；失败时不要继续把同时返回的零值学员当成有效结果使用。本课明确约定失败时返回 `Student{}`，其他 API 的结果能否部分使用应阅读各自文档。
+
+延续上一课的提醒：一个存有空指针的 `error` 接口不一定等于 `nil`。成功分支应直接 `return student, nil`，不要返回一个值为 `nil` 的自定义错误指针来表示成功。
+
+### 2. 用稳定错误值标记一种失败原因
+
+`errors.New("学员姓名不能为空")` 创建一个错误。若调用者需要判断这种原因，可以在包级保存一个稳定的错误值，例如 `var ErrNameRequired = errors.New(...)`。这种约定俗成的“哨兵错误”，适合表达不需要额外字段的一类失败。
+
+不要每次判断时重新调用 `errors.New`：两个文本相同的新错误也不是同一个错误值。也不要依赖 `err.Error() == "某段文本"`，因为增加上下文或调整措辞都会破坏这种判断。
+
+### 3. 包装错误：说明当前操作，但不丢失原因
+
+底层函数知道“分数不合法”，外层函数还知道“正在登记哪位学员”。写 `fmt.Errorf("登记学员 %s: %w", name, err)` 可以同时保留这两层信息。
+
+- `%w`：在说明中包含原错误，并保留可被检查的错误链。
+- `%v`：这里只生成包含错误文本的新消息，不为这个原错误建立可解包关系。
+
+普通的非 `nil` 错误先包装再返回即可，不要把 `nil` 当成失败包装。包装也不是到处堆相同句子，而是在跨越一层操作时补上新的上下文。
+
+### 4. errors.Is 判断原因，errors.As 读取详情
+
+`errors.Is(err, ErrNameRequired)` 可以沿错误链检查是否匹配指定原因，即使外面已经加了一层说明，也不必拆字符串。
+
+当失败需要携带数据时，定义自定义错误类型更合适。例如 `ScoreError` 保存收到的分数、允许的最小值和最大值，再用 `Error()` 生成说明。
+
+若 `*ScoreError` 实现了 `error`，调用者可以这样提取：
+
+```go
+var scoreErr *ScoreError
+if errors.As(err, &scoreErr) {
+    // 仅在匹配成功后，读取 scoreErr.Score 等字段。
+}
+```
+
+这里 `scoreErr` 的类型是 `*ScoreError`，`&scoreErr` 是交给 `errors.As` 填写结果的变量地址。它和“把空指针当成功返回”不是一回事。
+
+上一课的类型断言只能直接检查接口当前保存的值；包装后最外层不再是 `*ScoreError`，直接断言可能失败。`errors.As` 能沿错误链找匹配类型。入门时记成：**`Is` 问“是否这个原因”，`As` 问“能否取出这种错误的详情”。**
+
+### 5. 在合适的一层处理错误
+
+底层函数通常返回错误，外层补充上下文，最后由调用入口决定提示、重试或终止。本课由 `main` 打印提示；内层不再重复打印。
+
+不要用 `_` 忽略一个需要处理的错误，也不要为普通输入校验失败使用 `panic`。错误是预期流程的一部分，不等同于程序无法继续执行的内部故障。
+
+## 代码示例
+
+在新的空目录执行：
+
+```bash
+mkdir lesson10
+cd lesson10
+go mod init lesson10
+```
+
+将以下完整程序保存为 `main.go`，运行 `go run .`。示例只使用标准库，延续前课的 `Student`、姓名和分数，不引入用户输入或文件操作。
+
+```go
+package main
+
+import (
+    "errors"
+    "fmt"
+)
+
+var ErrNameRequired = errors.New("学员姓名不能为空")
+
+type Student struct {
+    Name  string
+    Score int
+}
+
+type ScoreError struct {
+    Score int
+    Min   int
+    Max   int
+}
+
+func (e *ScoreError) Error() string {
+    return fmt.Sprintf("分数 %d 不在 %d 到 %d 之间", e.Score, e.Min, e.Max)
+}
+
+func validateScore(score int) error {
+    if score < 0 || score > 100 {
+        return &ScoreError{Score: score, Min: 0, Max: 100}
+    }
+    return nil
+}
+
+func registerStudent(name string, score int) (Student, error) {
+    // 本例只检查空字符串；空白字符清理不属于今天的目标。
+    if name == "" {
+        return Student{}, fmt.Errorf("登记学员: %w", ErrNameRequired)
+    }
+    if err := validateScore(score); err != nil {
+        return Student{}, fmt.Errorf("登记学员 %s: %w", name, err)
+    }
+    return Student{Name: name, Score: score}, nil
+}
+
+func main() {
+    student, err := registerStudent("小李", 63)
+    if err != nil {
+        fmt.Println("登记失败:", err)
+        return
+    }
+    fmt.Println("登记成功:", student.Name, student.Score)
+
+    _, err = registerStudent("", 63)
+    if err != nil {
+        fmt.Println("姓名错误:", err)
+        fmt.Println("Is 判断原因:", errors.Is(err, ErrNameRequired))
+        fmt.Println("重新创建同文本错误:", errors.Is(err, errors.New("学员姓名不能为空")))
+    }
+
+    _, err = registerStudent("小李", 120)
+    if err != nil {
+        fmt.Println("分数错误:", err)
+        _, direct := err.(*ScoreError)
+        fmt.Println("直接类型断言:", direct)
+
+        var scoreErr *ScoreError
+        if errors.As(err, &scoreErr) {
+            fmt.Printf("As 读取详情: 收到 %d，允许 %d 到 %d\n",
+                scoreErr.Score, scoreErr.Min, scoreErr.Max)
+        }
+    }
+}
+```
+
+预期输出：
+
+```text
+登记成功: 小李 63
+姓名错误: 登记学员: 学员姓名不能为空
+Is 判断原因: true
+重新创建同文本错误: false
+分数错误: 登记学员 小李: 分数 120 不在 0 到 100 之间
+直接类型断言: false
+As 读取详情: 收到 120，允许 0 到 100
+```
+
+按顺序观察：
+
+1. 合法分数对应 `nil` 错误，调用者确认成功后才使用学员结果。
+2. 空姓名的错误经过 `%w` 包装，`errors.Is` 仍找到原来的 `ErrNameRequired`；重新创建相同文本的错误则不匹配。
+3. 分数 120 产生带字段的 `*ScoreError`，外层再补上“登记学员 小李”的操作说明。
+4. 直接断言只看到最外层包装错误，所以返回 `false`；`errors.As` 找到内部类型并取出具体分数与边界。
+5. 所有提示都由 `main` 输出，校验与登记函数只负责返回结果或错误。
+
+## 练习
+
+1. 把成功调用中的分数分别改为 `0`、`100`、`-1` 和 `101`。预测哪些成功，再运行验证边界；失败时确认没有打印“登记成功”。
+2. 只把空姓名分支的 `%w` 改为 `%v`。观察说明文本是否改变，以及 `Is 判断原因` 为什么变成 `false`，然后恢复 `%w`。
+3. 在分数错误的处理分支中，先写 `err = fmt.Errorf("导入课程名单: %w", err)`，确认多一层包装后 `errors.As` 仍然成功，直接断言仍失败。
+4. 为 `ScoreError` 增加 `Name string` 字段。由 `registerStudent` 在判断到分数错误后补充姓名，再包装返回；用 `errors.As` 读取该字段。只在成功匹配后访问指针，避免直接假定所有错误都是分数错误。
+5. 回答：如果只是想给用户展示提示，是否一定要使用 `errors.As`？如果需要程序区分姓名缺失，为什么不应比较 `err.Error()`？
+
+自查标准：能够分别用稳定错误值和自定义类型处理“只有类别”与“还需要详情”的失败，并能解释 `%w` 保留了什么。
+
+## 小结
+
+`error` 是描述失败说明的小接口，通常用 `nil` 表示成功。调用者先检查错误，再使用结果；内层返回原因，外层通过 `%w` 增加上下文。用 `errors.Is` 判断稳定原因，用 `errors.As` 提取自定义错误详情，不依赖错误文本，也不把普通输入失败变成 `panic`。下一课学习包、模块与可见性，把这些类型与函数组织到清晰的代码边界中。
