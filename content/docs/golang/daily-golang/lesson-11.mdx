@@ -1,0 +1,201 @@
+---
+title: Go 包与模块：用 internal 划清代码边界
+date: 2026-10-24
+lesson: 11
+tags:
+  - 每日学习
+  - Golang
+  - 包与模块
+  - 可见性
+series: daily-golang
+---
+
+# Go 包与模块：用 internal 划清代码边界
+
+上一课为学员“小李”的登记操作补上了错误返回。随着程序变长，我们希望把学员规则放在单独的目录里，让 `main` 只负责调用与展示。今天不新增一套业务，而是把已有的姓名、分数和校验规则组织成一个小模块。
+
+前置知识是第 10 课的错误处理，以及前面学过的结构体和方法。本课只关注 `go.mod`、包的导入路径、导出规则与 `internal` 边界，不展开第三方依赖管理、复杂分层或正式测试；下一课再学习 `testing`。
+
+## 学习目标
+
+- 分清模块（module）、包（package）和源文件之间的关系。
+- 根据 `go.mod` 中的模块路径，写出子目录中包的导入路径。
+- 理解首字母大小写如何决定标识符能否被其他包访问。
+- 将学员代码放入 `internal/student`，并解释谁可以导入它。
+
+## 核心概念
+
+### 1. 模块是管理边界，包是组织代码的单位
+
+`go mod init example.com/lesson11` 会在当前目录生成 `go.mod`。其中 `module example.com/lesson11` 声明本模块的路径，`go` 指令声明模块要求的最低 Go 版本，并影响相关语言与工具行为。本课让工具生成这部分，不手写一个固定版本。
+
+一个模块可以包含多个包。通常一个目录里的普通 `.go` 文件属于同一个包，在文件开头写相同的 `package` 声明；后面课程中的外部测试包是另一个专门约定。
+
+本课根目录用 `package main`，其中的 `main()` 是可执行程序入口；`internal/student` 目录用 `package student`，提供可复用的类型和函数，不需要 `main()`。
+
+**模块路径、包名和文件名不是同一件事。** `student.go` 只是文件名，改成 `model.go` 不会改变导入路径。把同一个包的代码分到同目录多个文件时，它们也不需要互相 `import`。
+
+### 2. 导入路径由模块路径和目录路径组合
+
+本课的关系是：
+
+| 项目 | 写法 |
+| --- | --- |
+| 模块路径 | `example.com/lesson11` |
+| 包所在的相对目录 | `internal/student` |
+| 完整导入路径 | `example.com/lesson11/internal/student` |
+| 包声明与默认调用前缀 | `student` |
+
+所以入口文件导入的是完整路径，调用时通常写 `student.Register(...)`。不要写 `import "./internal/student"`，也不要把本机绝对目录当成模块导入路径。
+
+`example.com/lesson11` 是本课的示例模块名，不要求你拥有这个域名。本模块内的包会按本地模块解析，本例只用标准库与自身代码，不会为了导入 `internal/student` 去请求该域名。真正发布模块供别人使用时，再选择与代码托管位置相符的路径。
+
+### 3. 首字母大写表示导出，不等于所有内容都公开
+
+包级的类型、函数、变量、常量等，名称以大写字母开头时可被其他包引用。结构体字段和方法也遵守导出规则：
+
+- `Student`、`Register`、`Summary` 可以作为跨包使用的接口。
+- `validateScore` 只在 `student` 包内使用，外部不能写 `student.validateScore(...)`。
+- `Student` 的 `name`、`score` 字段未导出，外部不能直接读取或用字面量给这些字段赋值。
+
+本课通过 `Register` 创建学员，通过 `Summary` 读取摘要，避免入口绕过校验随意改分数。上一课字段还在同一个 `main` 包里，今天改为小写是为了演示跨包边界，不是重新讲解结构体。
+
+注意：即使字段未导出，外部仍可以创建 `student.Student{}` 这样的零值。这个简单设计并没有保证“每个 Student 都已登记”；示例约定只使用 `Register` 成功返回的结果。未导出是编译期访问规则，也不是数据加密或运行时安全隔离。
+
+### 4. internal 限制谁能导入，不替代大小写规则
+
+对路径 `example.com/lesson11/internal/student`，Go 只允许位于该 `internal` 的父目录树内的代码导入它。根目录的 `main.go` 位于这个范围内，所以允许；另一个不在该目录树内的项目导入这个包，会被工具链拒绝。
+
+本例把 `internal` 放在模块根目录下，因此它适合承载“本项目使用，但不打算作为对外依赖”的代码。更一般的规则看的是 `internal` 的父目录树，不是只看模块名字的字符串前缀。
+
+两层边界要分开看：**`internal` 管谁能导入这个包；大小写管获准导入后能访问哪些标识符。** 把包放进 `internal`，并不会让小写函数自动变成可从 `main` 调用的函数。
+
+### 5. 包之间应保持单向依赖
+
+本例是 `main → student → 标准库`。`student` 不导入 `main`，只返回结果或错误，让入口决定如何展示。Go 不允许包的循环导入；拆目录时不要把互相调用的函数机械地分到两个互相导入的包中。
+
+先按一组紧密相关的职责拆包即可，不需要为每一个函数都创建目录，也不用急着引入多层架构。
+
+## 代码示例
+
+在新的空目录执行以下命令：
+
+```bash
+mkdir lesson11
+cd lesson11
+go mod init example.com/lesson11
+mkdir -p internal/student
+```
+
+目录结构如下；`go.mod` 由上面的命令生成，另两个文件完整内容见下文：
+
+```text
+lesson11/
+├── go.mod
+├── main.go
+└── internal/
+    └── student/
+        └── student.go
+```
+
+先保存 `internal/student/student.go`。这里使用上一课的错误返回约定，但不重复自定义错误类型和错误链判断，以免抢走包边界的重点。
+
+```go
+package student
+
+import (
+    "errors"
+    "fmt"
+)
+
+type Student struct {
+    name  string
+    score int
+}
+
+func Register(name string, score int) (Student, error) {
+    if name == "" {
+        return Student{}, errors.New("学员姓名不能为空")
+    }
+    if err := validateScore(score); err != nil {
+        return Student{}, fmt.Errorf("登记学员 %s: %w", name, err)
+    }
+    return Student{name: name, score: score}, nil
+}
+
+func validateScore(score int) error {
+    if score < 0 || score > 100 {
+        return errors.New("分数必须在 0 到 100 之间")
+    }
+    return nil
+}
+
+func (s Student) Summary() string {
+    return fmt.Sprintf("%s，当前分数 %d", s.name, s.score)
+}
+```
+
+再保存根目录的 `main.go`：
+
+```go
+package main
+
+import (
+    "fmt"
+
+    "example.com/lesson11/internal/student"
+)
+
+func main() {
+    learner, err := student.Register("小李", 63)
+    if err != nil {
+        fmt.Println("登记失败:", err)
+        return
+    }
+    fmt.Println("登记成功:", learner.Summary())
+
+    _, err = student.Register("小李", 120)
+    if err != nil {
+        fmt.Println("登记失败:", err)
+    }
+}
+```
+
+在含有 `go.mod` 的项目根目录执行：
+
+```bash
+gofmt -w main.go internal/student/student.go
+go vet ./...
+go run .
+```
+
+`gofmt` 整理格式，`go vet ./...` 检查当前模块目录下的相关包，成功时通常没有输出；它不是正式单元测试。`go run .` 运行当前目录的入口包，会连同被导入的 `student` 包一起编译，不要仅在入口文件旁复制一个同属 `package main` 的旧程序。
+
+预期输出：
+
+```text
+登记成功: 小李，当前分数 63
+登记失败: 登记学员 小李: 分数必须在 0 到 100 之间
+```
+
+逐步观察：
+
+1. `main` 通过模块导入路径找到本地 `student` 包，而不是按文件名导入。
+2. `Register` 与 `Summary` 已导出，因此入口可以调用；`name`、`score` 与 `validateScore` 留在包内。
+3. `Summary` 的方法体和字段同属 `student` 包，因此能访问小写字段。
+4. 不合法的分数仍走普通错误返回，入口检查错误后展示提示；拆包没有改变这个约定。
+5. 业务包不打印提示，也不依赖入口包，依赖方向保持清楚。
+
+## 练习
+
+1. 在 `main` 成功分支中临时添加 `fmt.Println(learner.score)`，运行 `go run .` 观察未导出字段导致的编译错误，然后删掉这行。再尝试调用 `student.validateScore(63)`，解释为什么包已导入仍不能调用它，验证后恢复。
+2. 在 `student` 包中新增 `func (s Student) Score() int`，返回分数；在 `main` 中用 `learner.Score()` 打印。确认不需要把字段改成大写，也不需要引入指针。
+3. 把 `Summary` 方法移到同目录的新文件 `summary.go`，保留 `package student`，并在新文件中导入 `fmt`。原文件仍需要 `fmt.Errorf`，所以也保留它的 `fmt` 导入。确认两份文件无需互相导入，`go run .` 仍成功。导入声明按文件生效，不会被同包其他文件共享。
+4. 把模块路径改为 `example.com/learn-go`，同步修改 `main.go` 的导入路径。运行验证，并回答：如果只改 `go.mod`，为什么旧的导入路径不再指向当前模块的这个包？完成后可恢复原路径。
+5. 用自己的话解释：把 `internal/student` 改为普通目录 `student` 并同步导入路径后，导入限制发生了什么变化？未导出的字段会因此变成公开吗？本题无需发布模块。
+
+自查标准：能够不看模板，从 `go.mod` 和目录结构推出导入路径，并分别说明模块、包、导出名称和 `internal` 的作用。
+
+## 小结
+
+模块通过 `go.mod` 定义路径与依赖管理边界，包通过目录组织相关代码。导入路径通常由模块路径加包的相对目录组成，调用名称则由包声明和导出标识符决定。大写导出提供跨包入口，小写隐藏实现细节，`internal` 进一步限制允许导入的代码范围。今天把学员登记从 `main` 拆成了单向依赖的小包；下一课用 `testing` 与表驱动测试，为这些校验规则建立可重复运行的检查。
