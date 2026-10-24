@@ -1,0 +1,200 @@
+---
+title: Go 测试入门：用表驱动测试检查学员登记
+date: 2026-10-25
+lesson: 12
+tags:
+  - 每日学习
+  - Golang
+  - testing
+  - 表驱动测试
+series: daily-golang
+---
+
+# Go 测试入门：用表驱动测试检查学员登记
+
+上一课把学员登记逻辑放进了 `internal/student`。手动运行入口能看到“小李，当前分数 63”，但每次改代码都靠肉眼检查，很容易漏掉空姓名、负分或满分这些情况。今天把这些规则变成可以反复执行的测试。
+
+前置知识是第 11 课的包与模块，以及结构体、切片、循环和错误返回。本课只学习标准库 `testing`、表驱动测试和常用测试命令，不引入第三方断言库、并发测试或模拟框架。
+
+## 学习目标
+
+- 按 `*_test.go` 文件和 `TestXxx(t *testing.T)` 函数约定编写单元测试。
+- 用“输入、预期结果、实际结果”的方式检查成功与失败分支。
+- 用结构体切片描述多组案例，通过 `t.Run` 运行具名子测试。
+- 使用 `go test` 的 `./...`、`-v`、`-run`、`-count=1` 和 `-cover` 参数。
+
+## 核心概念
+
+### 1. 测试文件与业务代码放在一起
+
+Go 工具会识别以 `_test.go` 结尾的文件。这里把 `student_test.go` 放在 `internal/student` 下，声明 `package student`，因此它可以直接调用同包的 `Register` 和 `Summary`，无需导入自己。
+
+另一种约定是声明 `package student_test`，只通过导出的入口测试包；今天先用同包测试，不扩展两种方式的取舍。测试文件不会作为普通业务源码参与 `go run` 或普通的非测试构建。
+
+测试函数示例名称是 `TestRegister`，签名为 `func TestRegister(t *testing.T)`。`Test` 后的名称应以大写字母开头，方便遵守测试发现约定。导入标准库 `testing`，不需要自己编写测试程序的 `main()`。
+
+### 2. 测试要比较结果，而不是只打印结果
+
+测试先调用被测函数，再检查返回值。`t.Errorf` 记录失败但继续执行当前测试；`t.Fatalf` 记录失败并立即结束当前测试或当前子测试。因此，成功案例如果意外返回错误，应先 `t.Fatalf`，避免继续检查一个无效结果。
+
+推荐让报错信息包含实际值和预期值，例如 `Summary() = %q, want %q`。`%q` 会把字符串加引号，空字符串或多余空格更容易看清。只调用 `fmt.Println` 不会自动判断通过或失败。
+
+### 3. 表驱动测试把案例与检查逻辑分开
+
+表驱动不是额外的语言语法，而是一个组织习惯：用结构体切片保存多组输入和预期结果，再通过 `for` 循环复用检查逻辑。
+
+本课每行包含案例名、姓名、分数、期望摘要与是否期望错误。覆盖普通成功、最低分、最高分、空姓名、低于下界和高于上界，比复制六份近似测试函数更容易维护。
+
+`t.Run(tc.name, func(t *testing.T) { ... })` 为每行创建具名子测试。某一行失败，日志能直接定位到案例。今天不调用 `t.Parallel()`；各案例不共享需要修改的全局状态，也不需要先引入 goroutine。
+
+### 4. 测试通过不等于所有问题都消失
+
+本课用 `wantErr` 判断是否返回错误，不依赖错误文字。这样改进提示措辞不会让测试无故失败；如果业务约定必须区分某类错误，再用上一课之前学过的 `errors.Is` 或 `errors.As` 补充检查。
+
+覆盖率表示测试执行过哪些语句，不代表这些语句的结果一定被正确检查，也不代表所有输入组合都已覆盖。应优先选择有意义的规则和边界，再看覆盖率辅助发现遗漏。
+
+## 代码示例
+
+为避免覆盖上一课的文件，在一个新的空目录中运行：
+
+```bash
+mkdir lesson12
+cd lesson12
+go mod init example.com/lesson12
+mkdir -p internal/student
+```
+
+这次项目不需要 `main.go`：`go test` 会为测试生成运行入口。`go.mod` 由工具生成，另外两个文件如下：
+
+```text
+lesson12/
+├── go.mod
+└── internal/
+    └── student/
+        ├── student.go
+        └── student_test.go
+```
+
+保存 `internal/student/student.go`。沿用上一课的登记规则与摘要格式，业务代码不为测试改变行为：
+
+```go
+package student
+
+import (
+    "errors"
+    "fmt"
+)
+
+type Student struct {
+    name  string
+    score int
+}
+
+func Register(name string, score int) (Student, error) {
+    if name == "" {
+        return Student{}, errors.New("学员姓名不能为空")
+    }
+    if err := validateScore(score); err != nil {
+        return Student{}, fmt.Errorf("登记学员 %s: %w", name, err)
+    }
+    return Student{name: name, score: score}, nil
+}
+
+func validateScore(score int) error {
+    if score < 0 || score > 100 {
+        return errors.New("分数必须在 0 到 100 之间")
+    }
+    return nil
+}
+
+func (s Student) Summary() string {
+    return fmt.Sprintf("%s，当前分数 %d", s.name, s.score)
+}
+```
+
+保存 `internal/student/student_test.go`：
+
+```go
+package student
+
+import "testing"
+
+func TestRegister(t *testing.T) {
+    tests := []struct {
+        name        string
+        learnerName string
+        score       int
+        wantSummary string
+        wantErr     bool
+    }{
+        {"normal", "小李", 63, "小李，当前分数 63", false},
+        {"minimum", "小李", 0, "小李，当前分数 0", false},
+        {"maximum", "小李", 100, "小李，当前分数 100", false},
+        {"empty_name", "", 63, "", true},
+        {"below_minimum", "小李", -1, "", true},
+        {"above_maximum", "小李", 101, "", true},
+    }
+
+    for _, tc := range tests {
+        t.Run(tc.name, func(t *testing.T) {
+            learner, err := Register(tc.learnerName, tc.score)
+            if tc.wantErr {
+                if err == nil {
+                    t.Errorf("Register(%q, %d) should return an error",
+                        tc.learnerName, tc.score)
+                }
+                return
+            }
+            if err != nil {
+                t.Fatalf("Register(%q, %d) returned unexpected error: %v",
+                    tc.learnerName, tc.score, err)
+            }
+            if got := learner.Summary(); got != tc.wantSummary {
+                t.Errorf("Summary() = %q, want %q", got, tc.wantSummary)
+            }
+        })
+    }
+}
+```
+
+错误案例检查完后使用 `return`，因为本课并不约定错误返回时的学员摘要；这会结束当前子测试回调，而不是终止整个案例循环。成功案例则检查没有错误，并核对完整摘要。
+
+在含 `go.mod` 的项目根目录执行：
+
+```bash
+gofmt -w internal/student/student.go internal/student/student_test.go
+go vet ./...
+go test ./... -v -count=1
+```
+
+详细日志应列出 `TestRegister` 及其六个子测试，每个都显示 `PASS`，最后显示该包 `ok`。耗时和日志排版可能随环境不同，不需要逐字匹配。`go vet` 通常在成功时没有输出；它是静态检查，不能替代这些输入与结果的测试。
+
+接下来分别体验常用命令：
+
+```bash
+go test ./...
+go test ./... -v -run '^TestRegister$/^maximum$' -count=1
+go test ./... -cover -count=1
+```
+
+- `./...`：测试当前目录树下的包。根目录没有普通 Go 源文件也没关系，只要子包存在；本例直接运行不带包参数的 `go test` 则会因根目录没有 Go 文件而失败。
+- `-v`：显示测试名称和通过信息，不只显示包级结果。
+- `-run`：按正则表达式筛选测试；斜线分隔父测试与子测试的匹配条件，上面的命令只选择 `maximum` 这一行，父测试仍会运行以发现子测试。
+- `-count=1`：禁用测试结果缓存，强制实际运行；普通命令若显示 `(cached)`，表示复用了可用的成功结果，不是执行出错。
+- `-cover`：显示语句覆盖率。这里检查了所有业务分支，但仍不能据此推断任意输入都正确。
+
+完整示例在 Go 1.23.12 上执行了 `go vet` 和上述测试命令；练习时也应以自己的实际输出确认通过，而不是只复制代码。
+
+## 练习
+
+1. 将 `normal` 的 `wantSummary` 临时改成 `"小李，当前分数 64"`，执行 `go test ./... -v -count=1`。确认失败定位到 `normal`，提示实际摘要与预期摘要，然后恢复正确值，重新运行到全部通过。
+2. 添加案例 `{"another_learner", "小王", 80, "小王，当前分数 80", false}`，验证摘要确实使用了输入姓名，而不是写死“小李”。无需增加另一份检查逻辑。
+3. 把业务校验里的 `score > 100` 临时改成 `score >= 100`，预测哪个案例会失败，再运行验证，最后恢复。解释为什么边界 `100` 与越界 `101` 都要检查。
+4. 使用 `-run '^TestRegister$/^empty_name$'` 只运行空姓名案例，再运行完整测试。理解筛选命令通过，只能说明被选中的案例通过。
+5. 比较两次 `go test ./...` 与一次 `go test ./... -count=1` 的输出。是否出现缓存与当前环境有关；关键是知道如何主动要求重新运行。
+
+自查标准：能从一条业务规则列出成功、失败和边界案例；能故意制造一次失败、读懂报错，再恢复为通过状态。所有临时错误修改都应在练习结束前还原。
+
+## 小结
+
+测试用可执行的检查替代肉眼查看输出：文件用 `_test.go` 命名，函数接收 `*testing.T`，通过错误报告方法表达失败。表驱动用结构体切片记录案例，`t.Run` 帮助定位具体输入。先覆盖学员登记的正常路径与边界，再借助 `-v`、`-run`、`-count=1` 和 `-cover` 提高反馈效率。下一课才进入 goroutine，并发不是今天测试的前提。
