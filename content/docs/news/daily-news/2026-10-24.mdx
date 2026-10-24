@@ -1,0 +1,78 @@
+---
+title: 2026-10-24｜Safari 预览折叠屏接口，GitHub 补齐企业自动化与用量治理
+date: 2026-10-24
+tags:
+  - 每日资讯
+  - 前端
+  - DevOps
+  - AI
+series: daily-news
+---
+
+# 2026-10-24｜Safari 预览折叠屏接口，GitHub 补齐企业自动化与用量治理
+
+今天的更新集中在工程边界：Safari 为折叠屏提供实验接口，但仍把响应式布局作为默认路径；GitHub 将更多企业管理操作交给 GitHub Apps，并补齐 IDE 之外的 Copilot 用量统计；OpenAI 则介绍训练环境隔离与大规模存储实践。本文采用截至北京时间 10 月 24 日早间可核实的最近 24 小时官方更新，来源页面标注日期均为 10 月 23 日。前端在排除上一期已覆盖内容后保留一条完整更新，不为凑数量重复预览版新闻。
+
+## 今日概览
+
+### 前端
+
+**折叠屏适配的基础仍是流式布局；姿态与分段接口是渐进增强，而非新的设备识别分支。**
+
+#### 1. Safari 27.1 为折叠屏预览 Device Posture 与 Viewport Segments API
+
+**发布日期：2026-10-23。** WebKit 发布 Safari 27.1 介绍，说明 iPhone Duo 使用与其他 iPhone 相同的 WebKit 引擎和 Web 技术。该设备上的 Safari 27.1 在 feature flags 后提供 Device Posture API 与 Viewport Segments API 开发者预览，需分别启用两个开关，并非所有用户默认可用。[来源](https://webkit.org/blog/18486/webkit-features-for-safari-27-1/)
+
+姿态接口通过 CSS `device-posture` 媒体查询及 JavaScript `navigator.devicePosture` 区分 `folded` 与 `continuous`；后者既包括完全展开，也包括完全闭合的平面显示状态。分段接口则提供横向、纵向分段数量查询、`viewport-segment-*` 环境变量，以及返回各分段矩形的 `window.viewport.segments`。两类信号分别回答“是否部分折叠”与“内容区域如何分段”，不应混为同一个尺寸判断。
+
+官方建议继续使用 Grid、Flexbox、媒体查询与特性检测，避免 UA 嗅探；测试可以使用 Xcode 27.1 或更新版本中的 Device Hub 模拟器。对已有应用，先验证窄视口、横竖屏与窗口变化，再考虑按折痕分区。文章还明确指出，网页目前不会延伸到侧边系统控件背后，不宜把未来可能的布局方案当作已实现能力。
+
+### DevOps
+
+**平台治理正在补齐两个缺口：自动化凭据能否摆脱个人令牌，以及真实调用能否被完整计量。**
+
+#### 2. GitHub Apps 企业级安装正式可用，更多管理自动化可替代 classic PAT
+
+**发布日期：2026-10-23。** GitHub 宣布企业级 GitHub Apps 安装正式可用，并扩大企业与组织管理 API 的权限覆盖。新增能力涉及企业仓库策略与 rulesets、只读绕过请求、双因素认证要求、域名验证、IP 白名单、企业访问限制，以及企业资料和成员权限等管理操作。[来源](https://github.blog/changelog/2026-10-23-enterprise-installations-for-github-apps-generally-available)
+
+这些扩展让原本依赖 classic PAT 的部分治理脚本可以迁移到 GitHub Apps。迁移仍需按工作流选择实际权限，不是给应用一组统一的“全能企业权限”；例如 bypass requests 为只读，其他权限各有独立读写范围。官方同时说明，这批更新将进入 GHES 3.24，因此不能把云端正式可用直接等同于当前所有自托管版本均已支持。
+
+工程团队可先盘点企业管理脚本中仍使用个人令牌的操作，逐项对照新覆盖的 API，再评估迁移。价值在于扩大应用身份能够承担的自动化范围，而不是声称个人令牌已经全面退场。
+
+#### 3. Copilot usage metrics 新增按客户端统计，覆盖 OpenCode 等 IDE 外调用
+
+**发布日期：2026-10-23。** Copilot usage metrics API 在企业、组织及对应用户级别的 1 天与 28 天报表中新增 `totals_by_client`，可以统计 OpenCode 等通过 Copilot 使用模型的工具。字段包含客户端、成功模型请求数、会话数、token 用量，以及按模型拆分的统计；模型选择方式可区分用户直接选择、自动选择和产品选择。[来源](https://github.blog/changelog/2026-10-23-usage-metrics-api-adds-usage-from-tools-like-opencode)
+
+这补上了不发送编辑器遥测的工具难以出现在 `totals_by_ide` 中的盲区，但有两条重要限制：`request_count` 计算模型调用而不是提示词，一次输入可能触发多次调用；`client` 根据请求携带的集成标识归组，只是尽力识别，不是经过验证的身份。它与计算 GitHub 上 agent app 启动作业的 activity 指标也不同，不能直接互换。
+
+使用前需启用 Copilot usage metrics policy，并具备企业所有者、账单管理员、组织所有者或包含 `View Copilot Metrics` 的相应角色权限。这是增量字段，既有字段不变。对平台团队，最实用的动作是将客户端维度纳入容量与工具采用分析，同时避免把调用数直接当作用户交互数或生产力指标。
+
+### AI
+
+**AI 系统的可用性不只由模型决定：训练边界需要对抗性验证，服务规模则需要处理一致性与读取成本。**
+
+#### 4. OpenAI 介绍前沿模型训练与评估环境的隔离强化
+
+**发布日期：2026-10-23。** OpenAI 发布《Securing our frontier model training environment》。同一官方页面的搜索摘要显示，其强化了内部前沿模型训练和评估的 containment，并使用最强模型对边界做红队测试；文章结构涵盖离线环境、纵深隔离、虚拟机逃逸、通向互联网的新路径，以及隔离任务之间的通信。[来源](https://openai.com/index/securing-our-frontier-model-training-environment)
+
+官方搜索摘要还表示，高计算量、使用最强模型的红队测试已成为未来前沿强化学习训练与评估安全论证的一部分。这里的工程重点是用对抗测试检验隔离假设，而不是把“运行在虚拟机里”当作充分证明。训练、评估或执行高权限工具的团队，可以据此审视网络出口、跨任务通信与监测是否存在独立的验证环节。
+
+本条事实限于可核实的官方搜索摘要；未据此补写漏洞数量、利用步骤或“完全无法逃逸”等安全保证。
+
+#### 5. OpenAI 分享 Habitat 存储优化：用变更流驱动跨区域缓存失效
+
+**发布日期：2026-10-23。** OpenAI 发布面向逾十亿 ChatGPT 用户的在线存储扩展系列第二篇，介绍应用存储平台 Habitat 对 Azure Cosmos DB 的优化。同一官方页面的搜索摘要说明，读取占 Habitat 请求的 90% 以上，且热点类型集中，因此适合引入分布式缓存以减少跨区域读取延迟。[来源](https://openai.com/index/scaling-storage-one-billion-users-part-two)
+
+摘要给出的机制是：通过 Cosmos DB change feed 做变更数据捕获，将缓存失效传播到全球，时间尺度为数秒；基础设施中的消费者在底层数据更新后执行本地缓存失效。此外，控制面负责确保所需容器都被捕获、选择读取区域并分配任务，通过副本区域和低优先级读取保护延迟敏感流量。
+
+对 AI 应用团队，这是一条关于产品基础设施而非模型升级的消息：高命中率与低陈旧度需要一起设计，后台变更捕获也不能挤占在线请求。事实来自目标官方页面的稳定搜索摘要，不将“数秒传播”扩写为强一致性承诺，也不把个案设计当作所有业务应照搬的架构。
+
+## 今日观察
+
+今天可以更新三份工程清单。前端将折叠姿态和视口分段作为可选增强，保留无实验接口时的完整体验；平台侧检查个人令牌迁移机会，并明确用量报表的计数与身份边界；AI 系统侧分别验证执行隔离和数据服务链路。共同点不是单纯增加接口，而是让每项能力的适用范围、可观测性和失败条件更清楚。
+
+## 简讯
+
+- **前端**：Safari 27.1 在 feature flags 后预览折叠姿态与视口分段接口，常规响应式布局仍是默认适配路径。
+- **DevOps**：GitHub Apps 企业级安装正式可用，Copilot 用量 API 新增 OpenCode 等客户端的模型请求与 token 统计。
+- **AI**：OpenAI 介绍训练环境隔离红队测试，以及 Habitat 利用 Cosmos DB 变更流实现跨区域缓存失效的工程实践。
