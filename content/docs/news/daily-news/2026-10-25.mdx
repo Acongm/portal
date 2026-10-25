@@ -1,0 +1,76 @@
+---
+title: 2026-10-25｜Chrome 默认开放数字凭证签发，GitHub 串联修复与泄露响应
+date: 2026-10-25
+tags:
+  - 每日资讯
+  - 前端
+  - DevOps
+  - AI
+series: daily-news
+---
+
+# 2026-10-25｜Chrome 默认开放数字凭证签发，GitHub 串联修复与泄露响应
+
+今天值得关注的是“能力可用之后，工作流如何闭环”：Chrome 将数字凭证签发变成默认能力，但接入方仍要处理用户手势、钱包选择和完成状态；GitHub 将 Teams 通知接入代码修复，并为公开泄露告警补上有效性检查与事件接口；OpenAI 的近期动态则涉及外部安全研究合作与企业部署方法。
+
+本文优先检索最近 24 小时官方更新；周末新增信息较少，选材窗口放宽至最近 72 小时，并补充一篇最近 7 天内的工程方法文章。所选来源发表于 10 月 22—23 日，均未作为最近一期日报的主力条目出现。前端保留一条信息完整的官方平台更新，不重复已报道的 Safari 版本内容。
+
+## 今日概览
+
+### 前端
+
+**数字凭证签发有了统一浏览器入口，但“API 调用成功”和“凭证签发完成”仍是两个状态。**
+
+#### 1. Chrome 155 默认启用 Digital Credentials API 签发能力
+
+**发布日期：2026-10-23。** Chrome 官方宣布，从 Chrome 155 起，Digital Credentials API 的签发能力默认启用，不再需要 origin trial token 或功能开关。网站通过带有 `digital` 参数的 `navigator.credentials.create()` 发起请求，由操作系统提供钱包选择界面；支持 Android 同设备流程，以及从桌面扫码、在 Android 上完成的跨设备流程，后者用蓝牙确认设备邻近。[来源](https://developer.chrome.com/blog/digital-credentials-api-issuance?hl=en)
+
+这是一层连接网站与钱包的传输机制，并不取代 OpenID4VCI 等签发协议。官方特别提醒，返回的 `credential.data` 是钱包的协议响应，不是签发出的凭证，也不必然代表签发已结束；业务服务器应依据钱包从凭证端点获取凭证的情况判断进度。
+
+从试用版迁移时，至少要检查三处：每次调用都会消耗一次临时用户激活；用户取消或没有兼容钱包时返回 `NotAllowedError`；跨源 iframe 需要 `digital-credentials-create` 权限策略。旧版 Chrome 的协议检测也可能给出看似支持的结果，仍需捕获 `NotSupportedError` 并提供替代流程。自动化测试可使用 CDP 的实验性虚拟钱包命令，覆盖成功、取消与超时，而不是只在真实手机上验证一次成功路径。
+
+### DevOps
+
+**协作入口与安全响应都在减少人工搬运，但代码合并和凭据撤销仍需明确的责任链。**
+
+#### 2. GitHub 将 Teams 通知与 Copilot 合并：从 issue 更新直接发起修复
+
+**发布日期：2026-10-23。** 新的 GitHub Teams 应用整合通知与 Copilot：团队在频道、群聊或私聊中收到更新后，可以通过 `@GitHub` 发起调查、修复并创建 pull request，之后仍由团队审查、测试和合并。原 GitHub notifications 应用用户需更新至最新版本，已有通知能力继续保留。[来源](https://github.blog/changelog/2026-10-23-turn-notifications-into-code-with-github-copilot-in-teams)
+
+这不是让聊天消息绕过仓库交付规则，而是把“收到问题”和“启动代码任务”放到同一个协作界面。官方还给出了迁移期限：旧版 GitHub 应用将更名为 `GitHub (deprecated)`，并于 11 月 16 日退役；使用者应安装整合后的应用，连接 GitHub 账号并选择仓库。平台团队可优先核查组织内是否仍在依赖旧入口，再验证新入口创建的 PR 是否进入现有测试和人工审查流程。
+
+#### 3. Public monitoring 补齐告警管理、持续有效性检查、REST API 与 webhook
+
+**发布日期：2026-10-23。** GitHub 为 public monitoring 增加关闭与重新打开告警、活动时间线、过滤和排序，并对支持的凭据类型持续检查有效性，显示 `Active`、`Inactive` 或 `Unknown`。企业管理员和企业安全管理员还可通过 REST API 查询归属于企业的发现，并订阅企业级 `secret_scanning_public_monitoring_alert` 事件，将新泄露发现接入响应流水线。[来源](https://github.blog/changelog/2026-10-23-public-monitoring-adds-triage-validity-api-and-webhooks)
+
+最重要的边界是：**关闭告警只改变企业侧状态，不会撤销泄露凭据，也不会从公开仓库删除内容。** 因此可将有效性结果用于响应优先级，但不能用“已关闭”代替“已轮换或撤销”。`Unknown` 也不能直接当作无效。
+
+该能力仍处于 public preview，面向 GitHub Enterprise Cloud，包括带数据驻留的版本；持有 GitHub Advanced Security 或 GitHub Secret Protection 许可时无需额外付费。它补齐的是发现之后的分流、审计与系统集成，不是自动完成整个事故处置。
+
+### AI
+
+**本期 AI 动态不以新模型参数为中心，而是关注外部评估和真实组织中的交付方式。**
+
+#### 4. OpenAI 与波兰 NASK 签署 AI 安全与技术研究合作协议
+
+**发布日期：2026-10-23。** OpenAI 宣布与波兰 NASK 国家研究院签署协议，探索 AI 安全、安保和技术研究合作。目标官方页面的搜索摘要显示，作为波兰人工智能安全研究所的 NASK AI Safety Research Center 将参与研究，探索评估能力不断增强的 AI 系统、识别潜在漏洞和强化防护的方法。[来源](https://openai.com/index/openai-nask-ai-safety-security-partnership)
+
+这条消息的意义在于引入组织之外的技术研究能力，而不是已经完成某项认证或发布了新的评测结果。对采购和治理团队，应区分“签署研究合作协议”与“提供可采用的测评标准”；当前可核实信息不支持推导具体测试覆盖率、漏洞数量或产品合规保证。
+
+#### 5. OpenAI 解释 FDE：企业部署经验如何反馈到产品与工程实践
+
+**发布日期：2026-10-22，作为最近 7 天工程观察补充。** OpenAI 发布《What FDE means at OpenAI》，介绍前沿部署工程的工作方式与企业落地问题。目标官方页面的搜索摘要展示了一组架构对比：从由专用 agent 和定制工具构成的多 agent 架构，转向以 Codex、skills、MCP 与代码仓库为中心的更简单架构。[来源](https://openai.com/index/forward-deployed-engineering-means)
+
+同一官方摘要给出一个 2026 年 8 月的部署案例：初次部署耗时两个月，扩展到第二个团队只用一天。这个例子适合用来观察“首次打通流程”与“复用既有方案”的成本差异，但不能把它推广成所有企业部署都能一天完成，也不能仅凭架构示意图断言多 agent 一定不如单一入口。
+
+对正在落地 agent 的团队，更实际的启发是检查知识、工具和代码上下文能否复用，以及新增团队是否还要重新搭建整套集成。本条限于已核实的官方搜索摘要，不补写未公开的交付规模、客户身份或性能对照。
+
+## 今日观察
+
+这几条更新可以转化为三项工程检查：数字凭证接入要把钱包响应与业务完成分开建模；协作 agent 创建 PR 后，应继续遵循既有审查流程，泄露告警关闭后则必须另行核实凭据处置；企业 AI 部署既要关注外部安全研究，也要判断初次集成能否沉淀为可复用能力。真正值得采用的不是“多一个入口”，而是入口之后的状态、权限和验证链条更清楚。
+
+## 简讯
+
+- **前端**：Chrome 155 默认开放数字凭证签发，接入需核对用户激活、错误处理及钱包响应与签发完成的区别。
+- **DevOps**：GitHub 整合 Teams 通知与 Copilot 修复入口，公开泄露监测新增持续有效性检查、告警管理及 API/webhook。
+- **AI**：OpenAI 与波兰 NASK 探索安全研究合作，并分享以 Codex、skills、MCP 和代码仓库简化企业部署的工程思路。
