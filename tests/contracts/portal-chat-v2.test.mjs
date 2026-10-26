@@ -22,9 +22,10 @@ test('Portal guests keep a Client ID and create anonymous auth only on first sen
   assert.match(embed, /ensureGuestAuth/);
   assert.match(embed, /prepareAuth/);
   assert.match(embed, /composerDisabled/);
+  assert.match(embed, /blockedByRestore/);
   assert.match(
     embed,
-    /const composerDisabled = status === 'restoring' \|\| status === 'error'/,
+    /status === 'restoring' \|\| status === 'error' \|\| blockedByRestore/,
   );
   assert.doesNotMatch(embed, /请先登录后再发送/);
   assert.doesNotMatch(
@@ -55,9 +56,13 @@ test('history restore failures only discard a confirmed stale pointer and otherw
   assert.match(hook, /error instanceof ChatStreamError && error.status === 404/);
   assert.match(hook, /localStorage\.removeItem\(resolvePointerKey\(userId\)\)/);
   assert.match(hook, /setRestoreError\(/);
+  assert.match(hook, /retryRestore/);
   assert.match(hook, /if \(restoreError\)/);
   assert.match(hook, /无法恢复已有会话：/);
   assert.doesNotMatch(hook, /setSeedMessages\(\[\]\)/);
+  assert.match(embed, /portal-chat-restore-error/);
+  assert.match(embed, /retryRestore/);
+  assert.match(embed, /blockedByRestore \? \[\] : seedMessages/);
 });
 
 test('Portal lazy-creates a durable chat and never supplies a ChatV1 stream URL', () => {
