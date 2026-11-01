@@ -1,0 +1,227 @@
+---
+title: Go channel 与 select：收集学员摘要并安全取消任务
+date: 2026-11-01
+lesson: 14
+tags:
+  - 每日学习
+  - Golang
+  - channel
+  - select
+series: daily-golang
+---
+
+# Go channel 与 select：收集学员摘要并安全取消任务
+
+上一课用 goroutine 生成学员摘要，再借助 WaitGroup 等待全部完成。今天继续使用“小李，当前分数 63”的格式，但不让后台任务直接打印：由它发送结果，主流程接收并决定什么时候停止。
+
+前置课程是第 13 课。本课只讨论无缓冲与有缓冲 channel、`select` 和 done channel 取消模式；不扩展锁、工作池或 `context`。
+
+## 学习目标
+
+- 创建 channel，区分无缓冲通信与有限容量的缓冲。
+- 使用发送、接收、关闭和 `range` 收集结果。
+- 用 `select` 同时等待数据通信与取消通知。
+- 分清“通知取消”与“确认任务已经退出”，避免 goroutine 卡在发送上。
+
+## 核心概念
+
+### 1. channel 是带类型的通信通道
+
+`make(chan string)` 创建只能传递字符串的无缓冲通道。`ch <- value` 发送，`value := <-ch` 接收；箭头表示数据流向。
+
+无缓冲发送需要与接收配对，发送才能完成。若在同一个 goroutine 中先向无缓冲通道发送、再写接收代码，它会卡在发送处，根本走不到接收。完整示例会把发送放进新的 goroutine。
+
+`make(chan string, 2)` 创建容量为 2 的缓冲通道：未满时发送可以先完成；缓冲满后，发送仍要等待。接收在缓冲为空且通道未关闭时也会等待。缓冲不是无限队列，也不能代替退出协议。
+
+本课所有 channel 都先用 `make` 初始化。未初始化 channel 的零值是 `nil`，对它发送或接收会一直阻塞；对它调用 `close` 会 panic。
+
+### 2. 关闭表示不会再发送，不表示丢掉已有数据
+
+发送方完成所有发送后可以 `close(ch)`。接收方用 `for value := range ch` 逐个取值，直到通道已关闭且缓存耗尽才退出循环。
+
+如果用 `value, ok := <-ch` 接收，`ok == false` 表示通道关闭且已无剩余数据，此时 `value` 是元素类型的零值。空字符串本身也可能是合法数据，不能只看值就判断结束。
+
+向已经关闭的通道发送、重复关闭都会 panic。本课由唯一发送方负责关闭结果通道；接收方不能因为“不想要结果了”就关闭它，否则发送方可能在下一次发送时崩溃。取消应使用另一条通知通道。
+
+### 3. select 等待能够进行的通信
+
+`select` 的每个 `case` 可以放一次发送或接收。若没有分支就绪且没有 `default`，当前 goroutine 会等待；若多个分支都能进行，会从中伪随机选择一个，不能依赖代码书写顺序。
+
+带 `default` 的 `select` 在没有通信可进行时会立即执行 `default`。把它直接放进循环可能造成空转，所以本课等待结果与取消时不加 `default`。
+
+### 4. done 通知取消，finished 确认退出
+
+`done := make(chan struct{})` 不承载业务数据。`struct{}` 是没有字段的结构体类型；这里借助关闭通道来广播通知，而不是传递摘要。
+
+协调方调用 `close(done)` 后，所有等待 `<-done` 的任务都能继续。我们约定只有主流程关闭它一次。
+
+任务必须在可能阻塞的地方同时监听取消。例如结果发送写成 `select`：要么把结果交给接收方，要么发现 done 已关闭后返回。若仍写成独立的 `results <- value`，接收方提前离开后，任务可能永远阻塞，无法检查 done。
+
+关闭 done 只是请求任务停止，不证明它已经返回。因此第二个示例额外用 `finished` 确认退出。`select` 不保证取消优先：取消与发送同时就绪时，发送仍可能被选中；不要把它当成“关闭后绝不会再产生结果”的承诺。
+
+## 代码示例
+
+### 示例一：观察缓冲，再收集全部摘要
+
+在新的空目录执行：
+
+```bash
+mkdir lesson14
+cd lesson14
+go mod init example.com/lesson14
+```
+
+保存下面完整代码为 `main.go`：
+
+```go
+package main
+
+import "fmt"
+
+type Student struct {
+    Name  string
+    Score int
+}
+
+func (s Student) Summary() string {
+    return fmt.Sprintf("%s，当前分数 %d", s.Name, s.Score)
+}
+
+func main() {
+    buffered := make(chan string, 2)
+    buffered <- "第一条"
+    buffered <- "第二条"
+    close(buffered)
+    for message := range buffered {
+        fmt.Println(message)
+    }
+
+    learners := []Student{
+        {Name: "小李", Score: 63},
+        {Name: "小王", Score: 80},
+        {Name: "小陈", Score: 95},
+    }
+    results := make(chan string)
+    go func() {
+        defer close(results)
+        for _, learner := range learners {
+            results <- learner.Summary()
+        }
+    }()
+
+    for summary := range results {
+        fmt.Println(summary)
+    }
+    fmt.Println("全部学员摘要已接收")
+}
+```
+
+运行：
+
+```bash
+gofmt -w main.go
+go vet ./...
+go run .
+```
+
+预期输出：
+
+```text
+第一条
+第二条
+小李，当前分数 63
+小王，当前分数 80
+小陈，当前分数 95
+全部学员摘要已接收
+```
+
+前两次发送没有接收方也能完成，因为缓冲恰好容纳两条消息。关闭后仍可以读出它们。如果在关闭前增加第三次发送、又不提前启动接收方，程序就会阻塞。
+
+摘要部分用无缓冲通道，发送与主流程的接收逐次配对。这里由**一个发送 goroutine 按切片顺序发送**，所以摘要顺序固定；这与上一课多个 goroutine 各自打印的无序输出不同。若以后改成多个发送方，必须重新设计统一关闭的位置，不能让每个发送方各自关闭同一个通道。
+
+### 示例二：接收一条摘要后取消
+
+用下面完整代码替换同目录的 `main.go`，不要与示例一放在同一个包内同时编译，以免重复定义。
+
+```go
+package main
+
+import "fmt"
+
+type Student struct {
+    Name  string
+    Score int
+}
+
+func (s Student) Summary() string {
+    return fmt.Sprintf("%s，当前分数 %d", s.Name, s.Score)
+}
+
+func produce(learners []Student, done <-chan struct{}, results chan<- string, finished chan<- struct{}) {
+    defer close(finished)
+    defer close(results)
+
+    for _, learner := range learners {
+        select {
+        case <-done:
+            return
+        case results <- learner.Summary():
+        }
+    }
+}
+
+func main() {
+    learners := []Student{
+        {Name: "小李", Score: 63},
+        {Name: "小王", Score: 80},
+        {Name: "小陈", Score: 95},
+    }
+    done := make(chan struct{})
+    results := make(chan string)
+    finished := make(chan struct{})
+    go produce(learners, done, results, finished)
+
+    select {
+    case summary, ok := <-results:
+        if ok {
+            fmt.Println(summary)
+        }
+    case <-done:
+        fmt.Println("等待结果时收到取消通知")
+    }
+
+    close(done)
+    <-finished
+    fmt.Println("已确认摘要任务退出")
+}
+```
+
+再次运行 `gofmt -w main.go`、`go vet ./...` 和 `go run .`，预期输出：
+
+```text
+小李，当前分数 63
+已确认摘要任务退出
+```
+
+阅读顺序：
+
+1. `done <-chan struct{}` 只允许任务接收取消通知，`results chan<- string` 只允许任务发送结果。这是限制函数能力的方向标记；创建通道时仍使用普通的 `make(chan ...)`。
+2. 主流程的 `select` 展示接收与取消两种分支。本例由主流程在收到第一条后才关闭 done，因此这次一定先接收摘要；若以后由外部事件通知取消，等待接收的代码也已有退出分支。本课不增加额外的取消来源。
+3. 第一条交接完成后，任务可能已经尝试发送第二条，但无缓冲 results 没有第二次接收。主流程关闭 done 后，发送所在的 `select` 就能转向取消分支，而不是永远卡住。
+4. 任务返回时，`defer` 按后登记先执行的顺序，先关闭 results，再关闭 finished。主流程收到 finished 的关闭信号，才打印退出确认。
+
+本例不创建额外的收集 goroutine，也不靠 `time.Sleep` 猜任务何时结束。若结果通道改为有缓冲，取消时可能已经存在未消费的摘要；不要把“生产者已退出”误解成“缓冲内没有数据”。此外，`select` 的发送表达式会先求值，本例的 `Summary()` 很短；不能据此认为耗时计算本身也能被 done 自动打断。
+
+## 练习
+
+1. 把示例一的 `results` 改为容量为 2 的缓冲通道，重新运行。输出应保持不变；解释变化的是发送方能提前推进多少，而不是通道变成了无限容量。
+2. 将示例二的 `close(done)` 移到 `go produce(...)` 之前，删除主流程接收结果的 `select`，保留 `<-finished`。预期只有“已确认摘要任务退出”，证明没有接收方时任务仍可取消。
+3. 让示例二接收全部结果：把主流程的 `select` 换成 `for summary := range results { fmt.Println(summary) }`，保留循环后的 `close(done)` 和退出确认。应按顺序打印三位学员，再打印确认；生产者自然结束也能正确关闭通道。
+4. 多次执行原始示例二，并运行 `GOMAXPROCS=1 go run .`。两行输出都应一致。解释为什么这里只有一个可成功交接的结果，不是依靠 goroutine 恰好慢一点。
+5. 只做代码阅读：若把任务中的 `select` 改成直接发送，为什么主流程收到第一条后即使关闭 done，仍可能永远等不到 finished？若接收方改成关闭 results，又为什么可能 panic？
+
+自查标准：能指出谁发送、谁接收、谁负责关闭每条通道，以及每个可能阻塞的等待如何结束；能区分“收齐结果”和“提前取消”两条路径。
+
+## 小结
+
+无缓冲 channel 让发送与接收配对，有缓冲 channel 允许有限数量的数据暂存。发送方关闭结果通道，接收方用 `range` 消费至结束。`select` 用于等待多种通信条件，done channel 用关闭广播取消，但取消不具有优先级，也不会自动中断普通计算。把取消信号与退出确认分开，才能在停止接收结果后依然安全地等待任务结束。下一课再系统学习 sync 包与数据竞争检测。
