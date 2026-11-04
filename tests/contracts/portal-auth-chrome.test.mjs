@@ -19,6 +19,8 @@ test('Portal chrome reads session without creating anonymous auth users', () => 
 
 test('Portal embed surfaces restore errors and keeps the composer open for guests', () => {
   assert.match(embed, /restoreError/);
+  assert.match(embed, /retryRestore/);
+  assert.match(embed, /portal-chat-restore-error/);
   assert.match(embed, /composerDisabled/);
   assert.match(embed, /正在准备安全会话/);
   assert.match(embed, /ensureGuestAuth/);
